@@ -1,0 +1,13 @@
+{
+    "homepage": "https://github.com/nradakovic/tooling/cr_checker",
+    "maintainers": [
+        {
+            "email": "nikola.ra.radakovic@bmw.de",
+            "github": "nradakovic",
+            "name": "Nikola Radakovic"
+        }
+    ],
+    "versions": [
+        "0.1.0"
+    ]
+}
