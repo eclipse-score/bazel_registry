@@ -1,0 +1,22 @@
+{
+    "homepage": "https://github.com/eclipse-score/toolchain_gcc",
+    "maintainers": [
+        {
+            "name": "Nikola Radakovic",
+            "email": "nikola.ra.radakovic@bmw.de",
+            "github": "nradakovic"
+        },
+        {
+            "name": "Lukasz Tekieli",
+            "email": "lukasz.tekieli@bmw.de",
+            "github": "ltekieli"
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/toolchain_gcc"
+    ],
+    "versions": [
+        "0.0.1"
+    ],
+    "yanked_versions": {}
+}
