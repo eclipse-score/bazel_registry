@@ -1,0 +1,15 @@
+# Commonly used for local settings and secrets
+.env
+
+# Bazel
+bazel-*
+MODULE.bazel.lock
+user.bazelrc
+
+# Ruff
+.ruff_cache
+
+# Python
+.venv
+__pycache__/
+/.coverage

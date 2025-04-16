@@ -1,0 +1,18 @@
+name: Pull Request Workflow
+on:
+  pull_request
+
+jobs:
+  hello_world:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "🔄 Check out"
+        uses: actions/checkout@v4
+      - name: 📦 Setup Bazel
+        uses: bazel-contrib/setup-bazel@0.9.1
+      - name: Run python script
+        run: bazel run //tools:hello-world
+  copyright-check:
+    uses: eclipse-score/cicd-workflows/.github/workflows/copyright.yml@main
+    with:
+      bazel-target: run //tools:copyright.check
