@@ -12,6 +12,7 @@
 # *******************************************************************************
 
 import os
+import sys
 from typing import Any
 
 import bcr_validation
@@ -59,8 +60,8 @@ def main():
         "--skip_validation",
         "presubmit_yml",
     ]
-    bcr_validation.main(args)
+    return bcr_validation.main(args)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
