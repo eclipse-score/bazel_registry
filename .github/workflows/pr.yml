@@ -3,15 +3,17 @@ on:
   pull_request
 
 jobs:
-  hello_world:
+  verify:
     runs-on: ubuntu-latest
+    name: "🔍 Verify Registry"
     steps:
       - name: "🔄 Check out"
         uses: actions/checkout@v4
       - name: 📦 Setup Bazel
         uses: bazel-contrib/setup-bazel@0.9.1
-      - name: Run python script
-        run: bazel run //tools:hello-world
+      - name: Run verification script
+        run: bazel run //tools:verify_modules
+
   copyright-check:
     uses: eclipse-score/cicd-workflows/.github/workflows/copyright.yml@main
     with:

@@ -1,0 +1,19 @@
+# This file is at the root level, as it applies to all Python code,
+# that's also the place where most IDEs and tools look for it.
+
+# Note that it will only work properly after executing:
+# > bazel run //tools:ide_support
+
+[tool.pyright]
+extends = "bazel-bin/tools/ide_support.runfiles/_main/external/score_python_basics~/pyproject.toml"
+
+[tool.ruff]
+extend = "bazel-bin/tools/ide_support.runfiles/_main/external/score_python_basics~/pyproject.toml"
+
+lint.ignore = [
+    # Unnecessary `else` after `return` statement.
+    # There is no clear consensus in the development community whether it's good
+    # or bad practice to use `else` after `return`. Some people prefer to use it for
+    # clarity and readability. So we'll allow it.
+    "RET505"
+]

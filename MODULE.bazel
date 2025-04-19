@@ -12,6 +12,27 @@ bazel_dep(name = "score_cr_checker", version = "0.2.0")
 # Dash License Checker
 bazel_dep(name = "score_dash_license_checker", version = "0.1.1")
 
+# Verification scripts from the Bazel Central Registry
+# Note: not using git_repository as we don't want to pull in all dependencies like npm.
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "bazel_central_registry",
+    # bazel_central_registry does not have any tags or releases,
+    # a0a9fab7bdb280770f400b1aeb165dd82db8ffb0 is a random commit mid April 2025.
+    url = "https://github.com/bazelbuild/bazel-central-registry/archive/a0a9fab7bdb280770f400b1aeb165dd82db8ffb0.zip",
+    sha256 = "ef6b29e511ff082069282a0e14fda78a336e88af98d8a1a50a4f7e1f1e79c4c8",
+    strip_prefix = "bazel-central-registry-a0a9fab7bdb280770f400b1aeb165dd82db8ffb0",
+
+    # Inject our own BUILD.bazel file to expose python scripts as py_library.
+    # Note: it will be added on root level.
+    build_file = "//tools:bcr_tools.BUILD",
+
+    # The existing tools/BUILD file prevents root level BUILD from accessing the tools content.
+    # The file is not even evaluated, but it is blocking the visibility of the tools directory.
+    patch_cmds = ["rm tools/BUILD"],  # 👈 simple and effective
+)
+
+
 # -- Python boilerplate --
 PYTHON_VERSION = "3.12"
 bazel_dep(name = "rules_python", version = "1.0.0")

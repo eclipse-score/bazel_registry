@@ -4,12 +4,14 @@
         {
             "name": "Nikola Radakovic",
             "email": "nikola.ra.radakovic@bmw.de",
-            "github": "nradakovic"
+            "github": "nradakovic",
+            "github_user_id": 35235060
         },
         {
             "name": "Lukasz Tekieli",
             "email": "lukasz.tekieli@bmw.de",
-            "github": "ltekieli"
+            "github": "ltekieli",
+            "github_user_id": 800113
         }
     ],
     "repository": [

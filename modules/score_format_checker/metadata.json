@@ -4,13 +4,15 @@
         {
             "name": "Nikola Radakovic",
             "email": "nikola.ra.radakovic@bmw.de",
-            "github": "nradakovic"
+            "github": "nradakovic",
+            "github_user_id": 35235060
         },
         {
             "name": "Dan Calavrezo",
             "email": "danc_ext@qorix.ai",
-            "github": "dcalavrezo-qorix"
-        }        
+            "github": "dcalavrezo-qorix",
+            "github_user_id": 195309321
+        }
     ],
     "repository": [
         "github:eclipse-score/tooling"

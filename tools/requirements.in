@@ -1,1 +1,6 @@
+
+# needed by bcr_validation.py
+jsonschema
+pyyaml
 requests
+packaging
