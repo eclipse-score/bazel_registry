@@ -4,7 +4,8 @@
         {
             "name": "Maximilian Soeren Pollak",
             "email": "maximilian.pollak@expleogroup.com",
-            "github": "MaximilianSoerenPollak"
+            "github": "MaximilianSoerenPollak",
+            "github_user_id": 74557518
         }
     ],
     "repository": [
@@ -13,7 +14,7 @@
     "versions": [
         "0.1.0",
         "0.2.0",
-        "0.3.0",
+        "0.3.0"
     ],
     "yanked_versions": {}
 }

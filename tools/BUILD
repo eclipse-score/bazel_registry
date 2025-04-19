@@ -39,11 +39,11 @@ compile_pip_requirements(
 )
 
 score_virtualenv(
-    reqs=all_requirements,
+    reqs=all_requirements + ["@bazel_central_registry//:bcr"],
 )
 
 py_binary(
-    name="hello-world",
-    srcs=["hello-world.py"],
-    deps=all_requirements,
+    name="verify_modules",
+    srcs=["verify_modules.py"],
+    deps=all_requirements + ["@bazel_central_registry//:bcr"],
 )
