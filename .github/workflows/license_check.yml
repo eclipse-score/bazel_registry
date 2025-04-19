@@ -30,6 +30,7 @@ permissions:
 jobs:
   license-check:
     uses: eclipse-score/cicd-workflows/.github/workflows/license-check.yml@main
-    secrets: inherit # Dash API token
+    secrets:
+      dash-api-token: ${{ secrets.ECLIPSE_GITLAB_API_TOKEN }}
     with:
       bazel-target: run //tools:license-check
