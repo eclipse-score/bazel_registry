@@ -1,0 +1,13 @@
+# This file defines code ownership for the repository.
+
+# The S-CORE infrastructure-maintainers are responsible for maintaining this repository.
+# This team consists of contributors from the S-CORE infrastructure team who have committer rights
+# within the S-CORE project.
+# Team details: https://github.com/orgs/eclipse-score/teams/infrastructure-maintainers
+#
+# We warmly welcome contributions from everyone! 
+# Please note that, according to project guidelines, only members of the infrastructure-maintainers 
+# team can merge pull requests. External contributions will be reviewed and merged by the team.
+#
+# Thank you for supporting the project!
+* @eclipse-score/infrastructure-maintainers
