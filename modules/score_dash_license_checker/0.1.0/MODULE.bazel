@@ -17,5 +17,4 @@ module(
     compatibility_level = 0,
 )
 
-# dependency on rules_java
 bazel_dep(name = "rules_java", version = "8.6.3")

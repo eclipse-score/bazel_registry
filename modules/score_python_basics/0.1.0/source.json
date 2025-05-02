@@ -1,5 +1,5 @@
 {
-    "integrity": "sha256-QUxH2CFySStLrOVxwhGtB+xV55f8hmKylItntPJPZ/4",
+    "integrity": "sha256-QUxH2CFySStLrOVxwhGtB+xV55f8hmKylItntPJPZ/4=",
     "strip_prefix": "tooling-release-0.4.0/python_basics",
     "url": "https://github.com/eclipse-score/tooling/archive/refs/tags/release-0.4.0.tar.gz"
 }
