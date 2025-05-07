@@ -24,7 +24,8 @@ def patch_bcr_validation():
     bcr_validation.COLOR = {
         bcr_validation.BcrValidationResult.GOOD: "✅ ",
         bcr_validation.BcrValidationResult.NEED_BCR_MAINTAINER_REVIEW: "⚠️ ",
-        bcr_validation.BcrValidationResult.FAILED: "❌ ",
+        # "::error::" will make the GitHub Action recognize this line as an error.
+        bcr_validation.BcrValidationResult.FAILED: "::error:: ❌ ",
     }
     # No need to reset color, since we don't use colors.
     bcr_validation.RESET = ""
