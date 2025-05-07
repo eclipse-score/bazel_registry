@@ -57,3 +57,4 @@ bazel_dep(name = "bazel_skylib", version = "1.7.1", dev_dependency=True)
 multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
 multitool.hub(lockfile = "multitool.lock.json")
 use_repo(multitool, "multitool")
+
