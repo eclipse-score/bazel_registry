@@ -1,0 +1,18 @@
+{
+    "homepage": "https://github.com/eclipse-sore/docs",
+    "maintainers": [
+        {
+            "name": "Maximilian Soeren Pollak",
+            "email": "maximilian.pollak@expleogroup.com",
+            "github": "MaximilianSoerenPollak",
+            "github_user_id": 74557518
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/docs-as-code"
+    ],
+    "versions": [
+        "0.1.0",
+    ],
+    "yanked_versions": {}
+}
