@@ -1,0 +1,18 @@
+{
+    "homepage": "https://eclipse-score.github.io/score/",
+    "maintainers": [
+        {
+            "name": "Maximilian Soeren Pollak",
+            "email": "maximilian.pollak@expleogroup.com",
+            "github": "MaximilianSoerenPollak",
+            "github_user_id": 74557518
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/score"
+    ],
+    "versions": [
+        "0.1.0",
+    ],
+    "yanked_versions": {}
+}
