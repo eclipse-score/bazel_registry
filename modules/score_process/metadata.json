@@ -6,13 +6,13 @@
             "email": "maximilian.pollak@expleogroup.com",
             "github": "MaximilianSoerenPollak",
             "github_user_id": 74557518
-        },
+        }
     ],
     "repository": [
         "github:eclipse-score/process_description"
     ],
     "versions": [
-        "0.1.0",
+        "0.1.0"
     ],
     "yanked_versions": {}
 }
