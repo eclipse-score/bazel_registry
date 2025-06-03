@@ -12,7 +12,8 @@
         "github:eclipse-score/process_description"
     ],
     "versions": [
-        "0.1.0"
+        "0.1.0",
+        "0.2.0"
     ],
     "yanked_versions": {}
 }
