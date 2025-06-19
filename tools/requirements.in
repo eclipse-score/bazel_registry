@@ -4,3 +4,6 @@ jsonschema
 pyyaml
 requests
 packaging
+
+# needed by test_verify_semver_compatibility_level.py
+pyfakefs

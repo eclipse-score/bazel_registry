@@ -7,6 +7,12 @@
 [tool.pyright]
 extends = "bazel-bin/tools/ide_support.runfiles/_main/external/score_python_basics~/pyproject.toml"
 
+exclude = [
+    "**/__pycache__",
+    "**/.*",
+    "**/bazel-*",
+]
+
 [tool.ruff]
 extend = "bazel-bin/tools/ide_support.runfiles/_main/external/score_python_basics~/pyproject.toml"
 
