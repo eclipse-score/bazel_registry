@@ -1,0 +1,9 @@
+{
+  // Run only on tools to avoid going into bazel-generated files
+  "python.testing.pytestArgs": [
+    "tools"
+  ],
+  // Enable pytest as the testing framework
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false
+}
