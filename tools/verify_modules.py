@@ -60,6 +60,10 @@ def main():
         # Skip validation of presubmit.yml as we don't use that approach.
         "--skip_validation",
         "presubmit_yml",
+
+        # Compatibility level will be checked by a different script.
+        "--skip_validation",
+        "compatibility_level",
     ]
     return bcr_validation.main(args)
 
