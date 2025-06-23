@@ -31,14 +31,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 GIT_ROOT = Path(__file__).parent.parent
-MODULES_DIR = GIT_ROOT / 'modules'
+MODULES_DIR = GIT_ROOT / "modules"
 
 
 def extract_major_version(version: str):
     """
     Extract the major version number from a version string (e.g., '2.1.0' -> 2).
     """
-    return int(version.split('.')[0])
+    return int(version.split(".")[0])
 
 
 def parse_compatibility_level(module_bazel_path: Path):
@@ -47,16 +47,13 @@ def parse_compatibility_level(module_bazel_path: Path):
     Returns None if not found.
     """
     content = module_bazel_path.read_text()
-    m = re.search(r'compatibility_level\s*=\s*(\d+)', content)
+    m = re.search(r"compatibility_level\s*=\s*(\d+)", content)
     if m:
         return int(m.group(1))
     return None
 
 
-def is_github_actions():
-    """
-    Return True if running in a GitHub Actions environment.
-    """
+def is_running_in_github_actions():
     return "GITHUB_ACTIONS" in os.environ
 
 
@@ -76,36 +73,42 @@ def analyze(modules_dir: Path) -> list[CheckResult]:
     """
     results: list[CheckResult] = []
     for module in modules_dir.iterdir():
-        meta_path = module / 'metadata.json'
+        meta_path = module / "metadata.json"
         with meta_path.open() as f:
             meta: dict[str, object] = json.load(f)
-        versions = meta.get('versions', [])
+        versions = meta.get("versions", [])
         assert isinstance(versions, list), "Versions should be a list"
         for version in versions:
             assert isinstance(version, str), "Version should be a string"
-            mod_bazel = module / version / 'MODULE.bazel'
+            mod_bazel = module / version / "MODULE.bazel"
             major = extract_major_version(version)
             compatibility_level = parse_compatibility_level(mod_bazel)
             if compatibility_level is None:
-                results.append(CheckResult(
-                    type='warning',
-                    file=mod_bazel,
-                    msg='missing compatibility_level',
-                ))
+                results.append(
+                    CheckResult(
+                        type="warning",
+                        file=mod_bazel,
+                        msg="missing compatibility_level",
+                    )
+                )
             elif compatibility_level != major:
-                results.append(CheckResult(
-                    type='error',
-                    file=mod_bazel,
-                    msg=f'compatibility_level {compatibility_level} does not match '
-                    f'major version {major} (from version {version})',
-                ))
+                results.append(
+                    CheckResult(
+                        type="error",
+                        file=mod_bazel,
+                        msg=f"compatibility_level {compatibility_level} does not match "
+                        + f"major version {major} (from version {version})",
+                    )
+                )
             else:
-                results.append(CheckResult(
-                    type='ok',
-                    file=mod_bazel,
-                    msg=f'compatibility_level {compatibility_level} matches '
-                    f'major version {major}',
-                ))
+                results.append(
+                    CheckResult(
+                        type="ok",
+                        file=mod_bazel,
+                        msg=f"compatibility_level {compatibility_level} matches "
+                        + f"major version {major}",
+                    )
+                )
     return results
 
 
@@ -116,28 +119,28 @@ def print_results(results: list[CheckResult], gha: bool):
     """
     for r in results:
         file = r.file.relative_to(GIT_ROOT)
-        if r.type == 'ok':
+        if r.type == "ok":
             if not gha:
                 print(f"✅ OK: {file} {r.msg}")
-        elif r.type == 'warning':
+        elif r.type == "warning":
             if gha:
                 print(f"::error file={file},line={r.line}::{r.msg}")
             else:
                 print(f"⚠️ WARNING: {file} {r.msg}")
-        elif r.type == 'error':
+        elif r.type == "error":
             if gha:
                 print(f"::error file={file},line={r.line}::{r.msg}")
             else:
                 print(f"❌ ERROR: {file} {r.msg}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     results = analyze(MODULES_DIR)
-    gha = is_github_actions()
+    gha = is_running_in_github_actions()
 
     print_results(results, gha)
 
-    any_error = any(r.type == 'error' for r in results)
+    any_error = any(r.type == "error" for r in results)
     if any_error:
         if not gha:
             print("\n❌ Some modules have incorrect compatibility_level.")
