@@ -17,7 +17,7 @@ jobs:
       - name: 🔄 Cross-Check SemVer with compatibility_level
         run: |
           pip install -r tools/requirements.txt
-          .venv/bin/python tools/verify_semver_compatibility_level.py
+          python tools/verify_semver_compatibility_level.py
 
       - name: 📋 Run verification script
         run: bazel run //tools:verify_modules
