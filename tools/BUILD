@@ -12,11 +12,12 @@
 # *******************************************************************************
 
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+load("@rules_python//python:defs.bzl", "py_binary")
 load("@pip//:requirements.bzl", "all_requirements")
 
 load("@score_cr_checker//:cr_checker.bzl", "copyright_checker")
 load("@score_dash_license_checker//:dash.bzl", "dash_license_checker")
-load("@score_python_basics//:defs.bzl", "score_virtualenv", "score_py_pytest")
+load("@score_python_basics//:defs.bzl", "score_virtualenv")
 
 copyright_checker(
     name = "copyright",
@@ -34,7 +35,10 @@ dash_license_checker(
 
 compile_pip_requirements(
     name = "requirements",
-    src = ":requirements.in",
+    srcs = [
+        ":requirements.in",
+        "@score_python_basics//:requirements.txt",
+    ],
     requirements_txt = "requirements.txt",
 )
 
