@@ -94,7 +94,7 @@ def call_helper_script(module):
     """
     cmd = [
         "python3",
-        "/home/asoussi/bazel_registry/scripts/helper.py",
+        "scripts/helper.py",
         "--repo_name", module["repo_name"],
         "--module_file_url", module["module_file_url"],
         "--module_name", module["module_name"],
