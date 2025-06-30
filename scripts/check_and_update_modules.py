@@ -138,8 +138,22 @@ if __name__ == "__main__":
     actual_versions = get_actual_versions("modules")
     modules_to_update = enrich_modules(modules, actual_versions, GITHUB_TOKEN)
 
-    print("\nModules needing update:")
-    print(json.dumps(modules_to_update, indent=2))
+    if not modules_to_update:
+        print("No modules need update.")
+        # Print an empty JSON array so workflow step output is valid
+        print("[]")
+    else:
+        # Create a markdown list string for PR body
+        module_list = "\n".join(
+            [f"- **{m['module_name']}**: {actual_versions.get(m['module_name'], 'unknown')} ➜ {m['module_version']}" for m in modules_to_update]
+        )
 
-    for module in modules_to_update:
-        call_helper_script(module)
+        print("### Modules needing update (markdown list):")
+        print(module_list)
+
+        # Call helper script for each module
+        for module in modules_to_update:
+            call_helper_script(module)
+
+        # Print raw JSON so workflow step can capture it as output
+        print(json.dumps(modules_to_update))
