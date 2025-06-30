@@ -5,14 +5,6 @@ from pathlib import Path
 
 import requests
 
-"""
-Done
-1. Get bazel module file
-2. Make new folder
-3. Copy bazel file
-4. write source.json
-5. Adapt metadata.json
-"""
 
 def generate_source_json(new_version_dir: Path, tarball: str, repo_name: str, module_version: str): 
     source_dict = {}

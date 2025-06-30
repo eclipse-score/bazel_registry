@@ -94,7 +94,7 @@ def call_helper_script(module):
     """
     cmd = [
         "python3",
-        "scripts/helper.py",
+        "scripts/generate_module_files.py",
         "--repo_name", module["repo_name"],
         "--module_file_url", module["module_file_url"],
         "--module_name", module["module_name"],
