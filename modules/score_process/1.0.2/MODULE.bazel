@@ -14,7 +14,7 @@
 module(
     name = "score_process",
     version = "1.0.2",
-    compatibility_level = 1,
+    compatibility_level = 42,
 )
 
 ###############################################################################
