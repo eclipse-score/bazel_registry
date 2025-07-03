@@ -1,0 +1,17 @@
+{
+    "homepage": "https://github.com/eclipse-score/inc_mw_per",
+    "maintainers": [
+        {
+            "name": "Uwe Maucher",
+            "github": "umaucher",
+            "github_user_id": 205777204
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/inc_mw_per"
+    ],
+    "versions": [
+        "0.1.0"
+    ],
+    "yanked_versions": {}
+}
