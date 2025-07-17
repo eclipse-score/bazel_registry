@@ -62,6 +62,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     bazel_file_url = args.module_file_url.replace("https://github.com","https://raw.githubusercontent.com").replace("blob", "refs/tags")
     r = requests.get(bazel_file_url)
-    assert r.ok
+    if not r.ok:
+        print(f"Error fetching {bazel_file_url}: {r.text}")
+        exit(1)
     module_text = r.text
     generate_needed_files(args.module_name, args.module_version, module_text, args.tarball, args.repo_name)
