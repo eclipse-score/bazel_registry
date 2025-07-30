@@ -1,5 +1,5 @@
 {
-    "integrity": "sha256-Lodxycc4QGM6Cax/Be5U/dXTStnmy6k1ipF0lrXC3QU=",
+    "integrity": "sha256-lnXL6Wu7ifedxQHK8JCQj4nZrFW35Weysn7qPAV566A=",
     "strip_prefix": "process_description-1.0.4",
-    "url": "https://github.com/eclipse-score/process_description/archive/refs/tags/v1.0.4.tar.gz"
+    "url": "https://api.github.com/repos/eclipse-score/process_description/tarball/v1.0.4"
 }

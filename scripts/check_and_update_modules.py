@@ -46,6 +46,7 @@ def get_latest_release_info(repo_url: str, github_token: str = ""):
             raise ValueError("Invalid GitHub repo URL format")
         owner, repo_name = path_parts
 
+        print(f"Fetching latest release info for {owner}/{repo_name}")
         gh = Github(github_token) if github_token else Github()
         repo = gh.get_repo(f"{owner}/{repo_name}")
 
@@ -56,7 +57,7 @@ def get_latest_release_info(repo_url: str, github_token: str = ""):
         return repo_name, version, tarball
 
     except Exception as e:
-        print(f"Error fetching release info for {repo_url}: {e}")
+        print(f"No official release in {repo_url}: {e}")
         return None, None, None
 
 def enrich_modules(modules_list, actual_versions_dict, github_token=""):
