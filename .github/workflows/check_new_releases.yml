@@ -63,6 +63,8 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           title: Update modules
+          author: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
+          committer: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
           body: |
             This PR updates the modules to their latest versions.
             Please review and merge if everything looks good.
