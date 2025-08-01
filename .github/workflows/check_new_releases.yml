@@ -31,9 +31,6 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v4.2.2
-
       - name: Debug PAT
         run: |
           echo "SCORE_BOT_PAT is set: [${{ secrets.SCORE_BOT_PAT != '' }}]"
@@ -59,6 +56,10 @@ jobs:
         env:
           SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
 
+      - name: Checkout the repository
+        uses: actions/checkout@v4.2.2
+        with:
+          token: ${{ secrets.SCORE_BOT_PAT }}
 
       - name: Run version checker script
         id: check_versions
