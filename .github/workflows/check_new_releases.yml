@@ -80,3 +80,4 @@ jobs:
           commit-message: Update modules
           # We need to use a different token than GITHUB_TOKEN, so that PR triggers all the PR-workflows.
           token: ${{ secrets.SCORE_BOT_PAT }}
+          branch: bot/modules-update-${{ github.run_id }}
