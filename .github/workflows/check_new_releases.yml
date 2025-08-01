@@ -34,6 +34,22 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4.2.2
 
+      - name: Debug PAT
+        run: |
+          echo "SCORE_BOT_PAT is set: [${{ secrets.SCORE_BOT_PAT != '' }}]"
+          echo "GITHUB_TOKEN is set: [${{ secrets.GITHUB_TOKEN != '' }}]"
+
+          echo "User:"
+          curl -s -H "Authorization: token $SCORE_BOT_PAT" https://api.github.com/user
+
+          echo "bazel_registry access:"
+          curl -s -H "Authorization: token $SCORE_BOT_PAT" https://api.github.com/repos/eclipse-score/bazel_registry
+
+          echo "Repos (first page):"
+          curl -s -H "Authorization: token $SCORE_BOT_PAT" https://api.github.com/user/repos?per_page=100
+        env:
+          SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
+
 
       - name: Run version checker script
         id: check_versions
