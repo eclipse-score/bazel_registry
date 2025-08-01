@@ -51,7 +51,7 @@ def get_latest_release_info(repo_url: str, github_token: str = ""):
 
         release = repo.get_latest_release()
         version = release.tag_name
-        tarball = release.tarball_url
+        tarball = f"https://github.com/{owner}/{repo_name}/archive/refs/tags/{version}.tar.gz"
 
         return repo_name, version, tarball
 
