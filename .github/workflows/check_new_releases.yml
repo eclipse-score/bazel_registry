@@ -31,35 +31,8 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Debug PAT
-        run: |
-          echo "SCORE_BOT_PAT is set: [${{ secrets.SCORE_BOT_PAT != '' }}]"
-          echo "GITHUB_TOKEN is set: [${{ secrets.GITHUB_TOKEN != '' }}]"
-        env:
-          SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
-
-      - name: "Debug PAT: /user"
-        run: |
-          curl -s -H "Authorization: token $SCORE_BOT_PAT" https://api.github.com/user
-        env:
-          SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
-
-      - name: "Debug PAT: /repos/eclipse-score/bazel_registry"
-        run: |
-          curl -s -H "Authorization: token $SCORE_BOT_PAT" https://api.github.com/repos/eclipse-score/bazel_registry
-        env:
-          SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
-
-      - name: "Debug PAT: /user/repos"
-        run: |
-          curl -s -H "Authorization: token $SCORE_BOT_PAT" https://api.github.com/user/repos?per_page=100
-        env:
-          SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
-
       - name: Checkout the repository
         uses: actions/checkout@v4.2.2
-        with:
-          token: ${{ secrets.SCORE_BOT_PAT }}
 
       - name: Run version checker script
         id: check_versions
@@ -80,5 +53,6 @@ jobs:
             Please review and merge if everything looks good.
           commit-message: Update modules
           # We need to use a different token than GITHUB_TOKEN, so that PR triggers all the PR-workflows.
-          token: ${{ secrets.SCORE_BOT_PAT }}
-          branch: bot/modules-update-${{ github.run_id }}
+          branch: bot/modules-update
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCORE_BOT_PAT }}
