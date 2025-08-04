@@ -34,7 +34,6 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4.2.2
 
-
       - name: Run version checker script
         id: check_versions
         env:
@@ -47,10 +46,13 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           title: Update modules
-          author: score-automations[bot] <score-bot@users.noreply.github.com>
+          author: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
+          committer: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
           body: |
             This PR updates the modules to their latest versions.
             Please review and merge if everything looks good.
           commit-message: Update modules
           # We need to use a different token than GITHUB_TOKEN, so that PR triggers all the PR-workflows.
-          token: ${{ secrets.SCORE_BOT_PAT }}
+          branch: bot/modules-update
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCORE_BOT_PAT }}
