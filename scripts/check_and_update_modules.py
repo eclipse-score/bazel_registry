@@ -13,12 +13,19 @@
 
 import json
 import os
+import re
 from urllib.parse import urlparse
 
 import requests
 from generate_module_files import generate_needed_files
 from github import Github
 
+
+def extract_module_version(bazel_content: str) -> str:
+    match = re.search(r'version\s*=\s*"([^"]+)"', bazel_content)
+    if match:
+        return match.group(1)
+    return ""
 
 def get_actual_versions_from_metadata(modules_path="modules"):
     actual_modules_versions = {}
@@ -91,10 +98,16 @@ def process_module(module):
     bazel_file_url = module["module_file_url"].replace("https://github.com", "https://raw.githubusercontent.com").replace("blob", "refs/tags")
     r = requests.get(bazel_file_url)
     if not r.ok:
-        print(f"Failed to fetch MODULE.bazel for {module['module_name']}")
+        print(f"❌ Failed to fetch MODULE.bazel for {module['module_name']}")
         return
 
     bazel_content = r.text
+
+    # ✅ Validate version
+    declared_version = extract_module_version(bazel_content)
+    if declared_version != module["module_version"]:
+        raise ValueError(f"Version mismatch in {module['module_name']}: GitHub release is {module['module_version']} but MODULE.bazel has {declared_version}")
+
     generate_needed_files(
         module_name=module["module_name"],
         module_version=module["module_version"],
@@ -124,6 +137,10 @@ if __name__ == "__main__":
             "module_name": "score_toolchains_gcc",
             "module_url": "https://github.com/eclipse-score/toolchains_gcc",
         },
+         {
+            "module_name": "toolchains_qnx",
+            "module_url": "https://github.com/eclipse-score/toolchains_qnx",
+        },       
     ]
 
     actual_versions = get_actual_versions_from_metadata("modules")
