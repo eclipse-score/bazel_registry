@@ -126,10 +126,8 @@ def process_module(module):
 
     bazel_content = r.text
     declared_version = extract_module_version(bazel_content)
-        # Extract the main version part (X.Y.Z) from the tag, ignoring any pre-release or build metadata
-    match = re.match(r'^(\d+\.\d+\.\d+)', module["module_version"])
-    tag_version_main = match.group(1) if match else module["module_version"]
-    if declared_version != tag_version_main:
+   
+    if declared_version !=  module["module_version"]:
         raise ValueError(
             f"Version mismatch in {module['module_name']}: "
             f"GitHub release is {module['module_version']} but MODULE.bazel has {declared_version}"
