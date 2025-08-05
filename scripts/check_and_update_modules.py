@@ -121,17 +121,19 @@ def process_module(module):
     bazel_file_url = module["module_file_url"].replace("https://github.com", "https://raw.githubusercontent.com").replace("blob", "refs/tags")
     r = requests.get(bazel_file_url)
     if not r.ok:
-        print(f"Failed to fetch MODULE.bazel for {module['module_name']}")
+        print(f"Failed to fetch MODULE.bazel for {module['module_name']}@{module['module_version']}")
         return
 
     bazel_content = r.text
     declared_version = extract_module_version(bazel_content)
-   
-    if declared_version !=  module["module_version"]:
-        raise ValueError(
-            f"Version mismatch in {module['module_name']}: "
-            f"GitHub release is {module['module_version']} but MODULE.bazel has {declared_version}"
+    release_base_version = module["module_version"]
+
+    if declared_version != release_base_version:
+        print(
+            f"Skipping {module['module_name']}@{module['module_version']}: "
+            f"Version mismatch (declared {declared_version})"
         )
+        return
 
     generate_needed_files(
         module_name=module["module_name"],
