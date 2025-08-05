@@ -97,7 +97,7 @@ def enrich_modules(modules_list, actual_versions_dict, github_token="", max_rele
             if release["prerelease"]:
                 if not re.search(r"\d+\.\d+\.\d+-[A-Za-z]+", release["tag_name"]):
                     print(
-                        f"⚠️ Skipping pre-release '{release['tag_name']}' for {module_name}: "
+                        f"Skipping pre-release '{release['tag_name']}' for {module_name}: "
                         "Pre-release version must include a suffix (e.g., -alpha, -rc)."
                     )
                     continue
@@ -130,8 +130,7 @@ def process_module(module):
     if declared_version != module["module_version"]:
         print(
             f"Skipping {module['module_name']}@{module['module_version']}: "
-            f"Version mismatch (declared {declared_version})"
-        )
+            f"Version mismatch (expected {module['module_version']}, declared {declared_version})"        )
         return
 
     generate_needed_files(
