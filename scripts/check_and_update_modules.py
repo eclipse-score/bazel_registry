@@ -126,9 +126,8 @@ def process_module(module):
 
     bazel_content = r.text
     declared_version = extract_module_version(bazel_content)
-    release_base_version = module["module_version"]
 
-    if declared_version != release_base_version:
+    if declared_version != module["module_version"]:
         print(
             f"Skipping {module['module_name']}@{module['module_version']}: "
             f"Version mismatch (declared {declared_version})"
