@@ -95,7 +95,7 @@ def enrich_modules(modules_list, actual_versions_dict, github_token="", max_rele
 
             # Validate pre-release has suffix
             if release["prerelease"]:
-                if not re.search(r"\d+\.\d+\.\d+-[A-Za-z]", release["tag_name"]):
+                if not re.search(r"\d+\.\d+\.\d+-[A-Za-z]+", release["tag_name"]):
                     print(
                         f"⚠️ Skipping pre-release '{release['tag_name']}' for {module_name}: "
                         "Pre-release version must include a suffix (e.g., -alpha, -rc)."
@@ -126,9 +126,10 @@ def process_module(module):
 
     bazel_content = r.text
     declared_version = extract_module_version(bazel_content)
-    release_base_version = module["module_version"].split("-")[0]
-
-    if declared_version != release_base_version:
+        # Extract the main version part (X.Y.Z) from the tag, ignoring any pre-release or build metadata
+    match = re.match(r'^(\d+\.\d+\.\d+)', module["module_version"])
+    tag_version_main = match.group(1) if match else module["module_version"]
+    if declared_version != tag_version_main:
         raise ValueError(
             f"Version mismatch in {module['module_name']}: "
             f"GitHub release is {module['module_version']} but MODULE.bazel has {declared_version}"
@@ -141,18 +142,21 @@ def process_module(module):
         tarball=module["tarball"],
         repo_name=module["repo_name"]
     )
-    print(f"✅ Successfully processed {module['module_name']}@{module['module_version']}")
+    print(f"Successfully processed {module['module_name']}@{module['module_version']}")
 
+def load_modules_from_json(json_path="scripts/modules.json"):
+    try:
+        with open(json_path, "r") as f:
+            modules = json.load(f)
+            return modules
+    except Exception as e:
+        print(f"Error reading modules JSON file: {e}")
+        return []
+    
 if __name__ == "__main__":
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 
-    modules = [
-        {"module_name": "score_docs_as_code", "module_url": "https://github.com/eclipse-score/docs-as-code"},
-        {"module_name": "score_process", "module_url": "https://github.com/eclipse-score/process_description"},
-        {"module_name": "score_platform", "module_url": "https://github.com/eclipse-score/score"},
-        {"module_name": "score_toolchains_gcc", "module_url": "https://github.com/eclipse-score/toolchains_gcc"},
-        {"module_name": "toolchains_qnx", "module_url": "https://github.com/eclipse-score/toolchains_qnx"},
-    ]
+    modules = load_modules_from_json()
 
     actual_versions = get_actual_versions_from_metadata("modules")
     modules_to_update = enrich_modules(modules, actual_versions, GITHUB_TOKEN)

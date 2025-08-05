@@ -1,0 +1,22 @@
+[
+  {
+    "module_name": "score_docs_as_code",
+    "module_url": "https://github.com/eclipse-score/docs-as-code"
+  },
+  {
+    "module_name": "score_process",
+    "module_url": "https://github.com/eclipse-score/process_description"
+  },
+  {
+    "module_name": "score_platform",
+    "module_url": "https://github.com/eclipse-score/score"
+  },
+  {
+    "module_name": "score_toolchains_gcc",
+    "module_url": "https://github.com/eclipse-score/toolchains_gcc"
+  },
+  {
+    "module_name": "toolchains_qnx",
+    "module_url": "https://github.com/eclipse-score/toolchains_qnx"
+  }
+]
