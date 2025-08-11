@@ -114,9 +114,6 @@ def enrich_modules(
         # Process only the N oldest releases that are not yet added
         count = 0
         for release in releases:
-            if release["version"] == current_version:
-                break  # Stop when we hit the current live version
-
             # Validate pre-release has suffix
             if release["prerelease"]:
                 if not re.search(r"\d+\.\d+\.\d+-[A-Za-z]+", release["tag_name"]):
