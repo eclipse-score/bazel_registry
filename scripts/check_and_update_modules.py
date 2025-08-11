@@ -27,6 +27,7 @@ def extract_module_version(bazel_content: str) -> str:
         return match.group(1)
     return ""
 
+
 def get_actual_versions_from_metadata(modules_path="modules"):
     actual_modules_versions = {}
     for module_name in os.listdir(modules_path):
@@ -37,11 +38,14 @@ def get_actual_versions_from_metadata(modules_path="modules"):
                 with open(metadata_path, "r") as f:
                     metadata = json.load(f)
                     versions = metadata.get("versions", [])
-                    actual_modules_versions[module_name] = versions[-1] if versions else None
+                    actual_modules_versions[module_name] = (
+                        versions[-1] if versions else None
+                    )
             except Exception as e:
                 print(f"Error reading {metadata_path}: {e}")
                 actual_modules_versions[module_name] = None
     return actual_modules_versions
+
 
 def get_all_releases(repo_url: str, github_token: str = ""):
     """
@@ -49,7 +53,7 @@ def get_all_releases(repo_url: str, github_token: str = ""):
     Returns sorted list of dicts with version info.
     """
     try:
-        path_parts = urlparse(repo_url).path.strip('/').split('/')
+        path_parts = urlparse(repo_url).path.strip("/").split("/")
         if len(path_parts) != 2:
             raise ValueError("Invalid GitHub repo URL format")
         owner, repo_name = path_parts
@@ -59,13 +63,15 @@ def get_all_releases(repo_url: str, github_token: str = ""):
 
         all_releases = []
         for release in repo.get_releases():
-            all_releases.append({
-                "version": release.tag_name.lstrip("v"),
-                "tag_name": release.tag_name,
-                "tarball": f"https://github.com/{owner}/{repo_name}/archive/refs/tags/{release.tag_name}.tar.gz",
-                "published_at": release.published_at,
-                "prerelease": release.prerelease,
-            })
+            all_releases.append(
+                {
+                    "version": release.tag_name.lstrip("v"),
+                    "tag_name": release.tag_name,
+                    "tarball": f"https://github.com/{owner}/{repo_name}/archive/refs/tags/{release.tag_name}.tar.gz",
+                    "published_at": release.published_at,
+                    "prerelease": release.prerelease,
+                }
+            )
 
         # Return oldest to newest for queue processing
         return sorted(all_releases, key=lambda r: r["published_at"])
@@ -73,6 +79,7 @@ def get_all_releases(repo_url: str, github_token: str = ""):
     except Exception as e:
         print(f"Error fetching releases for {repo_url}: {e}")
         return []
+
 
 def enrich_modules(modules_list, actual_versions_dict, github_token="", max_releases=5):
     """
@@ -102,14 +109,16 @@ def enrich_modules(modules_list, actual_versions_dict, github_token="", max_rele
                     )
                     continue
 
-            enriched.append({
-                "module_name": module_name,
-                "module_url": module_url,
-                "repo_name": module_url.split("/")[-1],
-                "module_version": release["version"],
-                "tarball": release["tarball"],
-                "module_file_url": f"{module_url}/blob/{release['tag_name']}/MODULE.bazel"
-            })
+            enriched.append(
+                {
+                    "module_name": module_name,
+                    "module_url": module_url,
+                    "repo_name": module_url.split("/")[-1],
+                    "module_version": release["version"],
+                    "tarball": release["tarball"],
+                    "module_file_url": f"{module_url}/blob/{release['tag_name']}/MODULE.bazel",
+                }
+            )
 
             count += 1
             if count >= max_releases:
@@ -117,11 +126,18 @@ def enrich_modules(modules_list, actual_versions_dict, github_token="", max_rele
 
     return enriched
 
+
 def process_module(module):
-    bazel_file_url = module["module_file_url"].replace("https://github.com", "https://raw.githubusercontent.com").replace("blob", "refs/tags")
+    bazel_file_url = (
+        module["module_file_url"]
+        .replace("https://github.com", "https://raw.githubusercontent.com")
+        .replace("blob", "refs/tags")
+    )
     r = requests.get(bazel_file_url)
     if not r.ok:
-        print(f"Failed to fetch MODULE.bazel for {module['module_name']}@{module['module_version']}")
+        print(
+            f"Failed to fetch MODULE.bazel for {module['module_name']}@{module['module_version']}"
+        )
         return
 
     bazel_content = r.text
@@ -130,7 +146,8 @@ def process_module(module):
     if declared_version != module["module_version"]:
         print(
             f"Skipping {module['module_name']}@{module['module_version']}: "
-            f"Version mismatch (expected {module['module_version']}, declared {declared_version})"        )
+            f"Version mismatch (expected {module['module_version']}, declared {declared_version})"
+        )
         return
 
     generate_needed_files(
@@ -138,9 +155,10 @@ def process_module(module):
         module_version=module["module_version"],
         bazel_module_file_content=bazel_content,
         tarball=module["tarball"],
-        repo_name=module["repo_name"]
+        repo_name=module["repo_name"],
     )
     print(f"Successfully processed {module['module_name']}@{module['module_version']}")
+
 
 def load_modules_from_json(json_path="scripts/modules.json"):
     try:
@@ -150,7 +168,8 @@ def load_modules_from_json(json_path="scripts/modules.json"):
     except Exception as e:
         print(f"Error reading modules JSON file: {e}")
         return []
-    
+
+
 if __name__ == "__main__":
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 
@@ -162,9 +181,12 @@ if __name__ == "__main__":
     if not modules_to_update:
         print("No modules need update.\n[]")
     else:
-        module_list = "\n".join([
-            f"- **{m['module_name']}** ➜ {m['module_version']}" for m in modules_to_update
-        ])
+        module_list = "\n".join(
+            [
+                f"- **{m['module_name']}** ➜ {m['module_version']}"
+                for m in modules_to_update
+            ]
+        )
         print("### Modules queued for update (in PR):")
         print(module_list)
 
