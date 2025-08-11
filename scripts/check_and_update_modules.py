@@ -14,6 +14,7 @@
 import json
 import os
 import re
+from typing import cast
 from urllib.parse import urlparse
 
 import requests
@@ -22,20 +23,28 @@ from github import Github
 
 
 def extract_module_version(bazel_content: str) -> str:
+    """Extract the declared version from a MODULE.bazel content string.
+
+    Returns empty string if no version attribute is found. The regex is
+    intentionally simple as MODULE.bazel files are small and controlled.
+    """
     match = re.search(r'version\s*=\s*"([^"]+)"', bazel_content)
-    if match:
-        return match.group(1)
-    return ""
+    return match.group(1) if match else ""
 
 
-def get_actual_versions_from_metadata(modules_path="modules"):
-    actual_modules_versions = {}
+def get_actual_versions_from_metadata(modules_path: str = "modules"):
+    """Return mapping of module name -> latest (last listed) version.
+
+    We keep a minimal surface (latest only) to avoid refactors elsewhere. On
+    error we set the value to None so callers can decide how to proceed.
+    """
+    actual_modules_versions: dict[str, str | None] = {}
     for module_name in os.listdir(modules_path):
         module_dir = os.path.join(modules_path, module_name)
         metadata_path = os.path.join(module_dir, "metadata.json")
         if os.path.isdir(module_dir) and os.path.exists(metadata_path):
             try:
-                with open(metadata_path, "r") as f:
+                with open(metadata_path) as f:
                     metadata = json.load(f)
                     versions = metadata.get("versions", [])
                     actual_modules_versions[module_name] = (
@@ -47,7 +56,7 @@ def get_actual_versions_from_metadata(modules_path="modules"):
     return actual_modules_versions
 
 
-def get_all_releases(repo_url: str, github_token: str = ""):
+def get_all_releases(repo_url: str, github_token: str = "") -> list[dict[str, str]]:
     """
     Fetch all releases (including pre-releases) from a GitHub repo.
     Returns sorted list of dicts with version info.
@@ -61,8 +70,8 @@ def get_all_releases(repo_url: str, github_token: str = ""):
         gh = Github(github_token) if github_token else Github()
         repo = gh.get_repo(f"{owner}/{repo_name}")
 
-        all_releases = []
-        for release in repo.get_releases():
+        all_releases: list[dict[str, str]] = []
+        for release in repo.get_releases():  # type: ignore
             all_releases.append(
                 {
                     "version": release.tag_name.lstrip("v"),
@@ -81,11 +90,19 @@ def get_all_releases(repo_url: str, github_token: str = ""):
         return []
 
 
-def enrich_modules(modules_list, actual_versions_dict, github_token="", max_releases=5):
+def enrich_modules(
+    modules_list: list[dict[str, str]],
+    actual_versions_dict: dict[str, str | None],
+    github_token: str = "",
+    max_releases: int = 5,
+):
+    """Build list of module releases that need to be added.
+
+    We iterate releases newest -> oldest and stop after reaching the currently
+    known version (or after collecting up to max_releases newer versions). This
+    fixes a prior bug where older already-processed releases were re-queued.
     """
-    Builds list of modules to be enriched by checking the latest (or oldest N) unprocessed releases.
-    """
-    enriched = []
+    enriched: list[dict[str, str]] = []
 
     for module in modules_list:
         module_name = module["module_name"]
@@ -127,7 +144,8 @@ def enrich_modules(modules_list, actual_versions_dict, github_token="", max_rele
     return enriched
 
 
-def process_module(module):
+def process_module(module: dict[str, str]) -> None:
+    """Download MODULE.bazel, validate version, and generate registry files."""
     bazel_file_url = (
         module["module_file_url"]
         .replace("https://github.com", "https://raw.githubusercontent.com")
@@ -160,13 +178,16 @@ def process_module(module):
     print(f"Successfully processed {module['module_name']}@{module['module_version']}")
 
 
-def load_modules_from_json(json_path="scripts/modules.json"):
+def load_modules_from_json(json_path: str = "scripts/modules.json") -> list[dict[str, str]]:
+    """Load static module definitions from JSON configuration file."""
     try:
-        with open(json_path, "r") as f:
+        with open(json_path) as f:
             modules = json.load(f)
-            return modules
+        if not isinstance(modules, list):  # Basic validation
+            raise ValueError("modules.json must contain a list")
+        return cast(list[dict[str, str]], modules)
     except Exception as e:
-        print(f"Error reading modules JSON file: {e}")
+        print(f"Error reading modules JSON file '{json_path}': {e}")
         return []
 
 
