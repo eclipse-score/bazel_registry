@@ -1,0 +1,24 @@
+{
+    "homepage": "https://github.com/eclipse-score/tooling",
+    "maintainers": [
+        {
+            "name": "Dan Calavrezo",
+            "email": "danc_ext@qorix.ai",
+            "github": "dcalavrezo-qorix",
+            "github_user_id": 195309321
+        },
+        {
+            "name": "Alexander Lanin",
+            "email": "alexander.lanin@etas.com",
+            "github": "AlexanderLanin",
+            "github_user_id": 5074553
+        }   
+    ],
+    "repository": [
+        "github:eclipse-score/tooling"
+    ],
+    "versions": [
+        "1.0.0"
+    ],
+    "yanked_versions": {}
+}
