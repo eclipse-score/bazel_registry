@@ -1,0 +1,15 @@
+{
+    "homepage": "https://github.com/eclipse-score/bazel-tools-python",
+    "maintainers": [
+        {
+            "email": "anton.krivoborodov@bmw.de",
+            "name": "Anron Krivoborodov"
+        }
+    ],
+	"repository": [
+		"github:eclipse-score/bazel-tools-python"
+	],
+	"versions": [
+		"0.1.0"
+	]
+}
