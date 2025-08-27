@@ -83,7 +83,7 @@ def get_all_releases(repo_url: str, github_token: str = "") -> list[dict[str, st
             )
 
         # Return oldest to newest for queue processing
-        return sorted(all_releases, key=lambda r: r["published_at"])
+        return sorted(all_releases, key=lambda r: r["published_at"], reverse=True)
 
     except Exception as e:
         print(f"Error fetching releases for {repo_url}: {e}")
@@ -101,6 +101,9 @@ def enrich_modules(
     We iterate releases newest -> oldest and stop after reaching the currently
     known version (or after collecting up to max_releases newer versions). This
     fixes a prior bug where older already-processed releases were re-queued.
+
+    e.g. max_releases = 5 means we pull the latest release + 4 old ones, to
+    ensure all releases are in the bazel_registry.
     """
     enriched: list[dict[str, str]] = []
 
