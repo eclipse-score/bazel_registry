@@ -22,5 +22,9 @@
   {
     "module_name": "score_tooling",
     "module_url": "https://github.com/eclipse-score/tooling"
+  },
+  {
+    "module_name": "score_bazel_tools_python",
+    "module_url": "https://github.com/eclipse-score/bazel-tools-python"
   }
 ]
