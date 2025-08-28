@@ -1,0 +1,17 @@
+{
+    "homepage": "https://github.com/eclipse-score/bazel-tools-python",
+    "maintainers": [
+        {
+            "name": "<tbd>",
+            "github": "<tbd>",
+            "github_user_id": 0
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/bazel-tools-python"
+    ],
+    "versions": [
+        "0.1.1"
+    ],
+    "yanked_versions": {}
+}
