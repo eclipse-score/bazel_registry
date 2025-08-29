@@ -25,9 +25,10 @@ jobs:
   check-updates:
     runs-on: ubuntu-latest
 
-    # Write permissions are granted in the last step via PAT
+    # permissions must be set even when using a PAT
     permissions:
-      contents: read
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout the repository
