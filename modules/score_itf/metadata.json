@@ -1,0 +1,30 @@
+{
+    "homepage": "https://github.com/eclipse-score/itf",
+    "maintainers": [
+        {
+            "name": "Dragan Bjedov",
+            "email": "dragan.db.bjedov@bmw.de",
+            "github": "draganbjedov",
+            "github_user_id": 4594303
+        },
+        {
+            "name": "Iheb Saidani",
+            "email": "iheb.saidani@bmw.de",
+            "github": "ihebs3ideni",
+            "github_user_id": 40735290
+        },
+        {
+            "name": "Lukasz Tekieli",
+            "email": "lukasz.tekieli@bmw.de",
+            "github": "ltekieli",
+            "github_user_id": 800113
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/itf"
+    ],
+    "versions": [
+        "0.1.0"
+    ],
+    "yanked_versions": {}
+}
