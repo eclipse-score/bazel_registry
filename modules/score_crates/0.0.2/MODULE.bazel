@@ -1,0 +1,39 @@
+# *******************************************************************************
+# Copyright (c) 2024 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_crates",
+    version = "0.0.2",
+    compatibility_level = 0,
+)
+
+bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "rules_rust", version = "0.61.0")
+
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+
+crate.spec(
+    package = "futures",
+    version = "0.3.31",
+)
+crate.spec(
+    package = "libc",
+    version = "0.2.155",
+)
+crate.spec(
+    features = ["derive"],
+    package = "clap",
+    version = "4.5.4",
+)
+
+crate.from_specs(name = "crate_index")
+use_repo(crate, "crate_index")
