@@ -26,5 +26,9 @@
   {
     "module_name": "score_bazel_tools_python",
     "module_url": "https://github.com/eclipse-score/bazel-tools-python"
+  },
+  {
+    "module_name": "score_crates",
+    "module_url": "https://github.com/eclipse-score/score-crates"
   }
 ]
