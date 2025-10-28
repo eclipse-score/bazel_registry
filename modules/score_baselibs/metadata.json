@@ -1,0 +1,18 @@
+{
+    "homepage": "https://github.com/eclipse-score/baselibs",
+    "maintainers": [
+        {
+            "name": "Andrey Babanin",
+            "email": "andrey.babanin@bmw.de",
+            "github": "4og",
+            "github_user_id": 2698858
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/baselibs"
+    ],
+    "versions": [
+        "0.1.1"
+    ],
+    "yanked_versions": {}
+}
