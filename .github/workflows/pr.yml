@@ -40,3 +40,8 @@ jobs:
     uses: eclipse-score/cicd-workflows/.github/workflows/copyright.yml@main
     with:
       bazel-target: run //tools:copyright.check
+      
+  required-approvals:
+   uses: eclipse-score/cicd-workflows/.github/workflows/required-approvals.yml@main
+   with:
+      workflow-version: main
