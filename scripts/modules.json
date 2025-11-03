@@ -30,5 +30,9 @@
   {
     "module_name": "score_crates",
     "module_url": "https://github.com/eclipse-score/score-crates"
+  },
+  {
+    "module_name": "score_test_scenarios",
+    "module_url": "https://github.com/eclipse-score/testing_tools"
   }
 ]
