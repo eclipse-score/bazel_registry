@@ -1,0 +1,18 @@
+{
+    "homepage": "https://github.com/eclipse-score/communication",
+    "maintainers": [
+        {
+            "name": "Ulrich Huber",
+            "email": "Ulrich.UH.Huber@bmw.de",
+            "github": "LittleHuba",
+            "github_user_id": 10881589
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/communication"
+    ],
+    "versions": [
+        "0.1.0"
+    ],
+    "yanked_versions": {}
+}
