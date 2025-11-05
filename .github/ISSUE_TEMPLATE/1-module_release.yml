@@ -1,0 +1,40 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
+name: "Module Release check list"
+description: Check list to ensure all necessary artifacts are delivered
+title: "Module Release Checklist"
+labels: ["codeowner_review"]
+body:
+- type: checkboxes
+  attributes:
+    label: Module Release check list
+    options:
+      - label: Does bazel module has set up an integration gate for the release
+        required: true
+      - label: Does integration gate include compilation with host toolchain
+        required: true
+      - label: Does integration gate include compilation with target toolchain
+        required: true
+      - label: Does integration gate include execution of unit-tests
+        required: true
+      - label: Does release of the module contain meaningful release notes
+        required: true
+      - label: Does release of the module contain feature requirements and architecture
+        required: true
+      - label: Does release of the module contain component requirements and architecture
+        required: true
+      - label: Does release of the module contain module AoUs
+        required: true
+      - label: Does release of the module contain detailed design
+        required: true
