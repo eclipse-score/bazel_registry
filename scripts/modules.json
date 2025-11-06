@@ -34,5 +34,9 @@
   {
     "module_name": "score_test_scenarios",
     "module_url": "https://github.com/eclipse-score/testing_tools"
+  },
+  {
+    "module_name": "score_orchestrator",
+    "module_url": "https://github.com/eclipse-score/orchestrator"
   }
 ]
