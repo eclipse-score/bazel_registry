@@ -12,7 +12,7 @@
 # *******************************************************************************
 module(
     name = "score_orchestrator",
-    version = "0.0.3",
+    version = "0.0.1",
     compatibility_level = 0,
 )
 
@@ -27,12 +27,12 @@ bazel_dep(name = "platforms", version = "1.0.0")
 
 # S-CORE process rules
 bazel_dep(name = "score_bazel_platforms", version = "0.0.2")
+bazel_dep(name = "score_virtualization", version = "0.0.1")
 bazel_dep(name = "score_docs_as_code", version = "1.4.0")
 bazel_dep(name = "score_tooling", version = "1.0.2")
 
 bazel_dep(name = "score_process", version = "1.2.1", dev_dependency = True)
 bazel_dep(name = "score_platform", version = "0.3.0", dev_dependency = True)  # This is main score repo
-bazel_dep(name = "score_virtualization", version = "0.0.1", dev_dependency = True)
 
 # Toolchains and extensions
 bazel_dep(name = "score_toolchains_gcc", version = "0.4", dev_dependency = True)
@@ -66,7 +66,7 @@ git_override(
 
 git_override(
     module_name = "score_virtualization",
-    commit = "99d3f153c43796b67a63e82aad1ede6a881aa6af",
+    commit = "31966b7ad85a03efe5b2cfc8884d9812a6a82a88",
     remote = "https://github.com/qorix-group/score_virtualization.git",
 )
 

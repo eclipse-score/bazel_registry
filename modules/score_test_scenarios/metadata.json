@@ -2,7 +2,7 @@
     "homepage": "https://github.com/eclipse-score/testing_tools",
     "maintainers": [
         {
-            "name": "Arkadiusz Jędrzejewski",
+            "name": "Arkadiusz J\u0119drzejewski",
             "email": "arkadiusz.jedrzejewski.ext@qorix.ai",
             "github": "arkjedrz",
             "github_user_id": 32277297
@@ -24,7 +24,8 @@
         "github:eclipse-score/testing_tools"
     ],
     "versions": [
-        "0.3.0"
+        "0.3.0",
+        "0.2.8"
     ],
     "yanked_versions": {}
 }
