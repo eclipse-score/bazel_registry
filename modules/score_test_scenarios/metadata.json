@@ -24,8 +24,8 @@
         "github:eclipse-score/testing_tools"
     ],
     "versions": [
-        "0.3.0",
-        "0.2.8"
+        "0.2.8",
+        "0.3.0"
     ],
     "yanked_versions": {}
 }
