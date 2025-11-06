@@ -30,5 +30,9 @@
   {
     "module_name": "score_crates",
     "module_url": "https://github.com/eclipse-score/score-crates"
+  },
+  {
+    "module_name": "score_orchestrator",
+    "module_url": "https://github.com/eclipse-score/orchestrator"
   }
 ]
