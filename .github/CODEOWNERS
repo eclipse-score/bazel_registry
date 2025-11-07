@@ -8,24 +8,25 @@
 
 # As we cannot use groups yet, we list all members explicitly.
 
-# @infrastructure-maintainers:
 # @AlexanderLanin @MaximilianSoerenPollak @dcalavrezo-qorix @nradakovic
 
-# @automotive-score-technical-leads:
 # @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
 
+# Default is @infrastructure-maintainers:
 * @AlexanderLanin @MaximilianSoerenPollak @dcalavrezo-qorix @nradakovic
 
+# CODEOWNERS are managed by @automotive-score-technical-leads:
 .github/CODEOWNERS @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
 
-/modules/score_baselibs               @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-/modules/score_persistency            @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-/modules/score_communication          @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-/modules/score_platform               @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-/modules/score_itf                    @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-/modules/score_orchestrator           @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
+/modules/score_baselibs               @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
+/modules/score_persistency            @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
+/modules/score_communication          @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
+/modules/score_platform               @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
+/modules/score_itf                    @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
+/modules/score_orchestrator           @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
+/modules/score_scrample               @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
+/modules/score_test_scenarios         @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
 
 # Doesn't exist yet, but we can create the rules:
-/modules/score_feo                    @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-/modules/score_logging                @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-/modules/score_test_scenarios         @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
+/modules/score_feo                    @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
+/modules/score_logging                @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
