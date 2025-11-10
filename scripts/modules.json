@@ -38,5 +38,9 @@
   {
     "module_name": "score_orchestrator",
     "module_url": "https://github.com/eclipse-score/orchestrator"
+  },
+  {
+    "module_name": "score_persistency",
+    "module_url": "https://github.com/eclipse-score/persistency"
   }
 ]
