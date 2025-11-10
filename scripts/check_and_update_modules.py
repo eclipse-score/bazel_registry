@@ -58,6 +58,8 @@ def get_actual_versions_from_metadata(modules_path: str = "modules"):
                 print(f"Error reading {metadata_path}: {e}")
                 actual_modules_versions[module_name] = None
     return actual_modules_versions
+
+
 @dataclass
 class ReleaseInfo:
     version: str
@@ -65,7 +67,8 @@ class ReleaseInfo:
     tarball: str
     published_at: datetime
     prerelease: bool
-    
+
+
 def get_all_releases(repo_url: str, github_token: str = "") -> list[ReleaseInfo]:
     """
     Fetch all releases (including pre-releases) from a GitHub repo.
@@ -93,7 +96,7 @@ def get_all_releases(repo_url: str, github_token: str = "") -> list[ReleaseInfo]
                 )
             )
 
-        # Return oldest to newest for queue processing
+        # Return newest to oldest for queue processing
         return sorted(all_releases, key=lambda r: r.published_at, reverse=True)
 
     except Exception as e:
@@ -203,7 +206,9 @@ def process_module(module: dict[str, str]) -> None:
     print(f"Successfully processed {module['module_name']}@{module['module_version']}")
 
 
-def load_modules_from_json(json_path: str = "scripts/modules.json") -> list[dict[str, str]]:
+def load_modules_from_json(
+    json_path: str = "scripts/modules.json",
+) -> list[dict[str, str]]:
     """Load static module definitions from JSON configuration file."""
     try:
         with open(json_path) as f:
