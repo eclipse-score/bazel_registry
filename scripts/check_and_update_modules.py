@@ -128,7 +128,7 @@ def enrich_modules(
 
         releases = get_all_releases(module_url, github_token)
 
-        # Process only the N oldest releases that are not yet added
+        # Process only the N newest releases that are not yet added
         count = 0
         for release in releases:
             # Do not add versions that are older than the current version.
