@@ -77,6 +77,7 @@ jobs:
 
       - name: Commit changes
         run: |
+          echo "fake" > changefile.txt
           git add -A
           git commit -m "chore: modules update"
         id: commit
@@ -105,4 +106,18 @@ jobs:
           PR_BASE: main
           PR_TITLE: "chore: modules update"
           PR_BODY: "Automated update via gh CLI (from fork)."
+
+      - name: Push via action
+        if: always()
+        uses: peter-evans/create-pull-request@v7
+        with:
+          title: Update modules
+          author: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
+          committer: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
+          body: |
+            This PR updates the modules to their latest versions.
+            Please review and merge if everything looks good.
+          commit-message: Update modules
+          branch: bot/modules-update
+          token: ${{ secrets.SCORE_BOT_PAT }}
  
