@@ -118,6 +118,7 @@ jobs:
             This PR updates the modules to their latest versions.
             Please review and merge if everything looks good.
           commit-message: Update modules
+          base: main
           branch: bot/modules-update
           token: ${{ secrets.SCORE_BOT_PAT }}
  
