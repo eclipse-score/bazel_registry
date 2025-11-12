@@ -82,30 +82,30 @@ jobs:
           git commit -m "chore: modules update"
         id: commit
 
-      - name: Create branch, push, and open PR
-        run: |
-          set -euox pipefail
-          git switch -C "$BRANCH"
+      # - name: Create branch, push, and open PR
+      #   run: |
+      #     set -euox pipefail
+      #     git switch -C "$BRANCH"
 
-          # Force origin to use the PAT
-          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+      #     # Force origin to use the PAT
+      #     git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
 
-          # Push the branch (create or update)
-          git push -u origin "$BRANCH"
+      #     # Push the branch (create or update)
+      #     git push -u origin "$BRANCH"
 
-          gh pr create \
-          --repo "${{ github.repository }}" \
-          --base "$PR_BASE" \
-          --head "$BRANCH" \
-          --title "$PR_TITLE" \
-          --body  "$PR_BODY"
+      #     gh pr create \
+      #     --repo "${{ github.repository }}" \
+      #     --base "$PR_BASE" \
+      #     --head "$BRANCH" \
+      #     --title "$PR_TITLE" \
+      #     --body  "$PR_BODY"
 
-        env:
-          GH_TOKEN: ${{ secrets.SCORE_BOT_PAT }}   # PAT belongs to eclipse-score-bot
-          BRANCH: bot/modules-update
-          PR_BASE: main
-          PR_TITLE: "chore: modules update"
-          PR_BODY: "Automated update via gh CLI (from fork)."
+      #   env:
+      #     GH_TOKEN: ${{ secrets.SCORE_BOT_PAT }}   # PAT belongs to eclipse-score-bot
+      #     BRANCH: bot/modules-update
+      #     PR_BASE: main
+      #     PR_TITLE: "chore: modules update"
+      #     PR_BODY: "Automated update via gh CLI (from fork)."
 
       - name: Push via action
         if: always()
