@@ -42,5 +42,9 @@
   {
     "module_name": "score_persistency",
     "module_url": "https://github.com/eclipse-score/persistency"
+  },
+  {
+    "module_name": "score_feo",
+    "module_url": "https://github.com/eclipse-score/feo"
   }
 ]
