@@ -14,12 +14,16 @@
 import json
 import os
 import re
+from dataclasses import dataclass
+from datetime import datetime
 from typing import cast
 from urllib.parse import urlparse
 
 import requests
 from generate_module_files import generate_needed_files
 from github import Github
+from packaging.version import InvalidVersion
+from packaging.version import parse as parse_version
 
 
 def extract_module_version(bazel_content: str) -> str:
@@ -56,11 +60,21 @@ def get_actual_versions_from_metadata(modules_path: str = "modules"):
     return actual_modules_versions
 
 
-def get_all_releases(repo_url: str, github_token: str = "") -> list[dict[str, str]]:
+@dataclass
+class ReleaseInfo:
+    version: str
+    tag_name: str
+    tarball: str
+    published_at: datetime
+    prerelease: bool
+
+
+def get_all_releases(repo_url: str, github_token: str = "") -> list[ReleaseInfo]:
     """
     Fetch all releases (including pre-releases) from a GitHub repo.
-    Returns sorted list of dicts with version info.
+    Result is sorted by published_at.
     """
+    # TODO: this iterates over ALL releases; we typically only need the latest few.
     try:
         path_parts = urlparse(repo_url).path.strip("/").split("/")
         if len(path_parts) != 2:
@@ -70,20 +84,20 @@ def get_all_releases(repo_url: str, github_token: str = "") -> list[dict[str, st
         gh = Github(github_token) if github_token else Github()
         repo = gh.get_repo(f"{owner}/{repo_name}")
 
-        all_releases: list[dict[str, str]] = []
+        all_releases: list[ReleaseInfo] = []
         for release in repo.get_releases():  # type: ignore
             all_releases.append(
-                {
-                    "version": release.tag_name.lstrip("v"),
-                    "tag_name": release.tag_name,
-                    "tarball": f"https://github.com/{owner}/{repo_name}/archive/refs/tags/{release.tag_name}.tar.gz",
-                    "published_at": release.published_at,
-                    "prerelease": release.prerelease,
-                }
+                ReleaseInfo(
+                    version=release.tag_name.lstrip("v"),
+                    tag_name=release.tag_name,
+                    tarball=f"https://github.com/{owner}/{repo_name}/archive/refs/tags/{release.tag_name}.tar.gz",
+                    published_at=release.published_at,
+                    prerelease=release.prerelease,
+                )
             )
 
-        # Return oldest to newest for queue processing
-        return sorted(all_releases, key=lambda r: r["published_at"], reverse=True)
+        # Return newest to oldest for queue processing
+        return sorted(all_releases, key=lambda r: r.published_at, reverse=True)
 
     except Exception as e:
         print(f"Error fetching releases for {repo_url}: {e}")
@@ -92,7 +106,7 @@ def get_all_releases(repo_url: str, github_token: str = "") -> list[dict[str, st
 
 def enrich_modules(
     modules_list: list[dict[str, str]],
-    actual_versions_dict: dict[str, str | None],
+    latest_module_version_in_registry: dict[str, str | None],
     github_token: str = "",
     max_releases: int = 5,
 ):
@@ -110,18 +124,32 @@ def enrich_modules(
     for module in modules_list:
         module_name = module["module_name"]
         module_url = module["module_url"]
-        current_version = actual_versions_dict.get(module_name)
+        registered_version = latest_module_version_in_registry.get(module_name)
 
         releases = get_all_releases(module_url, github_token)
 
-        # Process only the N oldest releases that are not yet added
+        # Process only the N newest releases that are not yet added
         count = 0
         for release in releases:
-            # Validate pre-release has suffix
-            if release["prerelease"]:
-                if not re.search(r"\d+\.\d+\.\d+-[A-Za-z]+", release["tag_name"]):
+            # Do not add versions that are older than the current version.
+            if registered_version:
+                try:
+                    v = parse_version(release.version)
+                    rv = parse_version(registered_version)
+                    if v <= rv:
+                        break
+                except InvalidVersion as e:
                     print(
-                        f"Skipping pre-release '{release['tag_name']}' for {module_name}: "
+                        f"Warning: could not compare versions for {module_name}: "
+                        f"'{release.version}' vs '{registered_version}': {e}"
+                    )
+                    continue
+
+            # Validate pre-release has suffix
+            if release.prerelease:
+                if not re.search(r"\d+\.\d+\.\d+-[A-Za-z]+", release.tag_name):
+                    print(
+                        f"Skipping pre-release '{release.tag_name}' for {module_name}: "
                         "Pre-release version must include a suffix (e.g., -alpha, -rc)."
                     )
                     continue
@@ -131,9 +159,9 @@ def enrich_modules(
                     "module_name": module_name,
                     "module_url": module_url,
                     "repo_name": module_url.split("/")[-1],
-                    "module_version": release["version"],
-                    "tarball": release["tarball"],
-                    "module_file_url": f"{module_url}/blob/{release['tag_name']}/MODULE.bazel",
+                    "module_version": release.version,
+                    "tarball": release.tarball,
+                    "module_file_url": f"{module_url}/blob/{release.tag_name}/MODULE.bazel",
                 }
             )
 
@@ -178,7 +206,9 @@ def process_module(module: dict[str, str]) -> None:
     print(f"Successfully processed {module['module_name']}@{module['module_version']}")
 
 
-def load_modules_from_json(json_path: str = "scripts/modules.json") -> list[dict[str, str]]:
+def load_modules_from_json(
+    json_path: str = "scripts/modules.json",
+) -> list[dict[str, str]]:
     """Load static module definitions from JSON configuration file."""
     try:
         with open(json_path) as f:
