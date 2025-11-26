@@ -16,7 +16,7 @@
     "module_url": "https://github.com/eclipse-score/toolchains_gcc"
   },
   {
-    "module_name": "toolchains_qnx",
+    "module_name": "score_toolchains_qnx",
     "module_url": "https://github.com/eclipse-score/toolchains_qnx"
   },
   {
