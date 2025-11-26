@@ -39,31 +39,31 @@ jobs:
       - name: Debug PAT
         if: runner.debug
         run: |
-          echo "SCORE_BOT_PAT is set: [${{ secrets.SCORE_BOT_PAT != '' }}]"
+          echo "SCORE_BOT_CLASSIC_PAT is set: [${{ secrets.SCORE_BOT_CLASSIC_PAT != '' }}]"
           echo "GITHUB_TOKEN is set: [${{ secrets.GITHUB_TOKEN != '' }}]"
         env:
-          SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
+          SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
       - name: "Debug PAT: /user"
         if: runner.debug
         run: |
-          curl -s -H "Authorization: token $SCORE_BOT_PAT" https://api.github.com/user
+          curl -s -H "Authorization: token $SCORE_BOT_CLASSIC_PAT" https://api.github.com/user
         env:
-          SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
+          SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
       - name: "Debug PAT: /repos/eclipse-score/bazel_registry"
         if: runner.debug
         run: |
-          curl -s -H "Authorization: token $SCORE_BOT_PAT" https://api.github.com/repos/eclipse-score/bazel_registry
+          curl -s -H "Authorization: token $SCORE_BOT_CLASSIC_PAT" https://api.github.com/repos/eclipse-score/bazel_registry
         env:
-          SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
+          SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
       - name: "Debug PAT: /user/repos"
         if: runner.debug
         run: |
-          curl -s -H "Authorization: token $SCORE_BOT_PAT" https://api.github.com/user/repos?per_page=100
+          curl -s -H "Authorization: token $SCORE_BOT_CLASSIC_PAT" https://api.github.com/user/repos?per_page=100
         env:
-          SCORE_BOT_PAT: ${{ secrets.SCORE_BOT_PAT }}
+          SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
       - name: Run version checker script
         id: check_versions
