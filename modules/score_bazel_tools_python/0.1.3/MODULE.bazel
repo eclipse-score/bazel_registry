@@ -1,0 +1,132 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_bazel_tools_python",
+    version = "0.1.3",
+    compatibility_level = 0,
+    repo_name = "bazel_tools_python",
+)
+
+# Checker rule for CopyRight checks/fixs
+bazel_dep(name = "score_cr_checker", version = "0.3.1", dev_dependency = True)
+bazel_dep(name = "score_python_basics", version = "0.3.4", dev_dependency = True)
+
+# Dash license checker
+bazel_dep(name = "score_dash_license_checker", version = "0.1.2", dev_dependency = True)
+
+# Format checker
+bazel_dep(name = "score_format_checker", version = "0.1.1", dev_dependency = True)
+bazel_dep(name = "aspect_rules_lint", version = "1.4.4", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.0.2", dev_dependency = True)
+
+# docs-as-code
+bazel_dep(name = "score_docs_as_code", version = "1.0.1", dev_dependency = True)
+bazel_dep(name = "platforms", version = "0.0.11", dev_dependency = True)
+
+# Unfortunately bazel_skylib can not be dev_dependency because we use some of its libraries.
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+
+# Unfortunately rules_python can not be dev_dependency because we provide our pip hub using it.
+bazel_dep(name = "rules_python", version = "1.4.1")
+
+# We patch rules_python patch to python coverage files.
+# This enable us to select our own .coveragerc file when issuing a bazel coverage command.
+# Reference: https://github.com/bazelbuild/rules_python/blob/main/python/private/coverage.patch
+single_version_override(
+    module_name = "rules_python",
+    patches = ["@bazel_tools_python//third_party/rules_python:rules_python.patch"],
+)
+
+# Python toolchain and dependencies
+
+PYTHON_VERSIONS = [
+    "3.8",
+    "3.9",
+    "3.10",
+    "3.11",
+    "3.12",
+]
+
+# By default, one can't add `dev_dependency = True` to `python` extension from
+# `@rules_python//python/extensions:python.bzl` if python dependencies are
+# provided to the end user. To circumvent that, we rely on a conditional
+# statement by the mentioned extension, see:
+# https://github.com/bazelbuild/rules_python/blob/89d850aab819eb2dea9d6340beab1ca810dbe18d/python/private/pypi/extension.bzl#L111
+
+# The result is that `dev_dependency` can only be added to `python` extension
+# if every `pip_parse` has `python_interpreter` set. We set `python_interpreter`
+# to `python3` value because every hermetic toolchain has it as a symlink to
+# the real executable.
+
+# More info about this can be found at:
+# https://github.com/bazelbuild/rules_python/issues/1818#issuecomment-2271227487
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+
+[
+    python.toolchain(
+        configure_coverage_tool = True,
+        ignore_root_user_error = True,
+        is_default = False,
+        python_version = "{}".format(version),
+    )
+    for version in PYTHON_VERSIONS
+]
+
+# We can't use a loop for the following `use_repo` because we change the name of each toolchain.
+# buildifier: leave-alone
+use_repo(
+    python,
+    bazel_tools_python_python_3_8 = "python_3_8",
+    bazel_tools_python_python_3_9 = "python_3_9",
+    bazel_tools_python_python_3_10 = "python_3_10",
+    bazel_tools_python_python_3_11 = "python_3_11",
+    bazel_tools_python_python_3_12 = "python_3_12",
+)
+
+[
+    register_toolchains(
+        "@bazel_tools_python//bazel/toolchains/python:bazel_tools_python_python_{}_toolchain".format(version.replace(".", "_")),
+        dev_dependency = True,
+    )
+    for version in PYTHON_VERSIONS
+]
+
+register_toolchains(
+    "@bazel_tools_python//bazel/toolchains/python:py_undefined_trap",
+    dev_dependency = True,
+)
+
+register_toolchains(
+    "@bazel_tools_python//bazel/toolchains/python:do_not_use_bazel_tools_python_toolchains_trap",
+    dev_dependency = True,
+)
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+
+[
+    pip.parse(
+        hub_name = "bazel_tools_python_pip_{}".format(version.replace(".", "_")),
+        python_version = "{}".format(version),
+        requirements_lock = "//third_party/pip:requirements_lock_{}.txt".format(version.replace(".", "_")),
+    )
+    for version in PYTHON_VERSIONS
+]
+
+[
+    use_repo(pip, "bazel_tools_python_pip_{}".format(version.replace(".", "_")))
+    for version in PYTHON_VERSIONS
+]
+
+rules_python_pip_hub = use_extension("@bazel_tools_python//third_party:extensions.bzl", "rules_python_pip_hub")
+use_repo(rules_python_pip_hub, "bazel_tools_python_pip_hub")

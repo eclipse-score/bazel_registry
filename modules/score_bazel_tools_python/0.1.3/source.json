@@ -1,0 +1,5 @@
+{
+    "integrity": "sha256-jtgSYfUTwfei2mzpHma7iMzQNTKtf37LCGeOVuYy9LE=",
+    "strip_prefix": "bazel-tools-python-0.1.3",
+    "url": "https://github.com/eclipse-score/bazel-tools-python/archive/refs/tags/v0.1.3.tar.gz"
+}
