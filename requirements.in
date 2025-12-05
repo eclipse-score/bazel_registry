@@ -1,0 +1,6 @@
+# for testing
+pyfakefs
+pytest
+
+#need to fetch github API
+PyGithub

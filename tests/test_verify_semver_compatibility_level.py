@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .verify_semver_compatibility_level import analyze
+from registry_manager.main import main
 
 
 def build_fake_filesystem(fs: Any, structure: dict[str, object], base_path: str = ""):
@@ -39,10 +39,8 @@ def test_all_correct(fs: Any):
             }
         }
     })
-    results = analyze(Path("/modules"))
-    assert results[0].type == "ok"
-    assert results[1].type == "ok"
-    assert len(results) == 2
+    exit_code = main(["--check"])
+    assert exit_code == 0
 
 
 def test_missing_level(fs: Any):

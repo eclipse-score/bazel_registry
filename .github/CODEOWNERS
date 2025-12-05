@@ -6,27 +6,9 @@
 # For more information about CODEOWNERS, see:
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# As we cannot use groups yet, we list all members explicitly.
-
-# @AlexanderLanin @MaximilianSoerenPollak @dcalavrezo-qorix @nradakovic
-
-# @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-
-# Default is @infrastructure-maintainers:
+# As we cannot use groups, we list all members of @eclipse-score/infrastructure-maintainers here.
 * @AlexanderLanin @MaximilianSoerenPollak @dcalavrezo-qorix @nradakovic
 
-# CODEOWNERS are managed by @automotive-score-technical-leads:
-.github/CODEOWNERS @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-
-/modules/score_baselibs               @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
-/modules/score_persistency            @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
-/modules/score_communication          @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
-/modules/score_platform               @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
-/modules/score_itf                    @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
-/modules/score_orchestrator           @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
-/modules/score_scrample               @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
-/modules/score_test_scenarios         @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
-
-# Doesn't exist yet, but we can create the rules:
-/modules/score_feo                    @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
-/modules/score_logging                @antonkri @FScholPer @qor-lb @johannes-esr @markert-r @AlexanderLanin
+# Note: releases need to be controlled pre-tagging, and not pre-inclusion into the registry.
+# Therefore, we do not assign code owners for the modules here.
+# bazel_registry will be synced to individual repo releases.
