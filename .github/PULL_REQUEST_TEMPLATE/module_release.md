@@ -1,5 +1,11 @@
 ## Pull Request: New Module Release
 
+<!--
+  This template is for modules that are being released or updated manually.
+  We'll remove this option as soon as possible!!
+  For now, you can still use manual PRs in this repository to release new module versions.
+-->
+
 **Please check before merging:**
 
 - [ ] **Module Consistency:** Do the modules match each other? (e.g., `docs-as-code` and related process repositories)

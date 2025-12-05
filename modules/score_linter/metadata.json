@@ -1,14 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/tooling",
-    "maintainers": [
-        {
-            "name": "Sameer Srivastava",
-            "email": "sameer.g.srivastava@accenture.com",
-            "github": "sameer6989",
-            "github_user_id": 187406479
-        }
-
-    ],
+    "obsolete": true,
     "repository": [
         "github:eclipse-score/tooling"
     ],

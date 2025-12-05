@@ -11,32 +11,21 @@ jobs:
       - name: 📥 Check out
         uses: actions/checkout@v4
 
-      - name: 🛠️ Setup Bazel
-        uses: bazel-contrib/setup-bazel@0.9.1
+      - name: 🛠️ Setup Python Dependencies
+        run: pip install -r tools/requirements.txt
 
-      - name: 🔄 Cross-Check SemVer with compatibility_level
-        run: |
-          pip install -r tools/requirements.txt
-          python tools/verify_semver_compatibility_level.py
-
-      - name: 📋 Run verification script
-        run: bazel run //tools:verify_modules
-
+      - name: 🔍 Check bazel registry
+        run: python src/registry_manager/main.py --check
 
   self_test:
     name: 🔬 Self Test
     runs-on: ubuntu-latest
     steps:
-      - name: 📤 Check out
+      - name: 📥 Check out
         uses: actions/checkout@v4
 
+      - name: 🛠️ Setup Python Dependencies
+        run: pip install -r tools/requirements.txt
+
       - name: 🧩 Run pytest
-        run: |
-          pip install -r tools/requirements.txt
-          pytest tools
-
-
-  copyright-check:
-    uses: eclipse-score/cicd-workflows/.github/workflows/copyright.yml@main
-    with:
-      bazel-target: run //tools:copyright.check
+        run: pytest tests
