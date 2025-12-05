@@ -46,5 +46,9 @@
   {
     "module_name": "score_feo",
     "module_url": "https://github.com/eclipse-score/feo"
+  },
+  {
+   "module_name": "score_rust_policies",
+   "module_url": "https://github.com/eclipse-score/score_rust_policies"
   }
 ]
