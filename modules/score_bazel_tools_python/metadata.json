@@ -1,19 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/bazel-tools-python",
-    "maintainers": [
-        {
-            "name": "Dan Calavrezo",
-            "email": "danc_ext@qorix.ai",
-            "github": "dcalavrezo-qorix",
-            "github_user_id": 195309321
-        },
-        {
-            "name": "Alexander Lanin",
-            "email": "alexander.lanin@etas.com",
-            "github": "AlexanderLanin",
-            "github_user_id": 5074553
-        }
-    ],
+    "obsolete": true,
     "repository": [
         "github:eclipse-score/bazel-tools-python"
     ],

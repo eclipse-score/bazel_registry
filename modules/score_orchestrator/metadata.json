@@ -1,13 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/orchestrator",
-    "maintainers": [
-        {
-            "name": "Pawel Rutka",
-            "email": "Pawel.Rutka.ext@qorix.ai",
-            "github": "pawelrutkaq",
-            "github_user_id": 195489054
-        }
-    ],
+    "periodic-pull": true,
     "repository": [
         "github:eclipse-score/orchestrator"
     ],
