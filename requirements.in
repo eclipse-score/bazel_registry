@@ -1,0 +1,7 @@
+# for testing
+pyfakefs
+pytest
+
+# for tool
+PyGithub
+semver

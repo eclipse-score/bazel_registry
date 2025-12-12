@@ -23,3 +23,20 @@ lint.ignore = [
     # clarity and readability. So we'll allow it.
     "RET505"
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = [
+  "--import-mode=importlib",
+  "--strict-markers",
+  "--strict-config",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

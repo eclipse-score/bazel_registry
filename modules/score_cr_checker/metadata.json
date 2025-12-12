@@ -1,13 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/tooling",
-    "maintainers": [
-        {
-            "name": "Nikola Radakovic",
-            "email": "nikola.ra.radakovic@bmw.de",
-            "github": "nradakovic",
-            "github_user_id": 35235060
-        }
-    ],
+    "obsolete": true,
     "repository": [
         "github:eclipse-score/tooling"
     ],

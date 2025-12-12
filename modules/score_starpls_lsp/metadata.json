@@ -1,13 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/tooling",
-    "maintainers": [
-        {
-            "name": "Nicolae Dicu",
-            "email": "nicolae.dicu.ext@qorix.ai",
-            "github": "nicu1989",
-            "github_user_id": 20380633
-        }
-    ],
+    "obsolete": true,
     "repository": [
         "github:eclipse-score/tooling"
     ],

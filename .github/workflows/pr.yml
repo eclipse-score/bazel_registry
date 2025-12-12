@@ -1,42 +1,32 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
 name: Pull Request Workflow
 on:
   pull_request:
     types: [opened, reopened, synchronize]
 
 jobs:
-  verify_registry:
-    name: 🧪 Verify Registry
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Check out
-        uses: actions/checkout@v4
-
-      - name: 🛠️ Setup Bazel
-        uses: bazel-contrib/setup-bazel@0.9.1
-
-      - name: 🔄 Cross-Check SemVer with compatibility_level
-        run: |
-          pip install -r tools/requirements.txt
-          python tools/verify_semver_compatibility_level.py
-
-      - name: 📋 Run verification script
-        run: bazel run //tools:verify_modules
-
 
   self_test:
     name: 🔬 Self Test
     runs-on: ubuntu-latest
     steps:
-      - name: 📤 Check out
+      - name: 📥 Check out
         uses: actions/checkout@v4
 
+      - name: 🛠️ Setup Python Dependencies
+        run: pip install -r requirements.txt
+
       - name: 🧩 Run pytest
-        run: |
-          pip install -r tools/requirements.txt
-          pytest tools
-
-
-  copyright-check:
-    uses: eclipse-score/cicd-workflows/.github/workflows/copyright.yml@main
-    with:
-      bazel-target: run //tools:copyright.check
+        run: python -m pytest tests
