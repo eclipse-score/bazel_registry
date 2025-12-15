@@ -1,0 +1,11 @@
+{
+    "homepage": "https://github.com/eclipse-score/bazel-tools-cc",
+    "periodic-pull": true,
+    "repository": [
+        "github:eclipse-score/bazel-tools-cc"
+    ],
+    "yanked_versions": {},
+    "versions": [
+        "0.1.0"
+    ]
+}
