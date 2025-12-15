@@ -23,6 +23,7 @@ on:
 
 jobs:
   check-updates:
+    if: ${{ github.event.repository.fork == false }}
     runs-on: ubuntu-latest
 
     # permissions must be set even when using a PAT
