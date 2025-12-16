@@ -15,8 +15,13 @@ name: Check for Module Updates
 
 on:
   schedule:
-    - cron: '17 * * * *' # At minute 17 past every hour
+    - cron: '17,47 * * * *' # Twice every hour at minute 17 and 47
   workflow_dispatch:
+    inputs:
+      module:
+        description: 'Optional specific module to update (e.g. score_communication). If not set, all auto-update modules are checked instead.'
+        required: false
+        default: ''
   push:
     branches:
       - main
@@ -32,12 +37,12 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Checkout the repository
+      - name: 📥 Check out
         uses: actions/checkout@v4.2.2
         with:
           persist-credentials: false  # We will use a PAT instead
 
-      - name: Debug PAT
+      - name: 🕵️‍♂️ Debug PAT
         if: runner.debug
         run: |
           echo "SCORE_BOT_CLASSIC_PAT is set: [${{ secrets.SCORE_BOT_CLASSIC_PAT != '' }}]"
@@ -45,43 +50,46 @@ jobs:
         env:
           SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
-      - name: "Debug PAT: /user"
+      - name: "🕵️‍♂️ Debug PAT: /user"
         if: runner.debug
         run: |
           curl -s -H "Authorization: token $SCORE_BOT_CLASSIC_PAT" https://api.github.com/user
         env:
           SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
-      - name: "Debug PAT: /repos/eclipse-score/bazel_registry"
+      - name: "🕵️‍♂️ Debug PAT: /repos/eclipse-score/bazel_registry"
         if: runner.debug
         run: |
           curl -s -H "Authorization: token $SCORE_BOT_CLASSIC_PAT" https://api.github.com/repos/eclipse-score/bazel_registry
         env:
           SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
-      - name: "Debug PAT: /user/repos"
+      - name: "🕵️‍♂️ Debug PAT: /user/repos"
         if: runner.debug
         run: |
           curl -s -H "Authorization: token $SCORE_BOT_CLASSIC_PAT" https://api.github.com/user/repos?per_page=100
         env:
           SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
-      - name: Run version checker script
-        id: check_versions
+      - name: 🛠️ Setup Python Dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🧩 Run update script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pip install -r tools/requirements.txt
-          python scripts/check_and_update_modules.py
+          {
+            printf "This PR updates the modules to their latest versions.\n"
+            printf "Please review and merge if everything looks good.\n\n"
+            python -m src.registry_manager.main ${{ github.event.inputs.module }}
+          } | tee /tmp/output.log
 
-      - name: Create Pull Request
+      - name: 📤 Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
           title: Update modules
           author: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
-          body: |
-            This PR updates the modules to their latest versions.
-            Please review and merge if everything looks good.
+          body-path: /tmp/output.log
           commit-message: Update modules
           base: main
           branch: bot/modules-update

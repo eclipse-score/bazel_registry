@@ -1,12 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/score_crates",
-    "maintainers": [
-        {
-            "name": "Markus Hosch",
-            "github": "darkwisebear",
-            "github_user_id": 3289071
-        }
-    ],
+    "periodic-pull": true,
     "repository": [
         "github:eclipse-score/score-crates"
     ],

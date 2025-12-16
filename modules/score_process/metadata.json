@@ -1,13 +1,6 @@
 {
     "homepage": "https://eclipse-score.github.io/process_description",
-    "maintainers": [
-        {
-            "name": "Maximilian Soeren Pollak",
-            "email": "maximilian.pollak@expleogroup.com",
-            "github": "MaximilianSoerenPollak",
-            "github_user_id": 74557518
-        }
-    ],
+    "periodic-pull": true,
     "repository": [
         "github:eclipse-score/process_description"
     ],

@@ -1,13 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/feo",
-    "maintainers": [
-        {
-            "name": "Armin Bartsch",
-            "email": "armin.bartsch@accenture.com",
-            "github": "armin-acn",
-            "github_user_id": 176416643
-        }
-    ],
+    "periodic-pull": true,
     "repository": [
         "github:eclipse-score/feo"
     ],

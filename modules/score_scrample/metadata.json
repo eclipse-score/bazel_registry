@@ -1,13 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/scrample",
-    "maintainers": [
-        {
-            "name": "Anton Krivoborodov",
-            "email": "anton.krivoborodov@bmw.de",
-            "github": "antonkri",
-            "github_user_id": 63401640
-        }
-    ],
+    "periodic-pull": true,
     "repository": [
         "github:eclipse-score/scrample"
     ],

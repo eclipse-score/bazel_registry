@@ -1,13 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/persistency",
-    "maintainers": [
-        {
-            "name": "Vinod Reddy",
-            "email": "vinodreddy.gopireddy@qorix.ai",
-            "github": "vinodreddy-g",
-            "github_user_id": 57339779
-        }
-    ],
+    "periodic-pull": true,
     "repository": [
         "github:eclipse-score/persistency"
     ],
