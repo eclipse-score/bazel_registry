@@ -48,7 +48,11 @@
     "module_url": "https://github.com/eclipse-score/feo"
   },
   {
-   "module_name": "score_rust_policies",
-   "module_url": "https://github.com/eclipse-score/score_rust_policies"
+    "module_name": "score_rust_policies",
+    "module_url": "https://github.com/eclipse-score/score_rust_policies"
+  },
+  {
+    "module_name": "score_bazel_platforms",
+    "module_url": "https://github.com/eclipse-score/bazel_platforms"
   }
 ]
