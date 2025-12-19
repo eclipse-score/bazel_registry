@@ -1,0 +1,163 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_logging",
+    version = "0.0.3",
+    compatibility_level = 0,
+)
+
+bazel_dep(name = "platforms", version = "1.0.0")
+
+bazel_dep(name = "score_toolchains_gcc", version = "0.4", dev_dependency = True)
+
+bazel_dep(name = "googletest", version = "1.17.0.bcr.1")
+bazel_dep(name = "google_benchmark", version = "1.9.4")
+bazel_dep(name = "rules_rust", version = "0.63.0")
+bazel_dep(name = "rapidjson", version = "1.1.0")
+bazel_dep(name = "score_crates", version = "0.0.3", repo_name = "crate_index")
+bazel_dep(name = "jemalloc", version = "5.3.0-bcr.alpha.4")
+bazel_dep(name = "libatomic", version = "1.0")
+local_path_override(
+    module_name = "libatomic",
+    path = "third_party/libatomic",
+)
+
+gcc = use_extension("@score_toolchains_gcc//extentions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    sha256 = "457f5f20f57528033cb840d708b507050d711ae93e009388847e113b11bf3600",
+    strip_prefix = "x86_64-unknown-linux-gnu",
+    url = "https://github.com/eclipse-score/toolchains_gcc_packages/releases/download/0.0.1/x86_64-unknown-linux-gnu_gcc12.tar.gz",
+)
+
+# TRLC dependency for requirements traceability
+bazel_dep(name = "trlc", version = "0.0.0")
+git_override(
+    module_name = "trlc",
+    commit = "650b51a47264a4f232b3341f473527710fc32669",  # trlc-2.0.2 release
+    remote = "https://github.com/bmw-software-engineering/trlc.git",
+)
+
+# TODO to be moved to toolchain. https://github.com/eclipse-score/toolchains_gcc/issues/11
+gcc.extra_features(
+    features = [
+        "minimal_warnings",
+        "treat_warnings_as_errors",
+    ],
+)
+gcc.warning_flags(
+    minimal_warnings = [
+        "-Wall",
+        "-Wno-error=deprecated-declarations",
+    ],
+    strict_warnings = [
+        "-Wextra",
+        "-Wpedantic",
+    ],
+    treat_warnings_as_errors = ["-Werror"],
+)
+use_repo(gcc, "gcc_toolchain", "gcc_toolchain_gcc")
+
+bazel_dep(name = "rules_boost", repo_name = "com_github_nelhage_rules_boost")
+archive_override(
+    module_name = "rules_boost",
+    strip_prefix = "rules_boost-master",
+    urls = ["https://github.com/nelhage/rules_boost/archive/refs/heads/master.tar.gz"],
+)
+
+bazel_dep(name = "boost.program_options", version = "1.87.0")
+bazel_dep(name = "download_utils", version = "1.0.1")
+
+download_archive = use_repo_rule("@download_utils//download/archive:defs.bzl", "download_archive")
+
+download_archive(
+    name = "json_schema_validator",
+    build = "//third_party/json_schema_validator:json_schema_validator.BUILD",
+    strip_prefix = "json-schema-validator-2.1.0",
+    urls = ["https://github.com/pboettch/json-schema-validator/archive/refs/tags/2.1.0.tar.gz"],
+)
+
+download_archive(
+    name = "jsonschema",
+    build = "//third_party/jsonschema:jsonschema.BUILD",
+    strip_prefix = "jsonschema-4.23.0",
+    urls = ["https://github.com/python-jsonschema/jsonschema/archive/refs/tags/v4.23.0.tar.gz"],
+)
+
+# C/C++ rules for Bazel
+bazel_dep(name = "rules_cc", version = "0.2.1")
+bazel_dep(name = "nlohmann_json", version = "3.11.3")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_doxygen", version = "2.5.0")
+bazel_dep(name = "score_baselibs", version = "0.2.0")
+git_override(
+    module_name = "score_baselibs",
+    commit = "baab4419469b8b74af87d7cc77d3f2605f8055a9",
+    remote = "https://github.com/eclipse-score/baselibs.git",
+)
+
+# Python 3.12 toolchain for Bazel (required for LOBSTER/TRLC dependencies)
+bazel_dep(name = "rules_python", version = "1.4.1")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = "3.12",
+)
+
+bazel_dep(name = "score_toolchains_qnx", version = "0.0.2", dev_dependency = True)
+git_override(
+    module_name = "score_toolchains_qnx",
+    commit = "f9fe820390eede3d4e9b2a35651ff78bdd3cb676",
+    remote = "https://github.com/eclipse-score/toolchains_qnx.git",
+)
+
+toolchains_qnx = use_extension(
+    "@score_toolchains_qnx//:extensions.bzl",
+    "toolchains_qnx",
+    dev_dependency = True,
+)
+toolchains_qnx.sdp(
+    sha256 = "f2e0cb21c6baddbcb65f6a70610ce498e7685de8ea2e0f1648f01b327f6bac63",
+    strip_prefix = "installation",
+    url = "https://www.qnx.com/download/download/79858/installation.tgz",
+)
+use_repo(toolchains_qnx, "toolchains_qnx_sdp")
+use_repo(toolchains_qnx, "toolchains_qnx_ifs")
+use_repo(toolchains_qnx, "toolchains_qnx_qcc")
+
+bazel_dep(name = "score_communication", version = "0.1.2")
+git_override(
+    module_name = "score_communication",
+    commit = "5a70133dd8bd632f5c07f200a5ee4bc9f507c23b",
+    remote = "https://github.com/eclipse-score/communication.git",
+)
+
+# LLVM Toolchains Rules - host configuration
+bazel_dep(name = "toolchains_llvm", version = "1.4.0")
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
+llvm.toolchain(
+    cxx_standard = {"": "c++17"},
+    llvm_version = "19.1.0",
+)
+use_repo(llvm, "llvm_toolchain")
+use_repo(llvm, "llvm_toolchain_llvm")
+
+register_toolchains("@llvm_toolchain//:all")
+
+# tooling
+bazel_dep(name = "score_tooling", version = "1.0.1")
+bazel_dep(name = "aspect_rules_lint", version = "1.5.3")
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.0.2")
+
+#docs-as-code
+bazel_dep(name = "score_docs_as_code", version = "2.0.2")

@@ -1,0 +1,18 @@
+{
+    "homepage": "https://github.com/eclipse-score/logging",
+    "maintainers": [
+        {
+            "name": "Anton Krivoborodov",
+            "email": "anton.krivoborodov@bmw.de",
+            "github": "antonkri",
+            "github_user_id": 63401640
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/logging"
+    ],
+    "versions": [
+        "0.0.3"
+    ],
+    "yanked_versions": {}
+}
