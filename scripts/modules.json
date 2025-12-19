@@ -1,5 +1,9 @@
 [
   {
+    "module_name": "score_communication",
+    "module_url": "https://github.com/eclipse-score/communication"
+  },
+  {
     "module_name": "score_docs_as_code",
     "module_url": "https://github.com/eclipse-score/docs-as-code"
   },
