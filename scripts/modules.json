@@ -1,5 +1,9 @@
 [
   {
+    "module_name": "score_communication",
+    "module_url": "https://github.com/eclipse-score/communication"
+  },
+  {
     "module_name": "score_docs_as_code",
     "module_url": "https://github.com/eclipse-score/docs-as-code"
   },
@@ -54,5 +58,9 @@
   {
     "module_name": "score_bazel_platforms",
     "module_url": "https://github.com/eclipse-score/bazel_platforms"
+  },
+  {
+    "module_name": "score_kyron",
+    "module_url": "https://github.com/eclipse-score/kyron"
   }
 ]

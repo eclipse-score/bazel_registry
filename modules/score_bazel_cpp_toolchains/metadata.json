@@ -1,0 +1,18 @@
+{
+    "homepage": "https://github.com/eclipse-score/bazel_cpp_toolchains",
+    "maintainers": [
+        {
+            "name": "Nikola Radakovic",
+            "email": "nikola.ra.radakovic@bmw.de",
+            "github": "nradakovic",
+            "github_user_id": 35235060
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/bazel_cpp_toolchains"
+    ],
+    "versions": [
+        "0.1.0"
+    ],
+    "yanked_versions": {}
+}
