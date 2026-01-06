@@ -18,7 +18,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.registry_manager import BazelModuleInfo, ModuleUpdateInfo
+from src.registry_manager import BazelModuleInfo, ModuleUpdateInfo, Version
 from src.registry_manager.bazel_wrapper import ModuleFileContent, ModuleUpdateRunner
 from src.registry_manager.gh_logging import Logger
 from src.registry_manager.github_wrapper import GitHubReleaseInfo
@@ -93,112 +93,84 @@ def basic_registry_setup(build_fake_filesystem):
     return _setup
 
 
-@pytest.fixture
-def make_module_info():
-    """Factory for creating BazelModuleInfo objects."""
-
-    def _make(
-        name: str = "score_demo",
-        org_and_repo: str = "org/repo",
-        versions: list[str] | None = None,
-        periodic_pull: bool = True,
-        obsolete: bool = False,
-    ) -> BazelModuleInfo:
-        return BazelModuleInfo(
-            path=Path(f"/modules/{name}"),
-            name=name,
-            org_and_repo=org_and_repo,
-            versions=versions or [],
-            periodic_pull=periodic_pull,
-            obsolete=obsolete,
-        )
-
-    return _make
+def make_module_info(
+    name: str = "score_demo",
+    org_and_repo: str = "org/repo",
+    versions: list[str] | None = None,
+    periodic_pull: bool = True,
+    obsolete: bool = False,
+) -> BazelModuleInfo:
+    return BazelModuleInfo(
+        path=Path(f"/modules/{name}"),
+        name=name,
+        org_and_repo=org_and_repo,
+        versions=[Version(v) for v in (versions or [])],
+        periodic_pull=periodic_pull,
+        obsolete=obsolete,
+    )
 
 
-@pytest.fixture
-def make_release_info():
-    """Factory for creating GitHubReleaseInfo objects."""
+def make_release_info(
+    version: str = "1.0.0",
+    tag_name: str | None = None,
+    prerelease: bool = False,
+    org_and_repo: str = "org/repo",
+) -> GitHubReleaseInfo:
+    if tag_name is None:
+        tag_name = f"v{version}"
 
-    def _make(
-        version: str = "1.0.0",
-        tag_name: str | None = None,
-        prerelease: bool = False,
-        org_and_repo: str = "org/repo",
-    ) -> GitHubReleaseInfo:
-        if tag_name is None:
-            tag_name = f"v{version}"
-
-        return GitHubReleaseInfo(
-            org_and_repo=org_and_repo,
-            version=version,
-            tag_name=tag_name,
-            published_at=datetime(2024, 1, 1),
-            prerelease=prerelease,
-        )
-
-    return _make
+    return GitHubReleaseInfo(
+        org_and_repo=org_and_repo,
+        version=Version(version),
+        tag_name=tag_name,
+        published_at=datetime(2024, 1, 1),
+        prerelease=prerelease,
+    )
 
 
-@pytest.fixture
-def make_module_content():
+def make_module_content(
+    version: str = "1.0.0",
+    comp_level: int | None = None,
+) -> ModuleFileContent:
     """Factory for creating ModuleFileContent objects."""
 
-    def _make(
-        version: str = "1.0.0",
-        comp_level: int | None = None,
-    ) -> ModuleFileContent:
-        if comp_level is None:
-            comp_level = int(version.split(".")[0])
+    if comp_level is None:
+        comp_level = int(version.split(".")[0])
 
-        return ModuleFileContent(
-            content=f'module(version="{version}", compatibility_level={comp_level})',
-            comp_level=comp_level,
-            version=version,
-        )
-
-    return _make
+    return ModuleFileContent(
+        content=f'module(version="{version}", compatibility_level={comp_level})',
+        comp_level=comp_level,
+        version=Version(version),
+    )
 
 
-@pytest.fixture
-def make_update_info(make_module_info, make_release_info, make_module_content):
-    """Factory for creating ModuleUpdateInfo objects."""
+def make_update_info(
+    version: str = "1.0.0",
+    module_version: str | None = None,
+    comp_level: int | None = None,
+    module_name: str = "score_demo",
+    existing_versions: list[str] | None = None,
+) -> ModuleUpdateInfo:
+    if module_version is None:
+        module_version = version
 
-    def _make(
-        version: str = "1.0.0",
-        module_version: str | None = None,
-        comp_level: int | None = None,
-        module_name: str = "score_demo",
-        existing_versions: list[str] | None = None,
-    ) -> ModuleUpdateInfo:
-        if module_version is None:
-            module_version = version
-
-        return ModuleUpdateInfo(
-            module=make_module_info(name=module_name, versions=existing_versions or []),
-            release=make_release_info(version=version),
-            mod_file=make_module_content(version=module_version, comp_level=comp_level),
-        )
-
-    return _make
+    return ModuleUpdateInfo(
+        module=make_module_info(name=module_name, versions=existing_versions or []),
+        release=make_release_info(version=version),
+        mod_file=make_module_content(version=module_version, comp_level=comp_level),
+    )
 
 
-@pytest.fixture
-def run_file_generation():
-    """Helper to run file generation with mocked sha256."""
-
-    def _run(
-        update_info: ModuleUpdateInfo,
-    ) -> ModuleUpdateRunner:
-        runner = ModuleUpdateRunner(update_info)
-        with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value="sha256-test",
-        ):
-            runner.generate_files()
-        return runner
-
-    return _run
+def run_file_generation(
+    update_info: ModuleUpdateInfo,
+) -> ModuleUpdateRunner:
+    runner = ModuleUpdateRunner(update_info)
+    with patch(
+        "src.registry_manager.bazel_wrapper.sha256_from_url",
+        return_value="sha256-test",
+    ):
+        runner.generate_files()
+    return runner
 
 
 @pytest.fixture

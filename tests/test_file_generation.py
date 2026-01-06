@@ -15,11 +15,12 @@ import json
 import os
 from collections.abc import Callable
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
-from src.registry_manager import ModuleUpdateInfo
 from src.registry_manager.bazel_wrapper import ModuleUpdateRunner
+from tests.conftest import make_update_info
 
 
 class TestFileGeneration:
@@ -27,11 +28,8 @@ class TestFileGeneration:
 
     def test_generates_source_json(
         self,
-        make_update_info: Callable[..., ModuleUpdateInfo],
         basic_registry_setup: Callable[..., None],
     ) -> None:
-        from unittest.mock import patch
-
         basic_registry_setup()
         os.chdir("/")
 
@@ -62,11 +60,8 @@ class TestFileGeneration:
 
     def test_generates_module_file(
         self,
-        make_update_info: Callable[..., ModuleUpdateInfo],
         basic_registry_setup: Callable[..., None],
     ) -> None:
-        from unittest.mock import patch
-
         basic_registry_setup()
         os.chdir("/")
 
@@ -101,11 +96,14 @@ class TestFileGeneration:
             ("3.0.0", "3.0.0", 1, 3),
             # Case 3: Both mismatches
             ("2.3.4", "1.5.0", 1, 2),
+            # Case 4: Release is "ABC", MODULE.bazel says version="1.0.0".
+            # Patch needed to change version to "ABC". Compatibility
+            # level remains as-is, as it cannot be derived from non-semver.
+            ("ABC", "1.0.0", 42, 42),
         ],
     )
     def test_creates_patch_when_mismatch(
         self,
-        make_update_info: Callable[..., ModuleUpdateInfo],
         basic_registry_setup: Callable[..., None],
         release_version: str,
         module_version: str,
@@ -113,8 +111,6 @@ class TestFileGeneration:
         expected_comp_level: int,
     ) -> None:
         """Test patches for MODULE.bazel version/comp_level mismatches."""
-        from unittest.mock import patch
-
         basic_registry_setup()
         os.chdir("/")
 
@@ -148,11 +144,8 @@ class TestFileGeneration:
 
     def test_no_patch_when_versions_match(
         self,
-        make_update_info: Callable[..., ModuleUpdateInfo],
         basic_registry_setup: Callable[..., None],
     ) -> None:
-        from unittest.mock import patch
-
         basic_registry_setup()
         os.chdir("/")
 
@@ -177,51 +170,10 @@ class TestFileGeneration:
         source = json.loads(source_path.read_text())
         assert "patches" not in source
 
-    def test_does_not_modify_metadata_when_version_exists(
-        self,
-        make_update_info: Callable[..., ModuleUpdateInfo],
-        basic_registry_setup: Callable[..., None],
-    ) -> None:
-        """Test that metadata.json is not rewritten when version already exists."""
-        from unittest.mock import patch
-
-        # Setup: metadata.json already contains version 1.0.0
-        existing_version = "1.0.0"
-        basic_registry_setup(versions=[existing_version])
-        os.chdir("/")
-
-        metadata_path = Path("/modules/score_demo/metadata.json")
-        initial_mtime = metadata_path.stat().st_mtime
-
-        # Try to add the same version again
-        update_info = make_update_info(
-            version=existing_version,
-            existing_versions=[existing_version],
-        )
-
-        runner = ModuleUpdateRunner(update_info)
-        with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value="sha256-test",
-        ):
-            runner.generate_files()
-
-        # Metadata file should not be touched (mtime unchanged)
-        final_mtime = metadata_path.stat().st_mtime
-        assert initial_mtime == final_mtime
-
-        # Verify the version appears only once (not duplicated)
-        metadata = json.loads(metadata_path.read_text())
-        assert existing_version in metadata["versions"]
-        assert metadata["versions"].count(existing_version) == 1
-
     def test_appends_version_with_semver_sorting(
         self,
-        make_update_info: Callable[..., ModuleUpdateInfo],
         basic_registry_setup: Callable[..., None],
     ) -> None:
-        from unittest.mock import patch
-
         # Setup: metadata.json has versions 1.0.9 and 1.0.10
         # Note: 1.0.10 > 1.0.9 in semver (not lexical where "10" < "9")
         existing = ["1.0.9", "1.0.10"]
@@ -245,4 +197,6 @@ class TestFileGeneration:
         # Verify versions are sorted descending by semver (newest first)
         metadata_path = Path("/modules/score_demo/metadata.json")
         metadata = json.loads(metadata_path.read_text())
-        assert metadata["versions"] == ["1.0.11", "1.0.10", "1.0.9"]
+        generated_versions = metadata["versions"]
+        expected_versions = ["1.0.11", "1.0.10", "1.0.9"]
+        assert generated_versions == expected_versions

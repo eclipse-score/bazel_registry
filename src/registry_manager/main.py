@@ -98,12 +98,20 @@ def plan_module_updates(
 
         latest_release = gh.get_latest_release(module.org_and_repo)
         if latest_release and module.latest_version != latest_release.version:
+            if not latest_release.version.semver:
+                # In the future we can extend non-semver handling if needed
+                log.warning(
+                    f"Latest release {latest_release.version} of "
+                    f"{module.name} is not a valid semantic version; skipping."
+                )
+                continue
+
             log.info(
                 f"Updating {module.name} "
                 f"from {module.latest_version} to {latest_release.version}"
             )
             content = gh.try_get_module_file_content(
-                module.org_and_repo, latest_release.version
+                module.org_and_repo, str(latest_release.version)
             )
 
             if content:

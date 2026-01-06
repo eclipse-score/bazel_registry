@@ -14,9 +14,8 @@
 import os
 from collections.abc import Callable
 
-import pytest
-
 from src.registry_manager.bazel_wrapper import read_modules
+from src.registry_manager.version import Version
 
 
 class TestModuleReading:
@@ -98,8 +97,8 @@ class TestModuleReading:
         # Versions in unsorted order
         unsorted_versions = ["1.0.9", "1.0.10", "1.0.2"]
         # Expected: sorted descending by semver (not lexical)
-        expected_sorted = ["1.0.10", "1.0.9", "1.0.2"]
-        expected_latest = "1.0.10"  # Highest version
+        expected_sorted = [Version("1.0.10"), Version("1.0.9"), Version("1.0.2")]
+        expected_latest = Version("1.0.10")  # Highest version
 
         setup_module_metadata(
             {
@@ -115,7 +114,7 @@ class TestModuleReading:
         assert modules[0].versions == expected_sorted
         assert modules[0].latest_version == expected_latest
 
-    def test_invalid_versions_raise(
+    def test_invalid_versions_still_work(
         self, setup_module_metadata: Callable[[dict], None]
     ) -> None:
         # These versions should cause validation to fail
@@ -131,6 +130,9 @@ class TestModuleReading:
         )
         os.chdir("/")
 
-        # Should raise SystemExit due to invalid version format
-        with pytest.raises(SystemExit):
-            read_modules(None)
+        modules = read_modules(None)
+        assert len(modules) == 1
+        parsed_versions = [str(v) for v in modules[0].versions]
+        # All versions should be read, even if invalid
+        # (disregard sorting)
+        assert sorted(parsed_versions) == sorted(invalid_versions)

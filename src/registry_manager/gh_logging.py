@@ -13,6 +13,7 @@
 
 import os
 from pathlib import Path
+from typing import NoReturn
 
 GIT_ROOT = Path(__file__).parent.parent.parent.resolve()
 
@@ -86,6 +87,6 @@ class Logger:
 
     def fatal(
         self, msg: str, file: Path | None = None, line: int | None = None
-    ) -> None:
+    ) -> NoReturn:
         self._print("error", msg, file, line)
         raise SystemExit(1)

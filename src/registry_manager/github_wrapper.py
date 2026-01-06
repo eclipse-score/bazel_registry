@@ -17,6 +17,7 @@ from datetime import datetime
 import github
 
 from .gh_logging import Logger
+from .version import Version
 
 log = Logger(__name__)
 
@@ -24,7 +25,7 @@ log = Logger(__name__)
 @dataclass
 class GitHubReleaseInfo:
     org_and_repo: str
-    version: str
+    version: Version
     tag_name: str
     published_at: datetime
     prerelease: bool
@@ -61,7 +62,7 @@ class GithubWrapper:
                 all_releases.append(
                     GitHubReleaseInfo(
                         org_and_repo=org_and_repo,
-                        version=release.tag_name.lstrip("v"),
+                        version=Version(release.tag_name.lstrip("v")),
                         tag_name=release.tag_name,
                         published_at=release.published_at,
                         prerelease=release.prerelease,

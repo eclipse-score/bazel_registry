@@ -20,30 +20,18 @@ import urllib.request
 from collections.abc import Iterable
 from pathlib import Path
 
-import semver
-
 from . import (
     BazelModuleInfo,
     ModuleFileContent,
     ModuleUpdateInfo,
+    Version,
 )
 from .gh_logging import Logger
 
 log = Logger(__name__)
 
 
-def _require_semver(version: str, metadata_path: Path | None = None) -> None:
-    """Validate that a version string is a valid semantic version."""
-    try:
-        semver.Version.parse(version)
-    except ValueError as e:
-        log.fatal(
-            f"{version!r} is not a valid semantic version: {e}",
-            file=metadata_path,
-        )
-
-
-def _validated_semver_list(raw_versions: object, metadata_path: Path) -> list[str]:
+def _parse_versions(raw_versions: object, metadata_path: Path) -> list[Version]:
     """Validate and sort a list of semantic version strings."""
     if raw_versions is None:
         return []
@@ -54,33 +42,11 @@ def _validated_semver_list(raw_versions: object, metadata_path: Path) -> list[st
             file=metadata_path,
         )
 
-    if not raw_versions:
-        return []
-
-    if not all(isinstance(v, str) for v in raw_versions):
-        log.fatal(
-            f"{metadata_path} has non-string versions; expected semantic version strings",
-            file=metadata_path,
-        )
-
-    # Validate all versions
-    invalid_versions = []
-    for v in raw_versions:
-        try:
-            semver.Version.parse(v)
-        except ValueError:
-            invalid_versions.append(v)
-
-    if invalid_versions:
-        log.fatal(
-            f"{metadata_path} contains non-semver versions: {invalid_versions}",
-            file=metadata_path,
-        )
+    versions: list[Version] = [Version(v) for v in raw_versions]  # pyright: ignore[reportUnknownVariableType]
 
     # Sort in descending order (highest version first)
     return sorted(
-        raw_versions,
-        key=lambda v: semver.Version.parse(v),
+        versions,
         reverse=True,
     )
 
@@ -98,7 +64,7 @@ def read_modules(module_names: list[str] | None) -> list[BazelModuleInfo]:
                 log.fatal(f"Module '{module_name}' could not be found or parsed.")
     else:
         for module_dir in Path("modules").iterdir():
-            if m := try_parse_metadata_json(module_dir / "metadata.json"):
+            if m := try_parse_metadata_json(module_dir / "metadata.json"):  # noqa: SIM102
                 if not m.obsolete:
                     modules.append(m)
     return modules
@@ -143,7 +109,7 @@ def try_parse_metadata_json(metadata_json: Path) -> BazelModuleInfo | None:
         )
         return None
 
-    versions = _validated_semver_list(data.get("versions", []), metadata_json)
+    versions = _parse_versions(data.get("versions", []), metadata_json)
 
     return BazelModuleInfo(
         path=metadata_json.parent,
@@ -166,12 +132,12 @@ def parse_MODULE_file_content(content: str) -> ModuleFileContent:
 
     version = None
     if m_ver := re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", content):
-        version = m_ver.group(1)
+        version = str(m_ver.group(1))
 
     return ModuleFileContent(
         content=content,
         comp_level=comp_level,
-        version=version,
+        version=Version(version) if version else None,
     )
 
 
@@ -213,10 +179,9 @@ class ModuleUpdateRunner:
 
     def __init__(self, task_info: ModuleUpdateInfo):
         self.info = task_info
-        self.log = log
         self.patches: dict[str, str] = {}
         self.module_path = Path("modules") / task_info.module.name
-        self.module_version_path = self.module_path / task_info.release.version
+        self.module_version_path = self.module_path / str(task_info.release.version)
 
     def generate_files(self) -> None:
         """Generate all necessary registry files for this module update.
@@ -258,30 +223,23 @@ class ModuleUpdateRunner:
         metadata_path = self.module_path / "metadata.json"
         with open(metadata_path, "r+") as f:
             metadata = json.load(f)
-            versions = _validated_semver_list(
-                metadata.get("versions", []), metadata_path
-            )
-            metadata["versions"] = versions
-
-            _require_semver(self.info.release.version, metadata_path)
+            versions = _parse_versions(metadata.get("versions", []), metadata_path)
 
             if self.info.release.version in versions:
-                self.log.warning(
-                    f"Version {self.info.release.version} already present in metadata; skipping append",
-                    file=metadata_path,
+                raise RuntimeError(
+                    f"Version {self.info.release.version} already present in metadata"
+                    f" for module {self.info.module.name}"
                 )
-            else:
-                versions.append(self.info.release.version)
-                # Keep versions sorted in descending order using SemVer semantics
-                metadata["versions"] = sorted(
-                    versions,
-                    key=lambda v: semver.Version.parse(v),
-                    reverse=True,
-                )
-                f.seek(0)
-                f.truncate()
-                json.dump(metadata, f, indent=4)
-                f.write("\n")
+
+            # prepend new version. This way we always modify a single line.
+            # (otherwise a comma needs to be added to the previous last line)
+            metadata["versions"] = [str(self.info.release.version)] + [
+                str(v) for v in versions
+            ]
+            f.seek(0)
+            f.truncate()
+            json.dump(metadata, f, indent=4)
+            f.write("\n")
 
     def _write_files(self) -> None:
         """Write MODULE.bazel and patches to disk."""
@@ -319,20 +277,15 @@ class ModuleUpdateRunner:
             self.info.mod_file.version == self.info.release.version
             and self.info.mod_file.major_version == self.info.mod_file.comp_level
         ):
-            self.log.debug(
-                "MODULE.bazel version matches release version; no patch needed."
-            )
+            log.debug("MODULE.bazel version matches release version; no patch needed.")
             return
 
         # Build metadata strings for logging
         file_meta = f"(version={self.info.mod_file.version}, comp_level={self.info.mod_file.comp_level})"
         release_meta = f"(version={self.info.release.version}, comp_level={self.info.mod_file.major_version})"
-        self.log.info(
+        log.info(
             f"MODULE.bazel {file_meta} doesn't match release {release_meta}; creating patch"
         )
-
-        # Extract major version from release semver
-        major_version = self.info.release.version.split(".")[0]
 
         # Create patched content by replacing version
         stamped_content = re.sub(
@@ -342,13 +295,16 @@ class ModuleUpdateRunner:
             count=1,
         )
 
-        # Replace compatibility_level with major version
-        stamped_content = re.sub(
-            r"(compatibility_level\s*=\s*)(\d+)",
-            lambda m: f"{m.group(1)}{major_version}",
-            stamped_content,
-            count=1,
-        )
+        if self.info.release.version.semver:
+            major_version = self.info.release.version.semver.major
+
+            # Replace compatibility_level with major version
+            stamped_content = re.sub(
+                r"(compatibility_level\s*=\s*)(\d+)",
+                lambda m: f"{m.group(1)}{major_version}",
+                stamped_content,
+                count=1,
+            )
 
         # Generate unified diff patch
         patch_text = "".join(

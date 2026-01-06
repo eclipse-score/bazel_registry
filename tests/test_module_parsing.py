@@ -20,7 +20,7 @@ class TestModuleFileParsing:
     def test_parse_complete_module_file(self):
         content = 'module(name="score_demo", version="1.2.3", compatibility_level=2)'
         parsed = parse_MODULE_file_content(content)
-        assert parsed.version == "1.2.3"
+        assert str(parsed.version) == "1.2.3"
         assert parsed.comp_level == 2
         assert parsed.major_version == 1  # major version is first digit of version
 

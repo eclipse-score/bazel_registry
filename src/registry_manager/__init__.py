@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .github_wrapper import GitHubReleaseInfo
+from .version import Version
 
 
 @dataclass
@@ -22,25 +23,33 @@ class BazelModuleInfo:
     path: Path
     name: str
     org_and_repo: str
-    versions: list[str]
+    # Sorted list of versions, highest (latest) first
+    versions: list[Version]
     periodic_pull: bool
     obsolete: bool
 
     @property
-    def latest_version(self) -> str | None:
-        """Return the latest semantic version, or None if no versions exist."""
-        return self.versions[0] if self.versions else None
+    def latest_version(self) -> Version:
+        # A module must always have at least one version,
+        # otherwise it simply does not make sense.
+        if not self.versions:
+            raise ValueError("No versions available")
+        return self.versions[0]
 
 
 @dataclass
 class ModuleFileContent:
     content: str
     comp_level: int | None = None
-    version: str | None = None
+    version: Version | None = None
 
     @property
     def major_version(self) -> int | None:
-        return int(self.version.split(".")[0]) if self.version else None
+        """Returns None if the version is empty or not a valid semantic version."""
+        if self.version and self.version.semver:
+            return self.version.semver.major
+        else:
+            return None
 
 
 @dataclass
