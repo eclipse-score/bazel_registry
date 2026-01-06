@@ -1,0 +1,18 @@
+{
+    "homepage": "https://github.com/eclipse-score/toolchains_rust",
+    "maintainers": [
+        {
+            "name": "Dan Calavrezo",
+            "email": "danc_ext@qorix.ai",
+            "github": "dcalavrezo-qorix",
+            "github_user_id": 195309321
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/toolchains_rust"
+    ],
+    "versions": [
+        "0.2.0"
+    ],
+    "yanked_versions": {}
+}
