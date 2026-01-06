@@ -33,6 +33,7 @@ class GitHubReleaseInfo:
     def tarball(self):
         return f"https://github.com/{self.org_and_repo}/archive/refs/tags/{self.tag_name}.tar.gz"
 
+
 class GithubWrapper:
     """Wrapper around GitHub API for fetching release information and module files."""
 

@@ -31,17 +31,17 @@ class TestUpdatePlanning:
         # Module has version 1.0.0
         module_current_version = "1.0.0"
         module = make_module_info(versions=[module_current_version])
-        
+
         # New release is version 2.0.0 (higher than current)
         new_release_version = "2.0.0"
         expected_comp_level = 2
 
         gh = MagicMock()
-        gh.get_latest_release.return_value = make_release_info(version=new_release_version)
-        # Mock module file content from the release
-        gh.try_get_module_file_content.return_value = (
-            f'module(version="{new_release_version}", compatibility_level={expected_comp_level})'
+        gh.get_latest_release.return_value = make_release_info(
+            version=new_release_version
         )
+        # Mock module file content from the release
+        gh.try_get_module_file_content.return_value = f'module(version="{new_release_version}", compatibility_level={expected_comp_level})'
 
         plan = plan_module_updates(Namespace(modules=[]), gh, [module])
 

@@ -57,9 +57,7 @@ class Logger:
                 "error": "error",
                 "success": "notice",
             }
-            print(
-                f"::{github_prefix.get(prefix, prefix)}{location}::{self.name} {msg}"
-            )
+            print(f"::{github_prefix.get(prefix, prefix)}{location}::{self.name} {msg}")
             return
 
         pretty_prefix = {

@@ -70,7 +70,7 @@ def _validated_semver_list(raw_versions: object, metadata_path: Path) -> list[st
             semver.Version.parse(v)
         except ValueError:
             invalid_versions.append(v)
-    
+
     if invalid_versions:
         log.fatal(
             f"{metadata_path} contains non-semver versions: {invalid_versions}",
@@ -258,7 +258,9 @@ class ModuleUpdateRunner:
         metadata_path = self.module_path / "metadata.json"
         with open(metadata_path, "r+") as f:
             metadata = json.load(f)
-            versions = _validated_semver_list(metadata.get("versions", []), metadata_path)
+            versions = _validated_semver_list(
+                metadata.get("versions", []), metadata_path
+            )
             metadata["versions"] = versions
 
             _require_semver(self.info.release.version, metadata_path)
@@ -331,7 +333,7 @@ class ModuleUpdateRunner:
 
         # Extract major version from release semver
         major_version = self.info.release.version.split(".")[0]
-        
+
         # Create patched content by replacing version
         stamped_content = re.sub(
             r"(version\s*=\s*['\"])([^'\"]+)(['\"])",
@@ -339,7 +341,7 @@ class ModuleUpdateRunner:
             self.info.mod_file.content,
             count=1,
         )
-        
+
         # Replace compatibility_level with major version
         stamped_content = re.sub(
             r"(compatibility_level\s*=\s*)(\d+)",

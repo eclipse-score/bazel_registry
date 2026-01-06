@@ -31,16 +31,16 @@ class TestFileGeneration:
         basic_registry_setup: Callable[..., None],
     ) -> None:
         from unittest.mock import patch
-        
+
         basic_registry_setup()
         os.chdir("/")
-        
+
         # Setup: module score_demo with org/repo, release version 1.0.0
         version = "1.0.0"
         org_repo = "org/repo"
         update_info = make_update_info(version=version)
         # Note: make_update_info defaults to org/repo, but we're being explicit here
-        
+
         # Mock sha256 calculation to return a test value
         mock_sha256 = "sha256-test"
         runner = ModuleUpdateRunner(update_info)
@@ -54,7 +54,10 @@ class TestFileGeneration:
         source_file = Path("/modules/score_demo/1.0.0/source.json")
         assert source_file.exists()
         source = json.loads(source_file.read_text())
-        assert source["url"] == f"https://github.com/{org_repo}/archive/refs/tags/v{version}.tar.gz"
+        assert (
+            source["url"]
+            == f"https://github.com/{org_repo}/archive/refs/tags/v{version}.tar.gz"
+        )
         assert source["integrity"] == mock_sha256
 
     def test_generates_module_file(
@@ -63,15 +66,15 @@ class TestFileGeneration:
         basic_registry_setup: Callable[..., None],
     ) -> None:
         from unittest.mock import patch
-        
+
         basic_registry_setup()
         os.chdir("/")
-        
+
         # When version and comp_level match, no patching is needed
         version = "1.0.0"
         comp_level = 1  # Defaults to first digit of version
         update_info = make_update_info(version=version)
-        
+
         runner = ModuleUpdateRunner(update_info)
         with patch(
             "src.registry_manager.bazel_wrapper.sha256_from_url",
@@ -111,19 +114,19 @@ class TestFileGeneration:
     ) -> None:
         """Test patches for MODULE.bazel version/comp_level mismatches."""
         from unittest.mock import patch
-        
+
         basic_registry_setup()
         os.chdir("/")
-        
+
         # Setup: GitHub release is at release_version, but the
         # MODULE.bazel file in that release declares module_version
         # with module_comp_level
         update_info = make_update_info(
-            version=release_version,          # What GitHub says
-            module_version=module_version,     # What MODULE.bazel says
-            comp_level=module_comp_level,      # What MODULE.bazel has
+            version=release_version,  # What GitHub says
+            module_version=module_version,  # What MODULE.bazel says
+            comp_level=module_comp_level,  # What MODULE.bazel has
         )
-        
+
         runner = ModuleUpdateRunner(update_info)
         with patch(
             "src.registry_manager.bazel_wrapper.sha256_from_url",
@@ -149,19 +152,19 @@ class TestFileGeneration:
         basic_registry_setup: Callable[..., None],
     ) -> None:
         from unittest.mock import patch
-        
+
         basic_registry_setup()
         os.chdir("/")
-        
+
         # When release version matches MODULE.bazel version and
         # comp_level is correct, no patch should be generated
         version = "1.0.0"
         update_info = make_update_info(
             version=version,
             module_version=version,  # Same as release
-            comp_level=1,            # Matches major version
+            comp_level=1,  # Matches major version
         )
-        
+
         runner = ModuleUpdateRunner(update_info)
         with patch(
             "src.registry_manager.bazel_wrapper.sha256_from_url",
@@ -181,7 +184,7 @@ class TestFileGeneration:
     ) -> None:
         """Test that metadata.json is not rewritten when version already exists."""
         from unittest.mock import patch
-        
+
         # Setup: metadata.json already contains version 1.0.0
         existing_version = "1.0.0"
         basic_registry_setup(versions=[existing_version])
@@ -195,7 +198,7 @@ class TestFileGeneration:
             version=existing_version,
             existing_versions=[existing_version],
         )
-        
+
         runner = ModuleUpdateRunner(update_info)
         with patch(
             "src.registry_manager.bazel_wrapper.sha256_from_url",
@@ -218,7 +221,7 @@ class TestFileGeneration:
         basic_registry_setup: Callable[..., None],
     ) -> None:
         from unittest.mock import patch
-        
+
         # Setup: metadata.json has versions 1.0.9 and 1.0.10
         # Note: 1.0.10 > 1.0.9 in semver (not lexical where "10" < "9")
         existing = ["1.0.9", "1.0.10"]
@@ -231,7 +234,7 @@ class TestFileGeneration:
             version=new_version,
             existing_versions=existing,
         )
-        
+
         runner = ModuleUpdateRunner(update_info)
         with patch(
             "src.registry_manager.bazel_wrapper.sha256_from_url",
@@ -243,4 +246,3 @@ class TestFileGeneration:
         metadata_path = Path("/modules/score_demo/metadata.json")
         metadata = json.loads(metadata_path.read_text())
         assert metadata["versions"] == ["1.0.11", "1.0.10", "1.0.9"]
-

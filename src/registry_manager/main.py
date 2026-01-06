@@ -28,6 +28,7 @@ from .github_wrapper import GithubWrapper
 
 log = Logger(__name__)
 
+
 def parse_args(args: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Check and update modules to latest releases."
