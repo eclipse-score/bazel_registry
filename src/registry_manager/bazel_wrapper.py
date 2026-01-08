@@ -201,13 +201,14 @@ class ModuleUpdateRunner:
         """Generate source.json with integrity hash and patch metadata."""
         repo = self.info.module.org_and_repo.split("/")[-1]
         integrity = sha256_from_url(self.info.release.tarball)
-        source_dict: dict[str, str | dict[str, str]] = {
+        source_dict: dict[str, object] = {
             "integrity": integrity,
             "strip_prefix": f"{repo}-{self.info.release.version}",
             "url": self.info.release.tarball,
         }
 
         if self.patches:
+            source_dict["patch_strip"] = 1
             source_dict["patches"] = {
                 patch_name: sha256_from_string(patch_text)
                 for patch_name, patch_text in self.patches.items()
