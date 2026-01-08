@@ -1,0 +1,11 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -13,7 +13,7 @@
+ 
+ module(
+     name = "score_docs_as_code",
+-    version = "2.3.0",
++    version = "2.3.1-test",
+     compatibility_level = 2,
+ )
+ 
