@@ -142,6 +142,13 @@ class TestFileGeneration:
         assert f'version="{release_version}"' in patch_content
         assert f"compatibility_level={expected_comp_level}" in patch_content
 
+        # MODULE.bazel file should reflect the patched version/comp_level, not
+        # the original ones!
+        mod = Path(f"/modules/score_demo/{release_version}/MODULE.bazel").read_text()
+        assert release_version in mod
+        if module_version != release_version:
+            assert module_version not in mod
+
     def test_no_patch_when_versions_match(
         self,
         basic_registry_setup: Callable[..., None],

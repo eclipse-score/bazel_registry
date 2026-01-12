@@ -193,9 +193,9 @@ class ModuleUpdateRunner:
         - source.json with integrity hash and patch metadata
         """
         self._add_version_to_metadata()
-        self._create_patch_for_module_version_if_mismatch()
+        patched_module_file = self._create_patch_for_module_version_if_mismatch()
         self._generate_source_json()
-        self._write_files()
+        self._write_files(patched_module_file)
 
     def _generate_source_json(self) -> None:
         """Generate source.json with integrity hash and patch metadata."""
@@ -242,14 +242,22 @@ class ModuleUpdateRunner:
             json.dump(metadata, f, indent=4)
             f.write("\n")
 
-    def _write_files(self) -> None:
-        """Write MODULE.bazel and patches to disk."""
+    def _write_files(self, patched_module_file: str | None) -> None:
+        """
+        Write MODULE.bazel and patches to disk.
+        
+        Note: if patched_module_file is provided, it is written as MODULE.bazel;
+        otherwise, the original module file content is used.
+        """
         if not self.info.mod_file:
             raise ValueError("Module file content not available")
 
         self.module_version_path.mkdir(parents=True, exist_ok=True)
         with open(self.module_version_path / "MODULE.bazel", "w") as f:
-            f.write(self.info.mod_file.content)
+            if patched_module_file:
+                f.write(patched_module_file)
+            else:
+                f.write(self.info.mod_file.content)
 
         patches_dir = self.module_version_path / "patches"
         patches_dir.mkdir(exist_ok=True)
@@ -257,7 +265,7 @@ class ModuleUpdateRunner:
             with open(patches_dir / patch_name, "w") as pf:
                 pf.write(patch_text)
 
-    def _create_patch_for_module_version_if_mismatch(self) -> None:
+    def _create_patch_for_module_version_if_mismatch(self) -> str | None:
         """Create a patch if MODULE.bazel version doesn't match release version.
 
         If the downloaded MODULE.bazel declares a different version or
@@ -271,7 +279,7 @@ class ModuleUpdateRunner:
         module(real_module)
         """
         if not self.info.mod_file:
-            return
+            raise ValueError("Module file content not available")
 
         # Check if no patch is needed
         if (
@@ -279,7 +287,7 @@ class ModuleUpdateRunner:
             and self.info.mod_file.major_version == self.info.mod_file.comp_level
         ):
             log.debug("MODULE.bazel version matches release version; no patch needed.")
-            return
+            return None  # No patch needed
 
         # Build metadata strings for logging
         file_meta = f"(version={self.info.mod_file.version}, comp_level={self.info.mod_file.comp_level})"
@@ -319,3 +327,6 @@ class ModuleUpdateRunner:
         )
 
         self.patches["module_dot_bazel_version.patch"] = patch_text
+
+        # Bazel registry must contain the patched content
+        return stamped_content

@@ -56,4 +56,6 @@ class ModuleFileContent:
 class ModuleUpdateInfo:
     module: BazelModuleInfo
     release: GitHubReleaseInfo
+
+    # Original module file content
     mod_file: ModuleFileContent
