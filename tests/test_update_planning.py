@@ -74,12 +74,14 @@ def test_plan_handles_missing_module_file():
     # Should not plan update if MODULE.bazel file is missing
     assert len(plan) == 0
 
+
 def _get_warnings(capsys: pytest.CaptureFixture[str]) -> list[str]:
     return [
         line
         for line in capsys.readouterr().out.splitlines()
         if "warning" in line.lower()
     ]
+
 
 def test_plan_skips_non_semver_release(
     capsys: pytest.CaptureFixture[str],
@@ -102,7 +104,7 @@ def test_plan_skips_non_semver_release(
     assert len(plan) == 0
 
     # Verify a warning was printed
-    warning_messages  = _get_warnings(capsys)
+    warning_messages = _get_warnings(capsys)
     msg = [m for m in warning_messages if new_release_version in m]
     assert len(msg) >= 1
     assert "is not a valid semantic version" in msg[0]

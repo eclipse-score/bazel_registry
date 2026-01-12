@@ -245,7 +245,7 @@ class ModuleUpdateRunner:
     def _write_files(self, patched_module_file: str | None) -> None:
         """
         Write MODULE.bazel and patches to disk.
-        
+
         Note: if patched_module_file is provided, it is written as MODULE.bazel;
         otherwise, the original module file content is used.
         """
