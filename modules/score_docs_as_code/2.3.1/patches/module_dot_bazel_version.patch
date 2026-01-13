@@ -1,0 +1,11 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -15,7 +15,7 @@
+ # Here we always keep "0.0.0" to indicate that.
+ module(
+     name = "score_docs_as_code",
+-    version = "0.0.0",
++    version = "2.3.1",
+ )
+ 
+ ###############################################################################

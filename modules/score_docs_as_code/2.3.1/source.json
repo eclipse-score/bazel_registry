@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-+KOLpWbeftxpCb4o07lgQC/tR15JiGv1nT+fE6oWPiU=",
+    "strip_prefix": "docs-as-code-2.3.1",
+    "url": "https://github.com/eclipse-score/docs-as-code/archive/refs/tags/v2.3.1.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-fgjsAdL7f7fMSuz3XZE1XLUPY5+32a5q9WKVAea1ryM="
+    }
+}
