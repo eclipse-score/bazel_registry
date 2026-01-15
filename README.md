@@ -1,14 +1,65 @@
-# Score Bazel modules registry
+# S-Core Bazel Registry
 
-## Usage
-Add the following lines to your .bazelrc:
+This repository hosts the S-Core Bazel module registry. It provides versioned
+Bazel modules for use with Bzlmod and automates tracking of upstream module
+releases.
+
+The registry does not host module source code. It only contains metadata and
+release information.
+
+
+## Module Maintainers: Adding and Updating Modules
+
+### Adding a New Module
+
+To add a new module:
+
+1. Create `modules/<module_name>/metadata.json`, using existing metadata files as reference. Set `periodic-pull: true` in the metadata file to enable automatic release tracking.
+2. Open and merge a pull request
+3. After merging, add the first release using the release process below
+
+
+### Adding a New Release
+
+Module releases are handled automatically if `periodic-pull: true` is set in the
+module's metadata file.
+
+A scheduled GitHub Actions workflow:
+- runs every 30 minutes
+- checks upstream GitHub releases
+- opens a pull request when a new release is detected
+
+If `periodic-pull: true` is NOT set, releases must be added manually:
+trigger the "Check for Module Updates" workflow manually via GitHub Actions
+and provide the module name as input.
+
+### Urgent Releases
+
+If a release is needed immediately, trigger the "Check for Module Updates"
+workflow manually via GitHub Actions.
+
+
+## Consumers: Using the Registry
+
+Add the S-Core registry to your Bazel configuration. It is typically used
+alongside the Bazel Central Registry (BCR).
+
+Add the registry to your `.bazelrc`:
 ```
 common --registry=https://raw.githubusercontent.com/eclipse-score/bazel_registry/main/
 common --registry=https://bcr.bazel.build
 ```
 
-## Development Environment
+## Registry Developers
 
+This section is only relevant if you are working on the registry tooling.
+
+
+### Development Environment
+
+The registry tooling is implemented in Python.
+
+Setup steps:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -18,23 +69,18 @@ pip install -r requirements.txt
 python -m src.registry_manager.main
 ```
 
-## Development: repository structure
-The repository is structured as follows:
-* `modules/`: Contains the actual bazel modules in the registry.
-* `src/`: Contains all the scripts to manage the registry.
-* `tests/`: Contains the tests for the registry management scripts.
-* `.github/`: Contains the GitHub workflows for automation.
+### Repository Structure
 
-## Release automation
+- `modules/` - Bazel module metadata and versioned module entries
+- `src/` - Registry management scripts
+- `tests/` - Test suite for the registry scripts
+- `.github/` - GitHub Actions workflows and scheduled automation
 
-The release automation workflow will run hourly and check for new releases of modules in the bazel registry.
-If a new release is found, it will create a PR with the updated module information.
 
-In case an urgent release of a module is needed, run the  `check_new_releases` workflow manually.
+## Questions and Contributions
 
-## Manual release of a module
-To manually update a module which is not marked for automatic updates, run the following command, e.g., to update the `communication` module:
+Please use GitHub Issues and pull requests for questions, bug reports, and
+improvements. You can also reach us via #score-infrastructure on the S-Core Slack.
 
-```bash
-python -m src.registry_manager.main score_communication
-```
+Keep issues scoped to registry behavior, automation, and metadata correctness.
+Module-specific issues should generally be reported upstream.
