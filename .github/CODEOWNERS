@@ -7,13 +7,5 @@
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # As we cannot use groups yet, we list all members explicitly.
-
-# @AlexanderLanin @MaximilianSoerenPollak @dcalavrezo-qorix @nradakovic
-
-# @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-
-# Default is @infrastructure-maintainers:
-* @AlexanderLanin @MaximilianSoerenPollak @dcalavrezo-qorix @nradakovic @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
-
-# CODEOWNERS are managed by @automotive-score-technical-leads:
-.github/CODEOWNERS @antonkri @FScholPer @qor-lb @johannes-esr @markert-r
+# @infrastructure-maintainers:
+* @AlexanderLanin @MaximilianSoerenPollak @dcalavrezo-qorix @nradakovic
