@@ -1,0 +1,33 @@
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+# As problems are rare, we group all areas into "all-in-one" PRs; Except for major updates.
+
+version: 2
+
+updates:
+  # We use GitHub Actions for CI/CD, so we can update those dependencies via dependabot.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      all-in-one:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Since this repo does not use bazel, we can also update python dependencies via dependabot.
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      all-in-one:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
