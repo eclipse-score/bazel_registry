@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-Vc+hDMu+xpc2ZB+jyenvreNie5B6x1nYmSBjORfo9iQ=",
+    "strip_prefix": "baselibs_rust-0.0.2",
+    "url": "https://github.com/eclipse-score/baselibs_rust/archive/refs/tags/v0.0.2.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-kkEVPFqKX+cIbVy3oC7LrOi0DJ+1xu/8Sk3mSAamb/A="
+    }
+}
