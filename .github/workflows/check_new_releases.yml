@@ -85,7 +85,7 @@ jobs:
           } | tee /tmp/output.log
 
       - name: 📤 Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           title: Update modules
           author: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
