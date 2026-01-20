@@ -28,7 +28,7 @@ pluggy==1.6.0
     # via pytest
 pycparser==2.22
     # via cffi
-pyfakefs==5.8.0
+pyfakefs==6.0.0
     # via -r requirements.in
 pygithub==2.6.1
     # via -r requirements.in
