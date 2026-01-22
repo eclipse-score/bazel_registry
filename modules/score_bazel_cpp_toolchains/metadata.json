@@ -1,5 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/bazel_cpp_toolchains",
+    "periodic-pull": true,
     "maintainers": [
         {
             "name": "Nikola Radakovic",
@@ -12,7 +13,8 @@
         "github:eclipse-score/bazel_cpp_toolchains"
     ],
     "versions": [
-        "0.1.0"
+        "0.1.0",
+        "0.2.0"
     ],
     "yanked_versions": {}
 }
