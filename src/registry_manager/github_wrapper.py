@@ -82,20 +82,20 @@ class GithubWrapper:
             return None
 
     def try_get_module_file_content(
-        self, org_and_repo: str, version: str
+        self, org_and_repo: str, git_tag: str
     ) -> str | None:
         """Fetch MODULE.bazel file content from a specific release.
 
         Caches results to avoid redundant API calls.
         Returns None if the file doesn't exist (404) or on error.
         """
-        cache_key = (org_and_repo, version)
+        cache_key = (org_and_repo, git_tag)
         if cache_key in self._module_file_cache:
             return self._module_file_cache[cache_key]
 
         try:
             repo = self.gh.get_repo(org_and_repo)
-            content = repo.get_contents("MODULE.bazel", ref=f"v{version}")
+            content = repo.get_contents("MODULE.bazel", ref=git_tag)
         except github.GithubException as e:
             if e.status == 404:
                 self._module_file_cache[cache_key] = None
@@ -103,7 +103,7 @@ class GithubWrapper:
             raise
         except Exception as e:
             log.warning(
-                f"Error fetching MODULE.bazel for {org_and_repo}@{version}: {e}"
+                f"Error fetching MODULE.bazel for {org_and_repo}@{git_tag}: {e}"
             )
             self._module_file_cache[cache_key] = None
             return None
@@ -119,7 +119,7 @@ class GithubWrapper:
             return result
         except Exception as e:
             log.warning(
-                f"Error decoding MODULE.bazel for {org_and_repo}@{version}: {e}"
+                f"Error decoding MODULE.bazel for {org_and_repo}@{git_tag}: {e}"
             )
             self._module_file_cache[cache_key] = None
             return None

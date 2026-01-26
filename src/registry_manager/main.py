@@ -123,6 +123,11 @@ def plan_module_updates(
                         mod_file=module_file_content,
                     )
                 )
+            else:
+                log.warning(
+                    f"Could not retrieve MODULE.bazel for "
+                    f"{module.name} at tag {latest_release.tag_name}; skipping."
+                )
         else:
             log.info(f"Module {module.name} is up to date.")
 

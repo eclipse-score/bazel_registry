@@ -57,6 +57,9 @@ def read_modules(module_names: list[str] | None) -> list[BazelModuleInfo]:
     if module_names:
         for module_name in module_names:
             metadata_path = Path("modules") / module_name / "metadata.json"
+            if not metadata_path.parent.is_dir():
+                log.fatal(f"Module '{module_name}' does not exist in registry.")
+
             if m := try_parse_metadata_json(metadata_path):
                 if not m.obsolete:
                     modules.append(m)
