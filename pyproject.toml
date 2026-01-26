@@ -1,27 +1,43 @@
-# This file is at the root level, as it applies to all Python code,
-# that's also the place where most IDEs and tools look for it.
-
-# Note that it will only work properly after executing:
-# > bazel run //tools:ide_support
-
-[tool.pyright]
-extends = "bazel-bin/tools/ide_support.runfiles/_main/external/score_python_basics~/pyproject.toml"
-
-exclude = [
-    "**/__pycache__",
-    "**/.*",
-    "**/bazel-*",
-]
 
 [tool.ruff]
-extend = "bazel-bin/tools/ide_support.runfiles/_main/external/score_python_basics~/pyproject.toml"
+src = ["src", "tests"]
+target-version = "py312"
 
-lint.ignore = [
-    # Unnecessary `else` after `return` statement.
-    # There is no clear consensus in the development community whether it's good
-    # or bad practice to use `else` after `return`. Some people prefer to use it for
-    # clarity and readability. So we'll allow it.
-    "RET505"
+[tool.ruff.lint]
+select = [
+  "E",    # pycodestyle errors
+  "W",    # pycodestyle warnings
+  "F",    # pyflakes
+  "I",    # isort
+  "N",    # pep8-naming
+  "UP",   # pyupgrade
+  "B",    # flake8-bugbear
+  "C4",   # flake8-comprehensions
+  "C90",  # mccabe (complexity checks)
+  "SIM",  # flake8-simplify
+  "TCH",  # flake8-type-checking
+  "TID",  # flake8-tidy-imports
+  "RUF",  # ruff-specific rules
+  "PT",   # flake8-pytest-style
+  "PIE",  # flake8-pie
+  "T20",  # flake8-print
+  "RSE",  # flake8-raise
+  "RET",  # flake8-return
+]
+ignore = [
+  "E501",   # line too long (handled by formatter)
+  "T201",   # allow print() globally for CLI friendliness
+  "RET505", # opinionated decision: allow else after if-return for readability
+]
+
+
+[tool.ruff.lint.isort]
+known-first-party = ["registry_manager"]
+combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  "S101",  # assert used
 ]
 
 [tool.pytest.ini_options]
@@ -36,7 +52,39 @@ addopts = [
 [tool.coverage.run]
 source = ["src"]
 branch = true
+omit = [
+  "tests/*",
+  "tests/**",
+]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
+skip_empty = true
+
+[tool.pyright]
+typeCheckingMode = "standard"
+
+# Warn if function parameters lack type annotations
+reportMissingParameterType = "warning"
+
+# Warn if generic types (e.g. List) are missing type args
+reportMissingTypeArgument = "warning"
+
+# Warn when using members marked as private (e.g. _log)
+reportPrivateUsage = "warning"
+
+# Warn when variable type can't be inferred or is 'Any'
+reportUnknownVariableType = "warning"
+
+# Warn about declared but unused variables
+reportUnusedVariable = "warning"
+
+exclude = [
+  "**/__pycache__",
+  "**/.*",
+  "**/bazel-*",
+  ".venv*/**",
+  "build",
+  "dist"
+]

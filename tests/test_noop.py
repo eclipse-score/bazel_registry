@@ -17,7 +17,6 @@ from contextlib import suppress
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from src.registry_manager.main import main
 
 

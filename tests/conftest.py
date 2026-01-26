@@ -17,7 +17,6 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-
 from src.registry_manager import BazelModuleInfo, ModuleUpdateInfo, Version
 from src.registry_manager.bazel_wrapper import ModuleFileContent, ModuleUpdateRunner
 from src.registry_manager.gh_logging import Logger
@@ -71,7 +70,7 @@ def build_fake_filesystem(fs: Any):
 
 
 @pytest.fixture
-def basic_registry_setup(build_fake_filesystem):
+def basic_registry_setup(build_fake_filesystem):  # pyright: ignore[reportMissingParameterType]
     """Setup a basic registry with score_demo module."""
 
     def _setup(versions: list[str] | None = None) -> None:
@@ -174,10 +173,10 @@ def run_file_generation(
 
 
 @pytest.fixture
-def setup_module_metadata(build_fake_filesystem):
+def setup_module_metadata(build_fake_filesystem):  # pyright: ignore[reportMissingParameterType]
     """Setup module metadata files for testing module reading."""
 
-    def _setup(modules_config: dict[str, dict]) -> None:
+    def _setup(modules_config: dict[str, dict[str, object]]) -> None:
         """
         Args:
             modules_config: Dict mapping module names to their metadata config.

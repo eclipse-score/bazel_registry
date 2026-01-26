@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "detachhead.basedpyright",
+    "ryanluker.vscode-coverage-gutters",
+  ],
+  "unwantedRecommendations": [
+    "ms-python.vscode-pylance"
+  ]
+}

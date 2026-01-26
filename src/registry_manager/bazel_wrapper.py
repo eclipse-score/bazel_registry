@@ -121,7 +121,7 @@ def try_parse_metadata_json(metadata_json: Path) -> BazelModuleInfo | None:
     )
 
 
-def parse_MODULE_file_content(content: str) -> ModuleFileContent:
+def parse_MODULE_file_content(content: str) -> ModuleFileContent:  # noqa: N802
     """Parse the content of a MODULE.bazel file.
 
     Extracts version and compatibility_level using regex patterns.

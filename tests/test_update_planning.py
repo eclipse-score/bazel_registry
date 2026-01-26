@@ -15,8 +15,8 @@ from argparse import Namespace
 from unittest.mock import MagicMock
 
 import pytest
-
 from src.registry_manager.main import plan_module_updates
+
 from tests.conftest import make_module_info, make_release_info
 
 

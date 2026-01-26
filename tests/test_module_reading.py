@@ -17,12 +17,13 @@ from collections.abc import Callable
 from src.registry_manager.bazel_wrapper import read_modules
 from src.registry_manager.version import Version
 
+SetupModuleMetadata = Callable[[dict[str, dict[str, object]]], None]
 
 class TestModuleReading:
     """Test reading and filtering modules."""
 
     def test_read_specific_modules_by_name(
-        self, setup_module_metadata: Callable[[dict], None]
+        self, setup_module_metadata: SetupModuleMetadata
     ) -> None:
         module_name = "score_alpha"
         module_repo = "github:org/alpha"
@@ -43,7 +44,7 @@ class TestModuleReading:
         assert modules[0].name == module_name
 
     def test_filter_out_obsolete_modules(
-        self, setup_module_metadata: Callable[[dict], None]
+        self, setup_module_metadata: SetupModuleMetadata
     ) -> None:
         active_module = "score_active"
         obsolete_module = "score_old"
@@ -68,7 +69,7 @@ class TestModuleReading:
         assert obsolete_module not in names
 
     def test_filter_out_non_github_modules(
-        self, setup_module_metadata: Callable[[dict], None]
+        self, setup_module_metadata: SetupModuleMetadata
     ) -> None:
         github_module = "score_github"
         gitlab_module = "score_gitlab"
@@ -91,7 +92,7 @@ class TestModuleReading:
         assert gitlab_module not in names
 
     def test_versions_sorted_semver_desc(
-        self, setup_module_metadata: Callable[[dict], None]
+        self, setup_module_metadata: SetupModuleMetadata
     ) -> None:
         module_name = "score_semver"
         # Versions in unsorted order
@@ -115,7 +116,7 @@ class TestModuleReading:
         assert modules[0].latest_version == expected_latest
 
     def test_invalid_versions_still_work(
-        self, setup_module_metadata: Callable[[dict], None]
+        self, setup_module_metadata: SetupModuleMetadata
     ) -> None:
         # These versions should cause validation to fail
         invalid_versions = ["1.0", "not-a-version"]

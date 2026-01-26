@@ -28,5 +28,8 @@ jobs:
       - name: 🛠️ Setup Python Dependencies
         run: pip install -r requirements.txt
 
+      - name: 🧩 Lint Codebase
+        run: ruff check
+
       - name: 🧩 Run pytest
         run: python -m pytest tests
