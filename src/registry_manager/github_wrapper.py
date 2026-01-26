@@ -85,41 +85,52 @@ class GithubWrapper:
         self, org_and_repo: str, version: str
     ) -> str | None:
         """Fetch MODULE.bazel file content from a specific release.
-
+    
         Caches results to avoid redundant API calls.
         Returns None if the file doesn't exist (404) or on error.
         """
         cache_key = (org_and_repo, version)
         if cache_key in self._module_file_cache:
             return self._module_file_cache[cache_key]
-
+    
         try:
             repo = self.gh.get_repo(org_and_repo)
-            content = repo.get_contents("MODULE.bazel", ref=f"v{version}")
-        except github.GithubException as e:
-            if e.status == 404:
-                self._module_file_cache[cache_key] = None
-                return None
-            raise
         except Exception as e:
-            log.warning(
-                f"Error fetching MODULE.bazel for {org_and_repo}@{version}: {e}"
-            )
+            log.warning(f"Error accessing repo {org_and_repo}: {e}")
             self._module_file_cache[cache_key] = None
             return None
+    
+        # Try both tag naming conventions:
+        #   0.4.0   (some repos)
+        #   v0.4.0  (very common )
+        ref_candidates = [version, f"v{version}"]
+    
+        for ref in ref_candidates:
+            try:
+                content = repo.get_contents("MODULE.bazel", ref=ref)
+    
+                if isinstance(content, list):
+                    log.warning(
+                        f"Unexpected: MODULE.bazel in {org_and_repo}@{ref} is a directory"
+                    )
+                    continue
+    
+                result = content.decoded_content.decode("utf-8")
+                self._module_file_cache[cache_key] = result
+                return result
+    
+            except github.GithubException as e:
+                if e.status == 404:
+                    # Try next ref candidate
+                    continue
+                raise
+            except Exception as e:
+                log.warning(
+                    f"Error fetching MODULE.bazel for {org_and_repo}@{ref}: {e}"
+                )
+                break
+    
+        # If we get here, neither ref worked
+        self._module_file_cache[cache_key] = None
+        return None
 
-        if isinstance(content, list):
-            log.warning(f"Unexpected: MODULE.bazel in {org_and_repo} is a directory")
-            self._module_file_cache[cache_key] = None
-            return None
-
-        try:
-            result = content.decoded_content.decode("utf-8")
-            self._module_file_cache[cache_key] = result
-            return result
-        except Exception as e:
-            log.warning(
-                f"Error decoding MODULE.bazel for {org_and_repo}@{version}: {e}"
-            )
-            self._module_file_cache[cache_key] = None
-            return None
