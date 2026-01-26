@@ -111,7 +111,7 @@ def plan_module_updates(
                 f"from {module.latest_version} to {latest_release.version}"
             )
             content = gh.try_get_module_file_content(
-                module.org_and_repo, str(latest_release.version)
+                module.org_and_repo, str(latest_release.tag_name)
             )
 
             if content:
