@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-1GID9lFvyW51l2h77IfanFiy/8Wli+xYTLL2ADOZjuY=",
+    "strip_prefix": "scrample-0.1.0-test",
+    "url": "https://github.com/eclipse-score/scrample/archive/refs/tags/v0.1.0-test.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-hBY4Yj4WIldUsEld5RL/SSlOyHpYybe0vFC/jg/Mggk="
+    }
+}
