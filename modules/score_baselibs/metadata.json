@@ -1,5 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/baselibs",
+    "periodic-pull": true,
     "maintainers": [
         {
             "name": "Andrey Babanin",
