@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-dC3SIOudouuX9k8YNGRLaNNLV6z5MLk/Z2UOkcp3HPM=",
+    "strip_prefix": "score_rust_policies-0.0.4",
+    "url": "https://github.com/eclipse-score/score_rust_policies/archive/refs/tags/0.0.4.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-qu4pNI4dh5Itz4po4KrTGUp5PKeg4iM84JMKcM17QKs="
+    }
+}
