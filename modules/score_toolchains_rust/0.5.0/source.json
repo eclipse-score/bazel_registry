@@ -1,0 +1,5 @@
+{
+    "integrity": "sha256-EaC+D1Sd/F2QHIQo1k/TMmitaYk6Nx1PG8Fwdub95Fk=",
+    "strip_prefix": "toolchains_rust-0.5.0",
+    "url": "https://github.com/eclipse-score/toolchains_rust/archive/refs/tags/v0.5.0.tar.gz"
+}

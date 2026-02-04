@@ -1,0 +1,98 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_toolchains_rust",
+    version = "0.5.0",
+    compatibility_level = 0,
+)
+
+bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "score_bazel_platforms", version = "0.0.3")
+bazel_dep(name = "rules_rust", version = "0.56.0")
+
+# Prebuilt Ferrocene Rust toolchains (QNX + Linux) from:
+# https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/tag/1.0.1
+ferrocene = use_extension(
+    "//extensions:ferrocene_toolchain_ext.bzl",
+    "ferrocene_toolchain_ext",
+)
+
+ferrocene.toolchain(
+    name = "ferrocene_x86_64_unknown_linux_gnu",
+    url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.0.1/ferrocene-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    sha256 = "4c08b41eaafd39cff66333ca4d4646a5331c780050b8b9a8447353fcd301dddc",
+    coverage_tools_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.0.1/coverage-tools-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    coverage_tools_sha256 = "497958e925bc94833ea226d68f6d5ba38bd890f571c73e230141d2923e30dd94",
+    coverage_tools_strip_prefix = "779fbed05ae9e9fe2a04137929d99cc9b3d516fd/x86_64-unknown-linux-gnu",
+    target_triple = "x86_64-unknown-linux-gnu",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    extra_rustc_flags = [
+        "-Clink-arg=-Wl,--no-as-needed",
+        "-Clink-arg=-lc++",
+        "-Clink-arg=-lm",
+        "-Clink-arg=-lc",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+ferrocene.toolchain(
+    name = "ferrocene_x86_64_pc_nto_qnx800",
+    url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.0.1/ferrocene-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-pc-nto-qnx800.tar.gz",
+    sha256 = "6daabbe20c0b06551335f83c2490326ce447759628dea04cd1c90d297c3a0bd3",
+    coverage_tools_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.0.1/coverage-tools-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    coverage_tools_sha256 = "497958e925bc94833ea226d68f6d5ba38bd890f571c73e230141d2923e30dd94",
+    coverage_tools_strip_prefix = "779fbed05ae9e9fe2a04137929d99cc9b3d516fd/x86_64-unknown-linux-gnu",
+    target_triple = "x86_64-pc-nto-qnx800",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    extra_rustc_flags = [
+        "-Clink-arg=-Wl,--no-as-needed",
+        "-Clink-arg=-lc++",
+        "-Clink-arg=-lm",
+        "-Clink-arg=-lc",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:qnx",
+    ],
+)
+
+ferrocene.toolchain(
+    name = "ferrocene_aarch64_unknown_nto_qnx800",
+    url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.0.1/ferrocene-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-aarch64-unknown-nto-qnx800.tar.gz",
+    sha256 = "563a2438324ee1c6fdcfd13fbe352bedf1cf3f0756d07bb7ba7bdca334df92bf",
+    coverage_tools_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.0.1/coverage-tools-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    coverage_tools_sha256 = "497958e925bc94833ea226d68f6d5ba38bd890f571c73e230141d2923e30dd94",
+    coverage_tools_strip_prefix = "779fbed05ae9e9fe2a04137929d99cc9b3d516fd/x86_64-unknown-linux-gnu",
+    target_triple = "aarch64-unknown-nto-qnx800",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    extra_rustc_flags = [
+        "-Clink-arg=-Wl,--no-as-needed",
+        "-Clink-arg=-lc++",
+        "-Clink-arg=-lm",
+        "-Clink-arg=-lc",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:qnx",
+    ],
+)
+
+use_repo(
+    ferrocene,
+    "ferrocene_aarch64_unknown_nto_qnx800",
+    "ferrocene_x86_64_pc_nto_qnx800",
+    "ferrocene_x86_64_unknown_linux_gnu",
+)
