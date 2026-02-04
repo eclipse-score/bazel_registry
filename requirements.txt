@@ -40,7 +40,7 @@ pytest==9.0.2
     # via -r requirements.in
 requests==2.32.4
     # via pygithub
-ruff==0.14.14
+ruff==0.15.0
     # via -r requirements.in
 semver==3.0.4
     # via -r requirements.in
