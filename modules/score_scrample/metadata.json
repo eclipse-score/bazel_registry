@@ -5,8 +5,9 @@
         "github:eclipse-score/scrample"
     ],
     "versions": [
-        "0.1.0-test",
-        "0.1.0"
+        "0.1.1",
+        "0.1.0",
+        "0.1.0-test"
     ],
     "yanked_versions": {}
 }
