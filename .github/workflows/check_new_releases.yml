@@ -78,6 +78,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -o pipefail
+          set -eu
           {
             printf "This PR updates the modules to their latest versions.\n"
             printf "Please review and merge if everything looks good.\n\n"
