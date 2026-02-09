@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-nBrqOrtTFyCoXs/Q/e+swnAzf58TquBY6V2AMYn9JVc=",
+    "strip_prefix": "toolchains_qnx-0.0.7",
+    "url": "https://github.com/eclipse-score/toolchains_qnx/archive/refs/tags/v0.0.7.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-Bujr3YVX4tEtTEeMH6cJgFpIVnCBn/FMkTjZwy1ZxSk="
+    }
+}
