@@ -29,6 +29,9 @@ class Logger:
         self.name = name
         self.warnings: list[str] = []
 
+    def clear(self) -> None:
+        self.warnings.clear()
+
     def _loc(self, file: Path | None, line: int | None) -> str:
         if file and file.is_absolute():
             file = file.relative_to(GIT_ROOT)

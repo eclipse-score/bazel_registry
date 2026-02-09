@@ -61,4 +61,6 @@ def test_all_correct(
     warning_messages = [
         line for line in captured.splitlines() if "warning" in line.lower()
     ]
-    assert len(warning_messages) == 0
+    if warning_messages:
+        print("Full log: ", captured)
+    assert warning_messages == []

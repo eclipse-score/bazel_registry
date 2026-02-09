@@ -25,6 +25,7 @@ from .bazel_wrapper import (
 )
 from .gh_logging import Logger
 from .github_wrapper import GithubWrapper
+from .version import Version
 
 log = Logger(__name__)
 
@@ -77,6 +78,69 @@ def get_token(args: argparse.Namespace) -> str | None:
             return None
 
 
+def is_release_semver_acceptable(module: BazelModuleInfo, new_version: Version) -> bool:
+    """
+    Verify that a new release version follows semantic versioning expectations.
+
+    Returns True if the new version is acceptable, False otherwise.
+
+    See tests for details on what is "acceptable".
+    """
+    if not new_version.semver:
+        log.warning(
+            f"Latest release {new_version} of "
+            f"{module.name} is not a valid semantic version."
+        )
+        # Cannot derive any semantic versioning rules.
+        # In the future we can extend non-semver handling if needed.
+        return False
+
+    # Check if the exact version already exists
+    if new_version in module.versions:
+        log.warning(
+            f"Latest release {new_version} of {module.name} "
+            f"already exists in the registry; it will be skipped."
+        )
+        return False
+
+    semver_versions = [v.semver for v in module.versions if v.semver]
+
+    # Check for backwards prerelease/build variants within the same base version
+    same_base = [
+        v
+        for v in semver_versions
+        if v.major == new_version.semver.major
+        and v.minor == new_version.semver.minor
+        and v.patch == new_version.semver.patch
+    ]
+    if same_base:
+        max_same_base = max(same_base)
+        if new_version.semver < max_same_base:
+            log.warning(
+                f"Latest release {new_version} of {module.name} "
+                f"is a backwards prerelease/build variant of {max_same_base}; it will be skipped."
+            )
+            return False
+
+    # Check for backwards patch versions within the same major.minor series
+    same_major_minor = [
+        v
+        for v in semver_versions
+        if v.major == new_version.semver.major and v.minor == new_version.semver.minor
+    ]
+
+    if same_major_minor:
+        max_patch = max(v.patch for v in same_major_minor)
+        if new_version.semver.patch < max_patch:
+            log.warning(
+                f"Latest release {new_version} of {module.name} "
+                f"is a backwards patch version (highest is *.*.{max_patch}); it will be skipped."
+            )
+            return False
+
+    return True
+
+
 def plan_module_updates(
     args: argparse.Namespace,
     gh: GithubWrapper,
@@ -97,13 +161,11 @@ def plan_module_updates(
         log.debug(f"Checking module {module.name}...")
 
         latest_release = gh.get_latest_release(module.org_and_repo)
-        if latest_release and module.latest_version != latest_release.version:
-            if not latest_release.version.semver:
-                # In the future we can extend non-semver handling if needed
-                log.warning(
-                    f"Latest release {latest_release.version} of "
-                    f"{module.name} is not a valid semantic version; skipping."
-                )
+
+        if latest_release and latest_release.version not in module.versions:
+            # TODO: this check belongs into local release workflows and not into bazel_registry.
+            if not is_release_semver_acceptable(module, latest_release.version):
+                # is_release_semver_acceptable already printed a warning
                 continue
 
             log.info(
@@ -144,6 +206,8 @@ def main(args: list[str]) -> None:
 
     Reads modules, checks for updates on GitHub, and generates update files.
     """
+    log.clear() # currently log is a global singleton. At least we need to clear it.
+
     p = parse_args(args)
     modules = read_modules(p.modules)
     gh = GithubWrapper(get_token(p))
