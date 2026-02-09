@@ -206,7 +206,7 @@ def main(args: list[str]) -> None:
 
     Reads modules, checks for updates on GitHub, and generates update files.
     """
-    log.clear() # currently log is a global singleton. At least we need to clear it.
+    log.clear()  # currently log is a global singleton. At least we need to clear it.
 
     p = parse_args(args)
     modules = read_modules(p.modules)

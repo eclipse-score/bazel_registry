@@ -19,6 +19,7 @@ from src.registry_manager.version import Version
 
 SetupModuleMetadata = Callable[[dict[str, dict[str, object]]], None]
 
+
 class TestModuleReading:
     """Test reading and filtering modules."""
 

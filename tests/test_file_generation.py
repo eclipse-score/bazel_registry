@@ -84,7 +84,12 @@ class TestFileGeneration:
         assert expected in module_file.read_text()
 
     @pytest.mark.parametrize(
-        ("release_version", "module_version", "module_comp_level", "expected_comp_level"),
+        (
+            "release_version",
+            "module_version",
+            "module_comp_level",
+            "expected_comp_level",
+        ),
         [
             # Case 1: Release is v2.0.0, but MODULE.bazel says
             # version="1.0.0". Patch needed to change version from

@@ -1,3 +1,16 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
 from pathlib import Path
 
 from src.registry_manager import BazelModuleInfo
@@ -18,9 +31,7 @@ EXAMPLE_MODULE = BazelModuleInfo(
 
 
 def verify_new_version(version: str) -> bool:
-    return is_release_semver_acceptable(
-        EXAMPLE_MODULE, Version(version)
-    )
+    return is_release_semver_acceptable(EXAMPLE_MODULE, Version(version))
 
 
 def test_bumping_patch_version():
@@ -60,19 +71,23 @@ def test_patch_of_old_release():
     # Even though 1.5.5 exists, a patch to an older minor version is acceptable
     assert verify_new_version("1.4.9")
 
+
 def test_backwards_patch_suffix():
     # As 2.0.1-alpha.5 exists, a lower prerelease suffix is not acceptable
     assert not verify_new_version("2.0.1-alpha")
     assert not verify_new_version("2.0.1-alpha.4")
+
 
 def test_forward_patch_suffix():
     # A higher prerelease suffix is acceptable
     assert verify_new_version("2.0.1-alpha.6")
     assert verify_new_version("2.0.1-beta")
 
+
 def test_prerelease_after_release():
     # A prerelease after the released version is not acceptable
     assert not verify_new_version("1.5.5-alpha")
+
 
 def test_all_bets_are_off_for_non_semver():
     assert not verify_new_version("foo")
