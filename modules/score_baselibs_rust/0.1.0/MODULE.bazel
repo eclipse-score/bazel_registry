@@ -1,0 +1,80 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_baselibs_rust",
+    version = "0.1.0",
+    compatibility_level = 0,
+)
+
+# Bazel global rules
+bazel_dep(name = "rules_python", version = "1.4.1")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_rust", version = "0.61.0")
+bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "aspect_rules_lint", version = "2.0.0")
+bazel_dep(name = "buildifier_prebuilt", version = "7.3.1")
+bazel_dep(name = "platforms", version = "1.0.0")
+
+# S-CORE process rules
+bazel_dep(name = "score_bazel_platforms", version = "0.0.4")
+bazel_dep(name = "score_docs_as_code", version = "3.0.0")
+bazel_dep(name = "score_tooling", version = "1.1.0")
+bazel_dep(name = "score_rust_policies", version = "0.0.5")
+
+bazel_dep(name = "score_process", version = "1.4.3", dev_dependency = True)
+bazel_dep(name = "score_platform", version = "0.5.2", dev_dependency = True)  # This is main score repo
+git_override(
+    module_name = "score_platform",
+    commit = "7d252e75b733b09225f1a383bb00d5d7d79fa5ae",
+    remote = "https://github.com/qorix-group/score.git",
+)
+# bazel_dep(name = "score_virtualization", version = "0.0.1", dev_dependency = True)
+
+# Toolchains and extensions
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.2.2", dev_dependency = True)
+bazel_dep(name = "score_toolchains_rust", version = "0.4.0", dev_dependency = True)
+
+# S-CORE crates
+bazel_dep(name = "score_crates", version = "0.0.6")
+
+# Extensions
+gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    name = "score_qcc_aarch64_toolchain",
+    sdp_version = "8.0.0",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(
+    gcc,
+    "score_gcc_x86_64_toolchain",
+    "score_qcc_aarch64_toolchain",
+)
+
+PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
+python.toolchain(
+    is_default = True,
+    python_version = PYTHON_VERSION,
+)
+use_repo(python)
