@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-fXCUlTw8bEBRtf9amUsC8Q4c2jU2fL7kvAKNyCcnVHg=",
+    "strip_prefix": "toolchains_rust-0.7.0",
+    "url": "https://github.com/eclipse-score/toolchains_rust/archive/refs/tags/v0.7.0.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-qpFrk+5pfURZ/3IcBf5swglfUBSefa3cxYuE6XjDixE="
+    }
+}
