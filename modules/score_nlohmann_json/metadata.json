@@ -1,0 +1,10 @@
+{
+    "homepage": "https://github.com/eclipse-score/nlohmann_json",
+    "periodic-pull": true,
+    "repository": [
+        "github:eclipse-score/nlohmann_json"
+    ],
+    "versions": [
+    ],
+    "yanked_versions": {}
+}
