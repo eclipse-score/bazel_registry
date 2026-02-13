@@ -1,0 +1,11 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -13,7 +13,7 @@
+ 
+ module(
+     name = "score_tooling",
+-    version = "0.0.0",
++    version = "1.1.2-RC",
+     compatibility_level = 1,
+ )
+ 
