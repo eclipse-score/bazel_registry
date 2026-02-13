@@ -1,0 +1,5 @@
+{
+    "integrity": "sha256-LFkV1VZqFH7/+OooHznRABrVN0EfPrQqg6JLZsFakxg=",
+    "strip_prefix": "bazel_platforms-0.1.0",
+    "url": "https://github.com/eclipse-score/bazel_platforms/archive/refs/tags/v0.1.0.tar.gz"
+}
