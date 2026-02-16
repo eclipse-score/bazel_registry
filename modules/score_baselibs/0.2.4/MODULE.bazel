@@ -1,0 +1,143 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_baselibs",
+    version = "0.2.4",
+    compatibility_level = 0,
+)
+
+## Configure the C++ toolchain
+
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.2.2", dev_dependency = True)
+
+gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_gcc_aarch64_toolchain",
+    target_cpu = "aarch64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_x86_64_toolchain",
+    sdp_version = "8.0.0",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_aarch64_toolchain",
+    sdp_version = "8.0.0",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(
+    gcc,
+    "score_gcc_aarch64_toolchain",
+    "score_gcc_x86_64_toolchain",
+    "score_qcc_aarch64_toolchain",
+    "score_qcc_x86_64_toolchain",
+)
+
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "google_benchmark", version = "1.9.5")
+bazel_dep(name = "boost.container", version = "1.87.0")
+bazel_dep(name = "boost.interprocess", version = "1.87.0")
+bazel_dep(name = "download_utils", version = "1.2.2")
+bazel_dep(name = "rules_cc", version = "0.2.16")
+
+## Custom Module Loading
+
+bazel_dep(name = "score_docs_as_code", version = "3.0.0")
+bazel_dep(name = "score_process", version = "1.4.3")
+bazel_dep(name = "score_tooling", version = "1.1.0")
+
+## Configure the python toolchain
+
+bazel_dep(name = "rules_python", version = "1.8.3")
+
+PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
+python.toolchain(
+    #configure_coverage_tool = True,
+    is_default = True,
+    python_version = PYTHON_VERSION,
+)
+
+bazel_dep(name = "aspect_rules_py", version = "1.6.3", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.0.2", dev_dependency = True)
+bazel_dep(name = "aspect_rules_lint", version = "1.5.3", dev_dependency = True)
+
+deb = use_repo_rule("@download_utils//download/deb:defs.bzl", "download_deb")
+
+deb(
+    name = "acl-deb",
+    build = "//third_party/acl:acl.BUILD",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/a/acl/libacl1-dev_2.2.52-3build1_amd64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "valgrind-deb",
+    build = "//third_party/valgrind:valgrind.BUILD",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/v/valgrind/valgrind_3.15.0-1ubuntu9.1_amd64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "libcap2-deb",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/libc/libcap2/libcap2_2.25-1.2_amd64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "libcap2-dev-deb",
+    build = "//third_party/libcap2:libcap2.BUILD",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/libc/libcap2/libcap-dev_2.25-1.2_amd64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "libseccomp2-deb",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/libs/libseccomp/libseccomp2_2.5.1-1ubuntu1~18.04.2_amd64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "libseccomp2-dev-deb",
+    build = "//third_party/libseccomp2:libseccomp2.BUILD",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/libs/libseccomp/libseccomp-dev_2.5.1-1ubuntu1~18.04.2_i386.deb"],
+    visibility = ["//visibility:public"],
+)
+
+bazel_dep(name = "nlohmann_json", version = "3.11.3")
+bazel_dep(name = "bazel_skylib", version = "1.8.2")
+
+#############################################################
+#
+# Constraint values for specifying platforms and toolchains
+#
+#############################################################
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "score_bazel_platforms", version = "0.0.4")
