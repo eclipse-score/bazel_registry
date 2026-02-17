@@ -38,9 +38,9 @@ class Logger:
 
         if for_github:
             if file and line:
-                return f"file={file},line={line}"
+                return f" file={file},line={line}"
             if file:
-                return f"file={file}"
+                return f" file={file}"
             return ""
 
         if file and line:
