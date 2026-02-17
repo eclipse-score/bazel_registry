@@ -60,6 +60,7 @@ class Logger:
         cli_prefix = {
             "debug": "DEBUG",
             "info": "INFO",
+            "important_info": "IMPORTANT_INFO",
             "warning": "WARNING",
             "error": "ERROR",
             "success": "SUCCESS",
