@@ -32,11 +32,11 @@ class Logger:
     def clear(self) -> None:
         self.warnings.clear()
 
-    def _loc(self, file: Path | None, line: int | None) -> str:
+    def _loc(self, file: Path | None, line: int | None, for_github: bool) -> str:
         if file and file.is_absolute():
             file = file.relative_to(GIT_ROOT)
 
-        if is_running_in_github_actions():
+        if for_github:
             if file and line:
                 return f"file={file},line={line}"
             if file:
@@ -52,25 +52,14 @@ class Logger:
     def _print(
         self, prefix: str, msg: str, file: Path | None = None, line: int | None = None
     ) -> None:
-        github_prefix = {
-            "important_info": "notice",
-            "warning": "warning",
-            "error": "error",
-        }
-        cli_prefix = {
-            "debug": "DEBUG",
-            "info": "INFO",
-            "important_info": "IMPORTANT_INFO",
-            "warning": "WARNING",
-            "error": "ERROR",
-            "success": "SUCCESS",
-        }
+        github_announcements = {"notice", "warning", "error"}
 
-        location = self._loc(file, line)
-        if is_running_in_github_actions() and prefix in github_prefix:
-            print(f"::{github_prefix.get(prefix, prefix)}{location}::{self.name} {msg}")
+        if is_running_in_github_actions() and prefix in github_announcements:
+            location = self._loc(file, line, for_github=True)
+            print(f"::{prefix}{location}::{self.name} {msg}")
         else:
-            print(f"{cli_prefix.get(prefix, prefix)}:{location} {self.name} {msg}")
+            location = self._loc(file, line, for_github=False)
+            print(f"{prefix.upper()}:{location} {self.name} {msg}")
 
     def debug(self, msg: str) -> None:
         self._print("debug", msg)
@@ -78,8 +67,8 @@ class Logger:
     def info(self, msg: str) -> None:
         self._print("info", msg)
 
-    def important_info(self, msg: str) -> None:
-        self._print("important_info", msg)
+    def notice(self, msg: str) -> None:
+        self._print("notice", msg)
 
     def warning(
         self, msg: str, file: Path | None = None, line: int | None = None

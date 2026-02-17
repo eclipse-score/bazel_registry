@@ -173,7 +173,7 @@ def plan_module_updates(
                 # is_release_semver_acceptable already printed a warning
                 continue
 
-            log.important_info(
+            log.notice(
                 f"Updating {module.name} "
                 f"from {module.latest_version} to {latest_release.version}"
             )
