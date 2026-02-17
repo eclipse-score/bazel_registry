@@ -173,10 +173,16 @@ def plan_module_updates(
                 # is_release_semver_acceptable already printed a warning
                 continue
 
-            log.notice(
-                f"Updating {module.name} "
-                f"from {module.latest_version} to {latest_release.version}"
-            )
+            if module.versions:
+                log.notice(
+                    f"Updating {module.name} "
+                    f"from {module.latest_version} to {latest_release.version}"
+                )
+            else:
+                log.notice(
+                    f"Adding first version to {module.name}: {latest_release.version}"
+                )
+
             content = gh.try_get_module_file_content(
                 module.org_and_repo, str(latest_release.tag_name)
             )

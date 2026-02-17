@@ -59,15 +59,22 @@ class GithubWrapper:
             repo = self.gh.get_repo(org_and_repo)
             all_releases: list[GitHubReleaseInfo] = []
             for release in repo.get_releases():  # type: ignore
-                all_releases.append(
-                    GitHubReleaseInfo(
-                        org_and_repo=org_and_repo,
-                        version=Version(release.tag_name.lstrip("v")),
-                        tag_name=release.tag_name,
-                        published_at=release.published_at,
-                        prerelease=release.prerelease,
+                # Only published releases count
+                if release.published_at:
+                    all_releases.append(
+                        GitHubReleaseInfo(
+                            org_and_repo=org_and_repo,
+                            version=Version(release.tag_name.lstrip("v")),
+                            tag_name=release.tag_name,
+                            published_at=release.published_at,
+                            prerelease=release.prerelease,
+                        )
                     )
-                )
+                else:
+                    log.notice(
+                        f"Skipping release {release.tag_name} in {org_and_repo} "
+                        f"because it is not published yet."
+                    )
 
             sorted_releases = sorted(
                 all_releases, key=lambda r: r.published_at, reverse=True
