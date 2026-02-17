@@ -1,0 +1,153 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_persistency",
+    version = "0.3.0",
+    compatibility_level = 0,
+)
+
+## Toolchains (dependencies and config)
+# python
+bazel_dep(name = "rules_python", version = "1.4.1")
+
+PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
+python.toolchain(
+    is_default = True,
+    python_version = PYTHON_VERSION,
+)
+use_repo(python)
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip", dev_dependency = True)
+pip.parse(
+    hub_name = "pip_score_venv_test",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//tests/test_cases:requirements.txt.lock",
+)
+use_repo(pip, "pip_score_venv_test")
+
+# rust
+bazel_dep(name = "rules_rust", version = "0.67.0")
+git_override(
+    module_name = "rules_rust",
+    commit = "2b171a7376e69cb1207eced1f66904ce4ae0c819",
+    remote = "https://github.com/pawelrutkaq/rules_rust.git",  # To be fixed once rule_rust is in score bazel registry
+)
+
+# Shared Rust policies (Clippy config, etc.), overridden locally during development.
+bazel_dep(name = "score_rust_policies", version = "0.0.4", dev_dependency = True)
+
+# bazel cc rules
+bazel_dep(name = "rules_cc", version = "0.1.2")
+
+# Toolchains and extensions
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.2.2", dev_dependency = True)
+bazel_dep(name = "score_toolchains_rust", version = "0.7.0", dev_dependency = True)
+
+## Bazel registry
+# Module dependencies
+bazel_dep(name = "googletest", version = "1.17.0.bcr.1")
+
+bazel_dep(name = "google_benchmark", version = "1.9.4", dev_dependency = True)
+
+bazel_dep(name = "platforms", version = "1.0.0")
+
+## S-CORE bazel registry
+bazel_dep(name = "score_baselibs", version = "0.2.4")
+bazel_dep(name = "score_bazel_platforms", version = "0.0.4")
+
+bazel_dep(name = "score_docs_as_code", version = "3.0.0", dev_dependency = True)
+bazel_dep(name = "score_platform", version = "0.5.3", dev_dependency = True)
+bazel_dep(name = "score_process", version = "1.4.3", dev_dependency = True)
+
+bazel_dep(name = "score_python_basics", version = "0.3.4")
+bazel_dep(name = "score_tooling", version = "1.1.0")
+
+# ToDo: implicit dependencies for score_tooling, but needed directly here??
+bazel_dep(name = "aspect_rules_lint", version = "2.0.0")
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.0.2")
+
+## temporary overrides / tools
+# Testing utils dependency.
+# Direct usage of tag in git_override reports false problem in editor, using hash of a tag
+bazel_dep(name = "score_test_scenarios", version = "0.3.0")
+git_override(
+    module_name = "score_test_scenarios",
+    commit = "a2f9cded3deb636f5dc800bf7a47131487119721",  # tag v0.3.0
+    remote = "https://github.com/eclipse-score/testing_tools.git",
+)
+
+bazel_dep(name = "custom_qemu", version = "1.0.0", dev_dependency = True)
+archive_override(
+    module_name = "custom_qemu",
+    integrity = "sha256-3V2d+p7nP0tsbrVWOPYUSJogLNal43CIAHEto6Vjdfg=",
+    strip_prefix = "third_party",  # matches top-level dir in the tar
+    urls = [
+        "https://github.com/qorix-group/custom-qemu/releases/download/1.0.0/custom_qemu.tar.gz",
+    ],
+)
+
+# needed for ITF
+bazel_dep(name = "score_toolchains_qnx", version = "0.0.5", dev_dependency = True)
+
+toolchains_qnx = use_extension("@score_toolchains_qnx//:extensions.bzl", "toolchains_qnx", dev_dependency = True)
+toolchains_qnx.sdp(
+    sha256 = "f2e0cb21c6baddbcb65f6a70610ce498e7685de8ea2e0f1648f01b327f6bac63",
+    strip_prefix = "installation",
+    url = "https://www.qnx.com/download/download/79858/installation.tgz",
+)
+use_repo(toolchains_qnx, "toolchains_qnx_sdp")
+use_repo(toolchains_qnx, "toolchains_qnx_ifs")
+
+gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_gcc_aarch64_toolchain",
+    target_cpu = "aarch64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_x86_64_toolchain",
+    sdp_version = "8.0.0",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_aarch64_toolchain",
+    sdp_version = "8.0.0",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(
+    gcc,
+    "score_gcc_aarch64_toolchain",
+    "score_gcc_x86_64_toolchain",
+    "score_qcc_aarch64_toolchain",
+    "score_qcc_x86_64_toolchain",
+)
+
+# S-CORE crates
+bazel_dep(name = "score_crates", version = "0.0.7")
