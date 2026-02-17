@@ -162,13 +162,18 @@ def plan_module_updates(
 
         latest_release = gh.get_latest_release(module.org_and_repo)
 
-        if latest_release and latest_release.version not in module.versions:
+        if not latest_release:
+            log.warning(
+                f"No releases found for {module.name} at "
+                f"{module.org_and_repo}; skipping."
+            )
+        elif latest_release.version not in module.versions:
             # TODO: this check belongs into local release workflows and not into bazel_registry.
             if not is_release_semver_acceptable(module, latest_release.version):
                 # is_release_semver_acceptable already printed a warning
                 continue
 
-            log.info(
+            log.important_info(
                 f"Updating {module.name} "
                 f"from {module.latest_version} to {latest_release.version}"
             )
@@ -191,7 +196,7 @@ def plan_module_updates(
                     f"{module.name} at tag {latest_release.tag_name}; skipping."
                 )
         else:
-            log.info(f"Module {module.name} is up to date.")
+            log.info(f"Module {module.name} is up to date ({module.latest_version}).")
 
     if not updated_modules:
         log.info("No modules need updating.")

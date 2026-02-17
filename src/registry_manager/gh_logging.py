@@ -52,26 +52,24 @@ class Logger:
     def _print(
         self, prefix: str, msg: str, file: Path | None = None, line: int | None = None
     ) -> None:
-        location = self._loc(file, line)
-        if is_running_in_github_actions():
-            github_prefix = {
-                "debug": "debug",
-                "info": "notice",
-                "warning": "warning",
-                "error": "error",
-                "success": "notice",
-            }
-            print(f"::{github_prefix.get(prefix, prefix)}{location}::{self.name} {msg}")
-            return
-
-        pretty_prefix = {
+        github_prefix = {
+            "important_info": "notice",
+            "warning": "warning",
+            "error": "error",
+        }
+        cli_prefix = {
             "debug": "DEBUG",
             "info": "INFO",
             "warning": "WARNING",
             "error": "ERROR",
             "success": "SUCCESS",
         }
-        print(f"{pretty_prefix.get(prefix, prefix)}:{location} {self.name} {msg}")
+
+        location = self._loc(file, line)
+        if is_running_in_github_actions() and prefix in github_prefix:
+            print(f"::{github_prefix.get(prefix, prefix)}{location}::{self.name} {msg}")
+        else:
+            print(f"{cli_prefix.get(prefix, prefix)}:{location} {self.name} {msg}")
 
     def debug(self, msg: str) -> None:
         self._print("debug", msg)
@@ -79,8 +77,8 @@ class Logger:
     def info(self, msg: str) -> None:
         self._print("info", msg)
 
-    def ok(self, msg: str) -> None:
-        self._print("success", msg)
+    def important_info(self, msg: str) -> None:
+        self._print("important_info", msg)
 
     def warning(
         self, msg: str, file: Path | None = None, line: int | None = None
