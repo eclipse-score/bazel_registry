@@ -163,7 +163,7 @@ def plan_module_updates(
         latest_release = gh.get_latest_release(module.org_and_repo)
 
         if not latest_release:
-            log.warning(
+            log.notice(
                 f"No releases found for {module.name} at "
                 f"{module.org_and_repo}; skipping."
             )
