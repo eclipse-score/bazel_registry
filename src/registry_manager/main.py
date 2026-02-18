@@ -174,12 +174,12 @@ def plan_module_updates(
                 continue
 
             if module.versions:
-                log.notice(
+                log.info(
                     f"Updating {module.name} "
                     f"from {module.latest_version} to {latest_release.version}"
                 )
             else:
-                log.notice(
+                log.info(
                     f"Adding first version to {module.name}: {latest_release.version}"
                 )
 
@@ -224,11 +224,18 @@ def main(args: list[str]) -> None:
     gh = GithubWrapper(get_token(p))
     plan = plan_module_updates(p, gh, modules)
 
+    log.info("---------------------------------------------------")
+
     for task in plan:
-        log.info(
-            f"Module {task.module.name} should be updated to "
-            f"{task.release.version} from {task.module.latest_version}"
-        )
+        if task.module.versions:
+            log.notice(
+                f"Updating {task.module.name} "
+                f"from {task.module.latest_version} to {task.release.version}"
+            )
+        else:
+            log.notice(
+                f"Adding first version to {task.module.name}: {task.release.version}"
+            )
         ModuleUpdateRunner(task).generate_files()
 
     if log.warnings:
