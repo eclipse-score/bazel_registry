@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-JKii8t/5XAtIAUlXUucZ3PUXEnKYl4tkh8/FA5YJIl4=",
+    "strip_prefix": "orchestrator-0.1.0",
+    "url": "https://github.com/eclipse-score/orchestrator/archive/refs/tags/v0.1.0.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-gJaUAeqUrH1OTA5b9goOf+OXhCxRdGj3Ryg2POrEI7g="
+    }
+}

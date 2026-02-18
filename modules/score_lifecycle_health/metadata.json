@@ -5,6 +5,7 @@
         "github:eclipse-score/lifecycle"
     ],
     "versions": [
+        "0.1.0"
     ],
     "yanked_versions": {}
 }

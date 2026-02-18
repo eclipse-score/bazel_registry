@@ -1,0 +1,11 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -12,7 +12,7 @@
+ # *******************************************************************************
+ module(
+     name = "score_lifecycle_health",
+-    version = "0.0.0",
++    version = "0.1.0",
+ )
+ 
+ # Bazel global rules
