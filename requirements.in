@@ -1,8 +1,5 @@
 # TODO: move dependencies to pyproject.toml, with a proper dev group.
 
-# for linting
-ruff
-
 # for testing
 pyfakefs
 pytest
