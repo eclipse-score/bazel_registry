@@ -61,9 +61,7 @@ The registry tooling is implemented in Python.
 
 Setup steps:
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 
 # Run script via:
 python -m src.registry_manager.main

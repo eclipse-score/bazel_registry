@@ -33,3 +33,23 @@ jobs:
 
       - name: 🧩 Run pytest
         run: python -m pytest tests
+
+  self_test_in_devcontainer:
+    name: 🔬 Self Test in Devcontainer
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/eclipse-score/devcontainer:latest
+    steps:
+      - name: 📥 Check out
+        uses: actions/checkout@v6
+
+      - name: 🛠️ Setup Python Dependencies
+        run: |
+          uv venv
+          uv pip install -r requirements.txt
+
+      - name: 🧩 Lint Codebase
+        run: ruff check
+
+      - name: 🧩 Run pytest
+        run: pytest tests
