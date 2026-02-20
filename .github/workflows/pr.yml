@@ -52,4 +52,4 @@ jobs:
         run: ruff check
 
       - name: 🧩 Run pytest
-        run: python -m pytest tests
+        run: pytest tests
