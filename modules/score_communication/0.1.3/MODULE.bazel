@@ -1,0 +1,256 @@
+# *******************************************************************************
+# Copyright (c) 2024-2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_communication",
+    version = "0.1.3",
+)
+
+bazel_dep(name = "platforms", version = "1.0.0")
+
+bazel_dep(name = "score_toolchains_gcc", version = "0.4", dev_dependency = True)
+
+gcc = use_extension(
+    "@score_toolchains_gcc//extentions:gcc.bzl",
+    "gcc",
+    dev_dependency = True,
+)
+gcc.toolchain(
+    sha256 = "457f5f20f57528033cb840d708b507050d711ae93e009388847e113b11bf3600",
+    strip_prefix = "x86_64-unknown-linux-gnu",
+    url = "https://github.com/eclipse-score/toolchains_gcc_packages/releases/download/0.0.1/x86_64-unknown-linux-gnu_gcc12.tar.gz",
+)
+
+# TODO to be moved to toolchain. https://github.com/eclipse-score/toolchains_gcc/issues/11
+gcc.extra_features(
+    features = [
+        "minimal_warnings",
+        "treat_warnings_as_errors",
+    ],
+)
+gcc.warning_flags(
+    minimal_warnings = [
+        "-Wall",
+        "-Wno-error=deprecated-declarations",
+    ],
+    strict_warnings = [
+        "-Wextra",
+        "-Wpedantic",
+    ],
+    treat_warnings_as_errors = ["-Werror"],
+)
+use_repo(gcc, "gcc_toolchain", "gcc_toolchain_gcc")
+
+bazel_dep(name = "toolchains_llvm", version = "1.5.0", dev_dependency = True)
+
+llvm = use_extension(
+    "@toolchains_llvm//toolchain/extensions:llvm.bzl",
+    "llvm",
+    dev_dependency = True,
+)
+llvm.toolchain(
+    compile_flags = {"": [
+        "-march=nehalem",
+        "-ffp-model=strict",
+        # Security
+        "-U_FORTIFY_SOURCE",  # https://github.com/google/sanitizers/issues/247
+        "-fstack-protector",
+        "-fno-omit-frame-pointer",
+        # Diagnostics
+        "-fcolor-diagnostics",
+        "-Wno-deprecated-declarations",
+        "-Wno-error=self-assign-overloaded",
+        "-Wthread-safety",
+    ]},
+    cxx_standard = {"": "c++17"},
+    link_libs = {"": [
+        "-lrt",
+        # This is the agreed way to ensure linking for targets using std::atomic operations.
+        "-latomic",
+    ]},
+    llvm_version = "19.1.7",
+)
+use_repo(llvm, "llvm_toolchain")
+
+# We use here a pre-compiled fully static and hermetic clang_format binary
+# and not the one provided by llvm_toolchain, because the one from llvm_toolchain is not fully hermetic (and different version for now)
+download_file = use_repo_rule("@download_utils//download/file:defs.bzl", "download_file")
+
+download_file(
+    name = "clang_format",
+    executable = True,
+    output = "executable",
+    urls = ["https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-2da3e7b/clang-format-19_linux-amd64"],
+)
+
+bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "aspect_rules_lint", version = "1.13.0")
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "google_benchmark", version = "1.9.4")
+bazel_dep(name = "rules_rust", version = "0.61.0")
+bazel_dep(name = "score_toolchains_rust", version = "0.2.0", dev_dependency = True)
+
+git_override(
+    module_name = "score_toolchains_rust",
+    commit = "f3cc7820d47683bc356963f9aa6aeae80475f933",
+    remote = "https://github.com/eclipse-score/toolchains_rust.git",  # Replace with actual repository URL
+)
+
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.0.2")
+bazel_dep(name = "score_crates", version = "0.0.6", repo_name = "crate_index")
+
+bazel_dep(name = "boost.program_options", version = "1.87.0")
+bazel_dep(name = "boost.interprocess", version = "1.87.0")
+bazel_dep(name = "download_utils", version = "1.0.1")
+
+download_archive = use_repo_rule("@download_utils//download/archive:defs.bzl", "download_archive")
+
+download_archive(
+    name = "json_schema_validator",
+    build = "//third_party/json_schema_validator:json_schema_validator.BUILD",
+    strip_prefix = "json-schema-validator-2.1.0",
+    urls = ["https://github.com/pboettch/json-schema-validator/archive/refs/tags/2.1.0.tar.gz"],
+)
+
+download_archive(
+    name = "jsonschema",
+    build = "//third_party/jsonschema:jsonschema.BUILD",
+    strip_prefix = "jsonschema-4.23.0",
+    urls = ["https://github.com/python-jsonschema/jsonschema/archive/refs/tags/v4.23.0.tar.gz"],
+)
+
+bazel_dep(name = "nlohmann_json", version = "3.11.3")
+bazel_dep(name = "bazel_skylib", version = "1.8.1")
+bazel_dep(name = "rules_doxygen", version = "2.5.0")
+bazel_dep(name = "score_docs_as_code", version = "3.0.0")
+
+# Force score_docs_as_code to 3.0.0 to resolve compatibility conflict between score_logging and score_baselibs
+single_version_override(
+    module_name = "score_docs_as_code",
+    version = "3.0.0",
+)
+
+# Apply patch to fix Doxyfile template for our use cases
+single_version_override(
+    module_name = "rules_doxygen",
+    patches = ["//third_party/rule_doxygen:Doxyfile.patch"],
+    patch_strip = 1,
+)
+
+# Apply patch to fix visibility issue with interprocess_notification target
+bazel_dep(name = "score_baselibs", version = "0.2.2")
+git_override(
+    module_name = "score_baselibs",
+    commit = "ba99dfcb2a1cf69108a2d9eb9fe3cf6ba5aa0832",
+    remote = "https://github.com/eclipse-score/baselibs.git",
+)
+
+bazel_dep(name = "score_logging", version = "0.0.4")
+git_override(
+    module_name = "score_logging",
+    commit = "d5267a5d89ca7462bec29c49d3b295a10ee834c3",
+    remote = "https://github.com/eclipse-score/logging.git",
+)
+
+bazel_dep(name = "score_baselibs_rust", version = "0.0.1")
+git_override(
+    module_name = "score_baselibs_rust",
+    commit = "9ee64ac85f2a990ef75b2858253ee44bfc1a7ab7",
+    remote = "https://github.com/eclipse-score/baselibs_rust.git",
+)
+
+# Doxygen extension for documentation generation
+doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension")
+use_repo(doxygen_extension, "doxygen")
+
+# Python 3.12 toolchain for Bazel
+bazel_dep(name = "rules_python", version = "1.5.1")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = "3.12",
+)
+
+# Python pip dependencies
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "score_communication_pip",
+    python_version = "3.12",
+    requirements_lock = "//:requirements_lock.txt",
+)
+use_repo(pip, "score_communication_pip")
+
+# TRLC dependency for requirements traceability
+bazel_dep(name = "trlc", version = "0.0.0", dev_dependency = True)
+git_override(
+    module_name = "trlc",
+    commit = "a4f7e95210d8093ba208b91cbc5b681eae8d502b",  # trlc-2.0.3 release
+    remote = "https://github.com/bmw-software-engineering/trlc.git",
+)
+
+lobster_ext = use_extension("//third_party/lobster:lobster.bzl", "lobster_ext")
+use_repo(lobster_ext, "lobster")
+
+# Use lobster's upstream requirements.txt directly for this module's Python hub
+pip.parse(
+    hub_name = "lobster_dependencies",
+    python_version = "3.12",
+    requirements_lock = "@lobster//:requirements.txt",
+)
+use_repo(pip, "lobster_dependencies")
+
+bazel_dep(name = "score_toolchains_qnx", version = "0.0.6", dev_dependency = True)
+
+toolchains_qnx = use_extension(
+    "@score_toolchains_qnx//:extensions.bzl",
+    "toolchains_qnx",
+    dev_dependency = True,
+)
+toolchains_qnx.sdp(
+    sha256 = "f2e0cb21c6baddbcb65f6a70610ce498e7685de8ea2e0f1648f01b327f6bac63",
+    strip_prefix = "installation",
+    url = "https://www.qnx.com/download/download/79858/installation.tgz",
+)
+use_repo(toolchains_qnx, "toolchains_qnx_sdp")
+use_repo(toolchains_qnx, "toolchains_qnx_ifs")
+use_repo(toolchains_qnx, "toolchains_qnx_qcc")
+
+bazel_dep(name = "score_bazel_platforms", version = "0.0.4")
+bazel_dep(name = "rules_oci", version = "1.8.0")
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+oci.pull(
+    name = "ubuntu_24_04",
+    digest = "sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30",
+    image = "ubuntu",
+    platforms = ["linux/amd64"],
+    tag = "24.04",
+)
+use_repo(oci, "ubuntu_24_04")
+
+bazel_dep(name = "rules_distroless", version = "0.6.1")
+
+apt = use_extension(
+    "@rules_distroless//apt:extensions.bzl",
+    "apt",
+    dev_dependency = True,
+)
+apt.install(
+    name = "ubuntu24_04",
+    lock = "@@//quality/integration_testing/environments/ubuntu24_04_docker:ubuntu24_04.lock.json",
+    manifest = "//quality/integration_testing/environments/ubuntu24_04_docker:ubuntu24_04.yaml",
+)
+use_repo(apt, "ubuntu24_04")
+
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+
+bazel_dep(name = "score_tooling", version = "1.0.4")
