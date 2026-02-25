@@ -76,6 +76,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          cacheFrom: ghcr.io/eclipse-score/devcontainer@latest
+          push: never
           runCmd: |
             set -o pipefail
             set -eu
