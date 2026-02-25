@@ -21,12 +21,11 @@ jobs:
   self_test:
     name: 🔬 Self Test
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/eclipse-score/devcontainer:latest
     steps:
       - name: 📥 Check out
         uses: actions/checkout@v6
-
-      - name: ⚙️ Setup uv
-        uses: astral-sh/setup-uv@v5
 
       - name: 🛠️ Run pre-commit
         run: uv run pre-commit run --all-files
