@@ -21,11 +21,13 @@ jobs:
   self_test:
     name: 🔬 Self Test
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/eclipse-score/devcontainer:latest
     steps:
       - name: 📥 Check out
         uses: actions/checkout@v6
 
       - name: 🛠️ Run pre-commit
-        run: uv run pre-commit run --all-files
+        uses: devcontainers/ci@v0.3
+        with:
+          cacheFrom: ghcr.io/eclipse-score/devcontainer@v1.2.0
+          push: never
+          runCmd: uv run pre-commit run --all-files
