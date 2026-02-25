@@ -27,6 +27,7 @@ jobs:
 
       - name: ⚙️ Setup uv
         uses: astral-sh/setup-uv@v5
+
       - name: 🛠️ Setup Python Dependencies
         run: uv sync --dev
 
