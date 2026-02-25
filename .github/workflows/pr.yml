@@ -30,4 +30,4 @@ jobs:
         with:
           cacheFrom: ghcr.io/eclipse-score/devcontainer@v1.2.0
           push: never
-          runCmd: uv run pre-commit run --all-files
+          runCmd: pre-commit run --all-files
