@@ -1,5 +1,5 @@
 {
-    "image": "ghcr.io/eclipse-score/devcontainer:latest",
+    "image": "ghcr.io/eclipse-score/devcontainer:main",
     "customizations": {
         "vscode": {
             "extensions": [

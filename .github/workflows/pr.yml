@@ -28,6 +28,6 @@ jobs:
       - name: 🛠️ Run pre-commit
         uses: devcontainers/ci@v0.3
         with:
-          cacheFrom: ghcr.io/eclipse-score/devcontainer@latest
+          cacheFrom: ghcr.io/eclipse-score/devcontainer@main
           push: never
           runCmd: pre-commit run --all-files
