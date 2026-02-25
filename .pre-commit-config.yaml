@@ -1,0 +1,48 @@
+exclude: ^modules/ # don't touch modules, they must remain unchanged
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        exclude: ^\.vscode/ # those are actually jsonc files
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ["--maxkb=10"]
+        exclude: ^uv.lock$
+
+  # use LOCAL hooks for python tooling so versions come from uv.lock
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (uv)
+        entry: uv run ruff check --fix
+        language: system
+        types_or: [python, pyi]
+
+      - id: ruff-format
+        name: ruff format (uv)
+        entry: uv run ruff format
+        language: system
+        types_or: [python, pyi]
+
+      - id: pytest
+        name: pytest (uv)
+        entry: uv run pytest
+        language: system
+        types_or: [python, pyi]
+
+      - id: basedpyright
+        name: basedpyright (uv)
+        entry: uv run basedpyright
+        language: system
+        types_or: [python, pyi]
+        # linters need to run on all files together, not only changed files
+        pass_filenames: false

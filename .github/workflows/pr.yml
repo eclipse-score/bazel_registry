@@ -28,11 +28,5 @@ jobs:
       - name: ⚙️ Setup uv
         uses: astral-sh/setup-uv@v5
 
-      - name: 🛠️ Setup Python Dependencies
-        run: uv sync --dev
-
-      - name: 🧩 Lint Codebase
-        run: uv run ruff check
-
-      - name: 🧩 Run pytest
-        run: uv run pytest tests
+      - name: 🛠️ Run pre-commit
+        uses: pre-commit/action@v3.0.1

@@ -246,5 +246,6 @@ def main(args: list[str]) -> None:
 def cli() -> None:
     main(args=sys.argv[1:])
 
+
 if __name__ == "__main__":
     cli()
