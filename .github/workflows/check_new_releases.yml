@@ -72,7 +72,7 @@ jobs:
           SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
       - name: 🛠️ Setup Python Dependencies
-        run: pip install -r requirements.txt
+        run: uv sync --dev
 
       - name: 🧩 Run update script
         env:
@@ -83,7 +83,7 @@ jobs:
           {
             printf "This PR updates the modules to their latest versions.\n"
             printf "Please review and merge if everything looks good.\n\n"
-            python -m src.registry_manager.main ${{ github.event.inputs.module }}
+            uv run registry-manager ${{ github.event.inputs.module }}
           } | tee /tmp/output.log
 
       - name: 📤 Create Pull Request

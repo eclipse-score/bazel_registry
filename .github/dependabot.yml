@@ -6,28 +6,26 @@
 version: 2
 
 updates:
-  # We use GitHub Actions for CI/CD, so we can update those dependencies via dependabot.
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
     groups:
       all-in-one:
         patterns:
           - "*"
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
 
-  # Since this repo does not use bazel, we can also update python dependencies via dependabot.
-  - package-ecosystem: "pip"
-    directory: "/"
+  - package-ecosystem: pip
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
     groups:
       all-in-one:
         patterns:
           - "*"
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
