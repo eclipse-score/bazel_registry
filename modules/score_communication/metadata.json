@@ -18,5 +18,7 @@
         "0.1.1",
         "0.1.0"
     ],
-    "yanked_versions": {}
+    "yanked_versions": {
+        "0.1.3": "Release created without codeowner approval and serious quality deficits that would have prevented the release if done through the release workflow."
+    }
 }
