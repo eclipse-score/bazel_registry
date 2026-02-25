@@ -21,6 +21,7 @@ dev = [
   "pyfakefs",
   "pytest",
   "ruff",
+  "basedpyright",
 ]
 
 [tool.hatch.build.targets.wheel]
