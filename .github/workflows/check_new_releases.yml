@@ -71,22 +71,21 @@ jobs:
         env:
           SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
-      - name: ⚙️ Setup uv
-        uses: astral-sh/setup-uv@v5
-      - name: 🛠️ Setup Python Dependencies
-        run: uv sync --dev
-
       - name: 🧩 Run update script
+        uses: devcontainers/ci@v0.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -o pipefail
-          set -eu
-          {
-            printf "This PR updates the modules to their latest versions.\n"
-            printf "Please review and merge if everything looks good.\n\n"
-            uv run registry-manager ${{ github.event.inputs.module }}
-          } | tee /tmp/output.log
+        with:
+          cacheFrom: ghcr.io/eclipse-score/devcontainer@main
+          push: never
+          runCmd: |
+            set -o pipefail
+            set -eu
+            {
+              printf "This PR updates the modules to their latest versions.\n"
+              printf "Please review and merge if everything looks good.\n\n"
+              uv run registry-manager ${{ github.event.inputs.module }}
+            } | tee /tmp/output.log
 
       - name: 📤 Create Pull Request
         uses: peter-evans/create-pull-request@v8

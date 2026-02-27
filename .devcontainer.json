@@ -1,0 +1,12 @@
+{
+    "image": "ghcr.io/eclipse-score/devcontainer:main",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "detachhead.basedpyright",
+                "github.vscode-github-actions"
+            ]
+        }
+    },
+    "postCreateCommand": "uv sync --dev"
+}
