@@ -72,7 +72,7 @@ jobs:
           SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
 
       - name: ⚙️ Setup uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
       - name: 🛠️ Setup Python Dependencies
         run: uv sync --dev
 
