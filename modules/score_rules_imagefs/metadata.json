@@ -4,6 +4,8 @@
     "repository": [
         "github:eclipse-score/rules_imagefs"
     ],
-    "versions": [],
+    "versions": [
+        "0.0.1"
+    ],
     "yanked_versions": {}
 }
