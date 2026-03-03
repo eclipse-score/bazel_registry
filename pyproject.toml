@@ -20,7 +20,7 @@ registry-manager = "registry_manager.main:cli"
 dev = [
   "pyfakefs",
   "pre-commit",
-  "score-python-tools-via-devcontainer @ git+https://github.com/eclipse-score/devcontainer.git@40bc09f0c0a13dfd385bd490d8b5e668b4efd688#subdirectory=src/s-core-devcontainer/.devcontainer/s-core-local/versions",
+  "score-python-tools-via-devcontainer @ git+https://github.com/eclipse-score/devcontainer.git@v1.2.0-test#subdirectory=src/s-core-devcontainer/.devcontainer/s-core-local/versions",
 ]
 
 [tool.hatch.build.targets.wheel]
