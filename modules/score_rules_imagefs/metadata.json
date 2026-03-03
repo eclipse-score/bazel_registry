@@ -1,17 +1,9 @@
 {
     "homepage": "https://github.com/eclipse-score/rules_imagefs",
     "periodic-pull": true,
-    "maintainers": [
-        {
-            "name": "Nikola Radakovic",
-            "email": "nikola.ra.radakovic@bmw.de",
-            "github": "nradakovic",
-            "github_user_id": 35235060
-        }
-    ],
     "repository": [
         "github:eclipse-score/rules_imagefs"
     ],
-    "versions": ["0.1.0"],
+    "versions": [],
     "yanked_versions": {}
 }
