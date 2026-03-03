@@ -560,7 +560,7 @@ wheels = [
 [[package]]
 name = "score-python-tools-via-devcontainer"
 version = "0.0.0"
-source = { git = "https://github.com/eclipse-score/devcontainer.git?subdirectory=src%2Fs-core-devcontainer%2F.devcontainer%2Fs-core-local%2Fversions&rev=v1.2.0-test#4757de66a06d0e48eeb01be685c9d84e6cd92959" }
+source = { git = "https://github.com/eclipse-score/devcontainer.git?subdirectory=src%2Fs-core-devcontainer%2F.devcontainer%2Fs-core-local%2Fversions&rev=v1.2.0-test#1d583af42733c4bcf534bcba6c34728d1453ad8f" }
 dependencies = [
     { name = "basedpyright" },
     { name = "pytest" },
