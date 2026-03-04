@@ -29,3 +29,15 @@ updates:
         update-types:
           - minor
           - patch
+
+  - package-ecosystem: devcontainers
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      all-in-one:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

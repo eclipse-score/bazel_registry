@@ -20,9 +20,6 @@ registry-manager = "registry_manager.main:cli"
 dev = [
   "pyfakefs",
   "pytest",
-  "ruff",
-  "basedpyright",
-  "pre-commit",
 ]
 
 [tool.hatch.build.targets.wheel]
