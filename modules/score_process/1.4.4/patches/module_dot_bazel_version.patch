@@ -1,0 +1,11 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -13,7 +13,7 @@
+ 
+ module(
+     name = "score_process",
+-    version = "0.0.0",
++    version = "1.4.4",
+     compatibility_level = 1,
+ )
+ 
