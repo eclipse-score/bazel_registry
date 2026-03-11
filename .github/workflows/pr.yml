@@ -17,6 +17,7 @@ on:
     types: [opened, reopened, synchronize]
   merge_group:
     types: [checks_requested]
+  workflow_dispatch: {}
 
 jobs:
   self_test:
