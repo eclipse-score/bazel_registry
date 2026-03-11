@@ -25,3 +25,4 @@ jobs:
     uses: eclipse-score/cicd-workflows/.github/workflows/reusable-on-pr.yml@dev
     permissions:
       id-token: write
+      contents: read
