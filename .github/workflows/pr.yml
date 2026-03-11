@@ -21,7 +21,7 @@ on:
 
 jobs:
   self_test:
-    name: 🔬 Self Test
+    name: 🔬
     uses: eclipse-score/cicd-workflows/.github/workflows/reusable-on-pr.yml@dev
     permissions:
       id-token: write
