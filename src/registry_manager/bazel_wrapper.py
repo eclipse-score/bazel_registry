@@ -127,15 +127,21 @@ def try_parse_metadata_json(metadata_json: Path) -> BazelModuleInfo | None:
 def parse_MODULE_file_content(content: str) -> ModuleFileContent:  # noqa: N802
     """Parse the content of a MODULE.bazel file.
 
-    Extracts version and compatibility_level using regex patterns.
+    Extracts version and compatibility_level using regex patterns,
+    scoped to the module() call only to avoid false matches in
+    bazel_dep() or other function calls.
     """
     comp_level = None
-    if m_cl := re.search(r"compatibility_level\s*=\s*(\d+)", content):
-        comp_level = int(m_cl.group(1))
-
     version = None
-    if m_ver := re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", content):
-        version = str(m_ver.group(1))
+
+    # Only extract version and compatibility_level from within the module() call.
+    # Using DOTALL so the pattern matches even if the module() call spans multiple lines.
+    if module_match := re.search(r"\bmodule\s*\(([^)]*)\)", content, re.DOTALL):
+        module_args = module_match.group(1)
+        if m_cl := re.search(r"\bcompatibility_level\s*=\s*(\d+)", module_args):
+            comp_level = int(m_cl.group(1))
+        if m_ver := re.search(r"\bversion\s*=\s*['\"]([^'\"]+)['\"]", module_args):
+            version = str(m_ver.group(1))
 
     return ModuleFileContent(
         content=content,
@@ -275,6 +281,11 @@ class ModuleUpdateRunner:
         compatibility_level than the release, a patch is created to stamp
         the correct version.
 
+        Handles two special cases:
+        - No version in module() call: the version attribute is added.
+        - Version "0.0.0" / no compatibility_level: compatibility_level defaults
+          to 0 in Bazel, so a missing compatibility_level is treated as 0.
+
         Note: this is based on rather fragile regex replacements and may need
         adjustments for more complex MODULE.bazel files.
         Example that would fail:
@@ -284,39 +295,85 @@ class ModuleUpdateRunner:
         if not self.info.mod_file:
             raise ValueError("Module file content not available")
 
-        # Check if no patch is needed
-        if (
-            self.info.mod_file.version == self.info.release.version
-            and self.info.mod_file.major_version == self.info.mod_file.comp_level
-        ):
+        # Expected compatibility_level based on release version's major.
+        # None when the release version is not a valid semver.
+        expected_comp_level: int | None = None
+        if self.info.release.version.semver:
+            expected_comp_level = self.info.release.version.semver.major
+
+        # Compatibility_level is considered correct when:
+        # - It explicitly matches the expected value, OR
+        # - It is absent (None) and the expected value is also None (non-semver
+        #   release) or 0 (Bazel's default compatibility_level is 0).
+        comp_level_ok = self.info.mod_file.comp_level == expected_comp_level or (
+            self.info.mod_file.comp_level is None
+            and (expected_comp_level is None or expected_comp_level == 0)
+        )
+
+        # Version is considered correct when it is present and matches the release.
+        version_ok = (
+            self.info.mod_file.version is not None
+            and self.info.mod_file.version == self.info.release.version
+        )
+
+        if version_ok and comp_level_ok:
             log.debug("MODULE.bazel version matches release version; no patch needed.")
             return None  # No patch needed
 
         # Build metadata strings for logging
         file_meta = f"(version={self.info.mod_file.version}, comp_level={self.info.mod_file.comp_level})"
-        release_meta = f"(version={self.info.release.version}, comp_level={self.info.mod_file.major_version})"
+        release_meta = f"(version={self.info.release.version}, comp_level={expected_comp_level})"
         log.info(
             f"MODULE.bazel {file_meta} doesn't match release {release_meta}; creating patch"
         )
 
-        # Create patched content by replacing version
-        stamped_content = re.sub(
-            r"(version\s*=\s*['\"])([^'\"]+)(['\"])",
-            lambda m: f"{m.group(1)}{self.info.release.version}{m.group(3)}",
-            self.info.mod_file.content,
-            count=1,
-        )
+        release_version_str = str(self.info.release.version)
+        stamped_content = self.info.mod_file.content
 
-        if self.info.release.version.semver:
-            major_version = self.info.release.version.semver.major
-
-            # Replace compatibility_level with major version
+        # Stamp version inside the module() call.
+        if self.info.mod_file.version is None:
+            # version= is absent from module(): add it before the closing paren.
+            # The pattern strips any optional trailing comma + whitespace before ')'
+            # so we always get a clean ", version = '...'" insertion.
             stamped_content = re.sub(
-                r"(compatibility_level\s*=\s*)(\d+)",
-                lambda m: f"{m.group(1)}{major_version}",
+                r"(\bmodule\s*\([^)]*?),?\s*\)",
+                lambda m: f'{m.group(1)}, version = "{release_version_str}")',
                 stamped_content,
                 count=1,
+                flags=re.DOTALL,
             )
+        else:
+            # version= is present: replace its value, scoped to the module() call.
+            stamped_content = re.sub(
+                r"(\bmodule\s*\([^)]*?\bversion\s*=\s*['\"])([^'\"]+)(['\"])",
+                lambda m: f"{m.group(1)}{release_version_str}{m.group(3)}",
+                stamped_content,
+                count=1,
+                flags=re.DOTALL,
+            )
+
+        # Stamp compatibility_level inside the module() call (only for semver releases).
+        if expected_comp_level is not None and not comp_level_ok:
+            if self.info.mod_file.comp_level is not None:
+                # compatibility_level= is present: replace its value, scoped to
+                # the module() call.
+                stamped_content = re.sub(
+                    r"(\bmodule\s*\([^)]*?\bcompatibility_level\s*=\s*)(\d+)",
+                    lambda m: f"{m.group(1)}{expected_comp_level}",
+                    stamped_content,
+                    count=1,
+                    flags=re.DOTALL,
+                )
+            elif expected_comp_level > 0:
+                # compatibility_level= is absent and the expected value is non-zero
+                # (0 is Bazel's default so we do not need to add it explicitly).
+                stamped_content = re.sub(
+                    r"(\bmodule\s*\([^)]*?),?\s*\)",
+                    lambda m: f"{m.group(1)}, compatibility_level = {expected_comp_level})",
+                    stamped_content,
+                    count=1,
+                    flags=re.DOTALL,
+                )
 
         # Generate unified diff patch
         patch_text = "".join(
