@@ -18,7 +18,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from src.registry_manager.bazel_wrapper import ModuleUpdateRunner
+from src.registry_manager.bazel_wrapper import ModuleUpdateRunner, parse_MODULE_file_content
 
 from tests.conftest import make_update_info
 
@@ -212,3 +212,118 @@ class TestFileGeneration:
         generated_versions = metadata["versions"]
         expected_versions = ["1.0.11", "1.0.10", "1.0.9"]
         assert generated_versions == expected_versions
+
+    def test_no_patch_when_zero_version_matches_and_no_comp_level(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """Release 0.0.0 with no compatibility_level in module() must not generate a patch.
+
+        Bazel's default for compatibility_level is 0, so a missing
+        compatibility_level is equivalent to compatibility_level=0.  When the
+        release version is 0.0.0 (major=0), no patching is required.
+        """
+        basic_registry_setup()
+        os.chdir("/")
+
+        # MODULE.bazel has version="0.0.0" but no compatibility_level attribute
+        mod_content = parse_MODULE_file_content('module(name="score_demo", version="0.0.0")')
+        update_info = make_update_info(version="0.0.0", module_content=mod_content)
+
+        runner = ModuleUpdateRunner(update_info)
+        with patch(
+            "src.registry_manager.bazel_wrapper.sha256_from_url",
+            return_value="sha256-test",
+        ):
+            runner.generate_files()
+
+        # No patches section should appear in source.json
+        source_path = Path("/modules/score_demo/0.0.0/source.json")
+        source = json.loads(source_path.read_text())
+        assert "patches" not in source
+
+    def test_creates_patch_when_module_has_no_version(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """When module() has no version= attribute the patch must add it.
+
+        This reproduces the bug from PR #326 where the regex was matching
+        version= inside a bazel_dep() call instead of the module() call,
+        producing a wrong patch.
+        """
+        basic_registry_setup()
+        os.chdir("/")
+
+        # MODULE.bazel like the one in PR #326: module() has no version,
+        # but a bazel_dep() further down does.
+        raw_content = (
+            'module(name = "score_demo")\n'
+            'bazel_dep(name = "platforms", version = "1.0.0")\n'
+        )
+        mod_content = parse_MODULE_file_content(raw_content)
+        # Sanity check: the parse must NOT pick up the bazel_dep version
+        assert mod_content.version is None
+
+        update_info = make_update_info(version="0.1.4", module_content=mod_content)
+
+        runner = ModuleUpdateRunner(update_info)
+        with patch(
+            "src.registry_manager.bazel_wrapper.sha256_from_url",
+            return_value="sha256-test",
+        ):
+            runner.generate_files()
+
+        patches_dir = Path("/modules/score_demo/0.1.4/patches")
+        assert patches_dir.exists()
+        patch_file = patches_dir / "module_dot_bazel_version.patch"
+        assert patch_file.exists()
+
+        patch_content = patch_file.read_text()
+
+        # The patch must add version="0.1.4" to the module() call
+        assert 'version = "0.1.4"' in patch_content
+
+        # The bazel_dep version line must appear only as context (space-prefixed),
+        # not as a removal (-) or addition (+)
+        for line in patch_content.splitlines():
+            if "bazel_dep" in line:
+                assert line.startswith(" "), (
+                    f"bazel_dep line must not be modified, got: {line!r}"
+                )
+
+        # The patched MODULE.bazel must have the version inside module()
+        mod = Path("/modules/score_demo/0.1.4/MODULE.bazel").read_text()
+        assert 'version = "0.1.4"' in mod
+        # The bazel_dep line must be unchanged
+        assert 'bazel_dep(name = "platforms", version = "1.0.0")' in mod
+
+    def test_creates_patch_when_module_has_no_version_and_major_nonzero(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """When module() has no version= and the release major version is > 0,
+        the patch must add both version and compatibility_level."""
+        basic_registry_setup()
+        os.chdir("/")
+
+        raw_content = 'module(name = "score_demo")\n'
+        mod_content = parse_MODULE_file_content(raw_content)
+
+        update_info = make_update_info(version="1.0.0", module_content=mod_content)
+
+        runner = ModuleUpdateRunner(update_info)
+        with patch(
+            "src.registry_manager.bazel_wrapper.sha256_from_url",
+            return_value="sha256-test",
+        ):
+            runner.generate_files()
+
+        patches_dir = Path("/modules/score_demo/1.0.0/patches")
+        assert patches_dir.exists()
+        patch_file = patches_dir / "module_dot_bazel_version.patch"
+        assert patch_file.exists()
+
+        patch_content = patch_file.read_text()
+        assert 'version = "1.0.0"' in patch_content
+        assert "compatibility_level = 1" in patch_content

@@ -26,7 +26,8 @@ class Version:
             return self._raw < other._raw
 
     def __eq__(self, other: object) -> bool:
-        assert isinstance(other, Version)
+        if not isinstance(other, Version):
+            return NotImplemented
         # Note: this intentionally compares the raw strings, not the semver objects.
         # e.g. technically "1.0.0" and "001.00.0000" are equivalent semver versions,
         # but we want to treat them as different versions.

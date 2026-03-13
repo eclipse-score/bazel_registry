@@ -11,5 +11,6 @@ user.bazelrc
 
 # Python
 .venv
+venv/
 __pycache__/
 /.coverage

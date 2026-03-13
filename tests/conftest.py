@@ -149,14 +149,17 @@ def make_update_info(
     comp_level: int | None = None,
     module_name: str = "score_demo",
     existing_versions: list[str] | None = None,
+    module_content: ModuleFileContent | None = None,
 ) -> ModuleUpdateInfo:
-    if module_version is None:
-        module_version = version
+    if module_content is None:
+        if module_version is None:
+            module_version = version
+        module_content = make_module_content(version=module_version, comp_level=comp_level)
 
     return ModuleUpdateInfo(
         module=make_module_info(name=module_name, versions=existing_versions or []),
         release=make_release_info(version=version),
-        mod_file=make_module_content(version=module_version, comp_level=comp_level),
+        mod_file=module_content,
     )
 
 
