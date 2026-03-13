@@ -19,10 +19,8 @@ registry-manager = "registry_manager.main:cli"
 [dependency-groups]
 dev = [
   "pyfakefs",
-  "pytest",
-  "ruff",
-  "basedpyright",
   "pre-commit",
+  "score-python-tools-via-devcontainer @ git+https://github.com/eclipse-score/devcontainer.git@v1.2.0-test#subdirectory=src/s-core-devcontainer/.devcontainer/s-core-local/versions",
 ]
 
 [tool.hatch.build.targets.wheel]
