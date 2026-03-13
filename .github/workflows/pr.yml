@@ -15,18 +15,14 @@ name: Pull Request Workflow
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+  merge_group:
+    types: [checks_requested]
+  workflow_dispatch: {}
 
 jobs:
-
   self_test:
-    name: 🔬 Self Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Check out
-        uses: actions/checkout@v6
-
-      - name: ⚙️ Setup uv
-        uses: astral-sh/setup-uv@v7
-
-      - name: 🛠️ Run pre-commit
-        run: uv run pre-commit run --all-files
+    name: 🔬
+    uses: eclipse-score/cicd-workflows/.github/workflows/reusable-on-pr.yml@dev
+    permissions:
+      id-token: write
+      contents: read
