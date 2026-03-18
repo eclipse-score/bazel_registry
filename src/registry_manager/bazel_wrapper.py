@@ -125,11 +125,8 @@ def try_parse_metadata_json(metadata_json: Path) -> BazelModuleInfo | None:
 
 
 def parse_MODULE_file_content(content: str) -> ModuleFileContent:  # noqa: N802
-    """Parse the content of a MODULE.bazel file.
+    """Parse the content of a MODULE.bazel file."""
 
-    Extracts version and compatibility_level from within the module() declaration.
-    Raises ValueError if module() declaration is not found.
-    """
     # This searches for the 'FIRST' module it can find
     module_match = re.search(r"module\s*\((.*?)\)", content, re.DOTALL)
 
@@ -144,26 +141,6 @@ def parse_MODULE_file_content(content: str) -> ModuleFileContent:  # noqa: N802
 
     version = None
     if m_ver := re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", module_content):
-        version = str(m_ver.group(1))
-
-    return ModuleFileContent(
-        content=content,
-        comp_level=comp_level,
-        version=Version(version) if version else None,
-    )
-
-
-def parse_MODULE_file_content2(content: str) -> ModuleFileContent:  # noqa: N802
-    """Parse the content of a MODULE.bazel file.
-
-    Extracts version and compatibility_level using regex patterns.
-    """
-    comp_level = None
-    if m_cl := re.search(r"compatibility_level\s*=\s*(\d+)", content):
-        comp_level = int(m_cl.group(1))
-
-    version = None
-    if m_ver := re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", content):
         version = str(m_ver.group(1))
 
     return ModuleFileContent(
