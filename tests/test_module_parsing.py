@@ -10,7 +10,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
-
+import pytest
 from src.registry_manager.bazel_wrapper import parse_MODULE_file_content
 
 
@@ -30,6 +30,27 @@ class TestModuleFileParsing:
         assert parsed.version is None
         assert parsed.comp_level is None
         assert parsed.major_version is None
+
+    def test_parse_ignores_bazel_dep_version(self):
+        content = (
+            'module(\nname = "score_docs_as_code",\nversion = "2.0.0",\n)\n'
+            '\nbazel_dep(name = "rules_python", version = "0.1.0)"'
+        )
+        parsed = parse_MODULE_file_content(content)
+        assert str(parsed.version) == "2.0.0"  # Old parser would find "0.1.0"
+
+    def test_parse_only_bazel_dep_present(self):
+        content = 'bazel_dep(name = "rules_python", version = "0.1.0")'
+
+        with pytest.raises(
+            ValueError, match=r"No 'module' declaration found in MODULE.bazel"
+        ):
+            parse_MODULE_file_content(content)
+
+    def test_parse_module_without_version_but_bazel_dep_has_version(self):
+        content = 'module(name = "my_project")\n\nbazel_dep(name = "some_dep", version = "5.0.0")'
+        parsed = parse_MODULE_file_content(content)
+        assert parsed.version is None
 
     def test_parse_minimal_module_with_bazel_dep(self):
         content = 'module(name="score_demo")\nbazel_dep("platform", version="1.0.0)"'
