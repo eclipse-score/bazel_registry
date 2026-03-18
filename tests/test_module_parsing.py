@@ -31,6 +31,13 @@ class TestModuleFileParsing:
         assert parsed.comp_level is None
         assert parsed.major_version is None
 
+    def test_parse_minimal_module_with_bazel_dep(self):
+        content = 'module(name="score_demo")\nbazel_dep("platform", version="1.0.0)"'
+        parsed = parse_MODULE_file_content(content)
+        assert parsed.version is None
+        assert parsed.comp_level is None
+        assert parsed.major_version is None
+
     def test_parse_module_file_content_preserved(self):
         content = 'module(name="test", version="1.0.0")\nbazel_dep(...)'
         parsed = parse_MODULE_file_content(content)
