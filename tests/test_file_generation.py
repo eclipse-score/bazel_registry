@@ -27,7 +27,7 @@ from src.registry_manager.bazel_wrapper import (
     parse_MODULE_file_content,
 )
 
-from tests.conftest import make_update_info, make_module_content
+from tests.conftest import make_update_info
 
 
 class TestFileGeneration:
