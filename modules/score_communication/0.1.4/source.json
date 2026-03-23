@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-183x4Mn0/WXstiKYjFs5r9zGttdcF1/O/4uEKbd4k08=",
+    "strip_prefix": "communication-0.1.4",
+    "url": "https://github.com/eclipse-score/communication/archive/refs/tags/v0.1.4.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-SZdO8hEtt2EtJIxX0E/ErQXkWel4NkOlITX9zj7pweg="
+    }
+}
