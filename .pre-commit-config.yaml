@@ -23,25 +23,25 @@ repos:
     hooks:
       - id: ruff
         name: ruff (uv)
-        entry: uv run ruff check --fix
+        entry: uvx run ruff check --fix
         language: system
         types_or: [python, pyi]
 
       - id: ruff-format
         name: ruff format (uv)
-        entry: uv run ruff format
+        entry: uvx run ruff format
         language: system
         types_or: [python, pyi]
 
       - id: pytest
         name: pytest (uv)
-        entry: uv run pytest
+        entry: uvx run pytest
         language: system
         types_or: [python, pyi]
 
       - id: basedpyright
         name: basedpyright (uv)
-        entry: uv run basedpyright
+        entry: uvx run basedpyright
         language: system
         types_or: [python, pyi]
         # linters need to run on all files together, not only changed files
