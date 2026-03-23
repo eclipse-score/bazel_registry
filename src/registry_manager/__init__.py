@@ -39,6 +39,7 @@ class BazelModuleInfo:
 
 @dataclass
 class ModuleFileContent:
+    raw_content: str
     content: str
     comp_level: int | None = None
     version: Version | None = None

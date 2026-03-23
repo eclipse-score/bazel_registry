@@ -137,6 +137,7 @@ def make_module_content(
         comp_level = int(version.split(".")[0])
 
     return ModuleFileContent(
+        raw_content='module(name="module")',
         content=f'module(version="{version}", compatibility_level={comp_level})',
         comp_level=comp_level,
         version=Version(version),

@@ -128,6 +128,7 @@ def parse_MODULE_file_content(content: str) -> ModuleFileContent:  # noqa: N802
     """Parse the content of a MODULE.bazel file."""
 
     # This searches for the 'FIRST' module it can find
+    raw_content = content
     module_match = re.search(r"module\s*\((.*?)\)", content, re.DOTALL)
 
     if not module_match:
@@ -170,6 +171,7 @@ def parse_MODULE_file_content(content: str) -> ModuleFileContent:  # noqa: N802
         content = content[:module_start] + new_module + content[module_end:]
 
     return ModuleFileContent(
+        raw_content=raw_content,
         content=content,
         comp_level=comp_level,
         version=Version(version) if version else None,
@@ -354,11 +356,11 @@ class ModuleUpdateRunner:
                 count=1,
             )
 
-        # Generate unified diff patch
+        # Generate Patch difference
         patch_text = "".join(
             difflib.unified_diff(
-                self.info.mod_file.content.splitlines(keepends=True),
-                stamped_content.splitlines(keepends=True),
+                a=self.info.mod_file.raw_content.splitlines(True),
+                b=stamped_content.splitlines(keepends=True),
                 fromfile="a/MODULE.bazel",
                 tofile="b/MODULE.bazel",
                 lineterm="\n",
