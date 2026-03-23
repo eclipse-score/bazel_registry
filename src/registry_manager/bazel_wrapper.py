@@ -163,8 +163,7 @@ def parse_MODULE_file_content(content: str) -> ModuleFileContent:  # noqa: N802
         if not has_comp_level:
             if not has_version:
                 to_insert += ","
-            to_insert += "\n    compatibility_level = 0"
-        to_insert += "\n"
+            to_insert += "\n    compatibility_level = 0\n"
 
         # replacing the entire module() block seemed easier than adding it
         new_module = "module(" + module_content.rstrip() + to_insert + ")"

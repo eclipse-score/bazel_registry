@@ -305,6 +305,17 @@ bazel_dep(name = "protobuf", version = "21.7")
 
         assert mod_file.version is None
         assert mod_file.comp_level is None
+        assert mod_file.raw_content is module_content_str
+        mod_file_placeholder_content = """module(
+    name = "score_demo",
+    version = "",
+    compatibility_level = 0
+)
+
+bazel_dep(name = "rules_python", version = "0.26.0")
+bazel_dep(name = "protobuf", version = "21.7")
+"""
+        assert mod_file.content == mod_file_placeholder_content
 
         update_info = make_update_info(version=release_version)
         update_info.mod_file = mod_file
@@ -321,6 +332,17 @@ bazel_dep(name = "protobuf", version = "21.7")
             f"/modules/score_demo/{release_version}/patches/module_dot_bazel_version.patch"
         )
         assert patch_file.exists()
+        patch_content = patch_file.read_text()
+        # We ensure it like this as patch files have other semantics that break out linters
+        # So a comparison as multiline string will fail pre-commit linting
+        # and has not much human readability as well
+        assert patch_content.startswith("""--- a/MODULE.bazel\n+++ b/MODULE.bazel""")
+
+        assert '+    version = "1.5.0",' in patch_content
+        assert "+    compatibility_level = 1" in patch_content
+
+        # Make sure it did not touch other things
+        assert 'bazel_dep(name = "rules_python", version = "0.26.0")' in patch_content
 
         module_file = Path(f"/modules/score_demo/{release_version}/MODULE.bazel")
         module_content = module_file.read_text()
