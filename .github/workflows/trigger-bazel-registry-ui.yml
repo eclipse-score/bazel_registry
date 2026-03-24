@@ -30,7 +30,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           gh_output="$(
             gh workflow run "$TARGET_WORKFLOW" \
@@ -38,8 +38,10 @@ jobs:
               --field bcrCommitHash="$GITHUB_SHA"
           )"
 
-          run_id=$(grep -Eo 'gh run view [0-9]+' <<< "$gh_output" | cut -d' ' -f4)
 
+          run_id="$(
+            grep -Eo 'gh run view [0-9]+' <<< "$gh_output" | cut -d' ' -f4 || true
+          )"
           if [ -n "$run_id" ]; then
             run_url="$GITHUB_SERVER_URL/$TARGET_REPOSITORY/actions/runs/$run_id"
             printf 'Triggered %s workflow run [%s](%s)\n' \
