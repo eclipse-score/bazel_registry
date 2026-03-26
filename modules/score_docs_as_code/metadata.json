@@ -1,6 +1,19 @@
 {
     "homepage": "https://github.com/eclipse-score/docs-as-code",
     "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Maximilian Soeren Pollak",
+            "email": "maximilian.pollak@qorix.com",
+            "github": "MaximilianSoerenPollak",
+            "github_user_id": 74557518
+        },
+        {
+            "name": "Andreas Zwinkau",
+            "github": "a-zw",
+            "github_user_id": 95761648
+        }
+    ],
     "repository": [
         "github:eclipse-score/docs-as-code"
     ],
