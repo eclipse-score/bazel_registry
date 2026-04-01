@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-9v0jzrWR2Ap2UFYHolnaFC2Xzq/NVwaOvyUOFqpuzMM=",
+    "strip_prefix": "process_description-1.5.1",
+    "url": "https://github.com/eclipse-score/process_description/archive/refs/tags/v1.5.1.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-7ib5MJJ2sBBwIvGniwgAaeAaiJIG+1B24jnR92KNQ7A="
+    }
+}
