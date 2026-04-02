@@ -11,17 +11,31 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-name: PR
+name: Daily Maintenance
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  pages: write
+  id-token: write
+
 on:
+  # Runs every day at midnight UTC
+  schedule:
+    - cron: '0 0 * * *'
+
+  # On changes to this workflow file
   pull_request:
-    types: [opened, reopened, synchronize]
-  merge_group:
-    types: [checks_requested]
+    branches:
+      - main
+    paths:
+      - '.github/workflows/daily.yml'
+
+  # Manually trigger the workflow from the GitHub UI
+  workflow_dispatch: {}
 
 jobs:
-  common:
+  maintenance:
     # TODO: pin version once stable release is available
-    uses: eclipse-score/cicd-workflows/.github/workflows/on-pr.yml@main
-    permissions:
-      contents: read
-      id-token: write
+    uses: eclipse-score/cicd-workflows/.github/workflows/daily.yml@main
