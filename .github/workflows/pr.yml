@@ -1,5 +1,5 @@
 # *******************************************************************************
-# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -11,18 +11,22 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-name: PR
+name: Pull Request Workflow
 on:
   pull_request:
     types: [opened, reopened, synchronize]
-  merge_group:
-    types: [checks_requested]
-
-permissions:
-  contents: read
-  id-token: write
 
 jobs:
-  common:
-    # TODO: pin version once stable release is available
-    uses: eclipse-score/cicd-workflows/.github/workflows/on-pr.yml@main
+
+  self_test:
+    name: 🔬 Self Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Check out
+        uses: actions/checkout@v6
+
+      - name: ⚙️ Setup uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: 🛠️ Run pre-commit
+        run: uv run pre-commit run --all-files
