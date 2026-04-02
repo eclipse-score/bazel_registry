@@ -18,10 +18,11 @@ on:
   merge_group:
     types: [checks_requested]
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   common:
     # TODO: pin version once stable release is available
     uses: eclipse-score/cicd-workflows/.github/workflows/on-pr.yml@main
-    permissions:
-      contents: read
-      id-token: write
