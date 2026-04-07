@@ -12,6 +12,7 @@
 # *******************************************************************************
 
 import os
+import sys
 from pathlib import Path
 from typing import NoReturn
 
@@ -50,19 +51,27 @@ class Logger:
         return ""
 
     def _print(
-        self, prefix: str, msg: str, file: Path | None = None, line: int | None = None
+        self,
+        prefix: str,
+        msg: str,
+        *,
+        file: Path | None = None,
+        line: int | None = None,
+        stderr: bool = False,
     ) -> None:
         github_announcements = {"notice", "warning", "error"}
 
         if is_running_in_github_actions() and prefix in github_announcements:
             location = self._loc(file, line, for_github=True)
-            print(f"::{prefix}{location}::{self.name} {msg}")
+            msg = f"::{prefix}{location}::{self.name} {msg}"
         else:
             location = self._loc(file, line, for_github=False)
-            print(f"{prefix.upper()}:{location} {self.name} {msg}")
+            msg = f"{prefix.upper()}:{location} {self.name} {msg}"
+
+        print(msg, file=sys.stderr if stderr else sys.stdout)
 
     def debug(self, msg: str) -> None:
-        self._print("debug", msg)
+        self._print("debug", msg, stderr=True)
 
     def info(self, msg: str) -> None:
         self._print("info", msg)
@@ -74,10 +83,10 @@ class Logger:
         self, msg: str, file: Path | None = None, line: int | None = None
     ) -> None:
         self.warnings.append(msg)
-        self._print("warning", msg, file, line)
+        self._print("warning", msg, file=file, line=line)
 
     def fatal(
         self, msg: str, file: Path | None = None, line: int | None = None
     ) -> NoReturn:
-        self._print("error", msg, file, line)
+        self._print("error", msg, file=file, line=line)
         raise SystemExit(1)

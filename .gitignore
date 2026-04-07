@@ -1,15 +1,13 @@
-# Commonly used for local settings and secrets
-.env
+# Development and local configuration files
+/.codex
 
-# Bazel
-bazel-*
-MODULE.bazel.lock
-user.bazelrc
+# Commonly used for local settings and secrets
+/.env
 
 # Ruff
-.ruff_cache
+/.ruff_cache
 
 # Python
-.venv
-__pycache__/
+/.venv
 /.coverage
+__pycache__/

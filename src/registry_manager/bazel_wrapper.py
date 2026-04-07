@@ -331,7 +331,7 @@ class ModuleUpdateRunner:
         # Build metadata strings for logging
         file_meta = f"(version={self.info.mod_file.version}, comp_level={self.info.mod_file.comp_level})"
         release_meta = f"(version={self.info.release.version}, comp_level={self.info.mod_file.major_version})"
-        log.info(
+        log.debug(
             f"MODULE.bazel {file_meta} doesn't match release {release_meta}; creating patch"
         )
 

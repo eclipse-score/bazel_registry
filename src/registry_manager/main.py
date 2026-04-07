@@ -155,7 +155,7 @@ def plan_module_updates(
     for module in modules_to_check:
         # Skip non-periodic modules unless explicitly requested
         if not module.periodic_pull and not args.modules:
-            log.info(f"Skipping module {module.name} as periodic-pull is false")
+            log.debug(f"Skipping module {module.name} as periodic-pull is false")
             continue
 
         log.debug(f"Checking module {module.name}...")
@@ -163,7 +163,7 @@ def plan_module_updates(
         latest_release = gh.get_latest_release(module.org_and_repo)
 
         if not latest_release:
-            log.notice(
+            log.debug(
                 f"No releases found for {module.name} at "
                 f"{module.org_and_repo}; skipping."
             )
@@ -174,12 +174,12 @@ def plan_module_updates(
                 continue
 
             if module.versions:
-                log.info(
+                log.debug(
                     f"Updating {module.name} "
                     f"from {module.latest_version} to {latest_release.version}"
                 )
             else:
-                log.info(
+                log.debug(
                     f"Adding first version to {module.name}: {latest_release.version}"
                 )
 
@@ -202,10 +202,10 @@ def plan_module_updates(
                     f"{module.name} at tag {latest_release.tag_name}; skipping."
                 )
         else:
-            log.info(f"Module {module.name} is up to date ({module.latest_version}).")
+            log.debug(f"Module {module.name} is up to date ({module.latest_version}).")
 
     if not updated_modules:
-        log.info("No modules need updating.")
+        log.debug("No modules need updating.")
     else:
         log.debug(f"Modules to be updated: {[m.module.name for m in updated_modules]}")
 
@@ -224,7 +224,7 @@ def main(args: list[str]) -> None:
     gh = GithubWrapper(get_token(p))
     plan = plan_module_updates(p, gh, modules)
 
-    log.info("---------------------------------------------------")
+    log.debug("---------------------------------------------------")
 
     for task in plan:
         if task.module.versions:
@@ -237,6 +237,9 @@ def main(args: list[str]) -> None:
                 f"Adding first version to {task.module.name}: {task.release.version}"
             )
         ModuleUpdateRunner(task).generate_files()
+
+    if not plan:
+        log.notice("All modules are up to date; no updates needed.")
 
     if log.warnings:
         # If any warnings were issued, exit with non-zero code
