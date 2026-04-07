@@ -1,3 +1,16 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
 exclude: ^modules/ # don't touch modules, they must remain unchanged
 
 repos:
@@ -46,3 +59,9 @@ repos:
         types_or: [python, pyi]
         # linters need to run on all files together, not only changed files
         pass_filenames: false
+
+  # Ensure every file has a copyright header as per the Eclipse Foundation's requirements
+  - repo: https://github.com/eclipse-score/tooling
+    rev: 31ff8eee214e4e97ef8f5cb46e443273515b63ec
+    hooks:
+      - id: copyright

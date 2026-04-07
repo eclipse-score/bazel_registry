@@ -1,0 +1,14 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -11,7 +11,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+ 
+-module(name = "score_rules_imagefs")
++module(name = "score_rules_imagefs",
++    version = "0.0.3",
++    compatibility_level = 0
++)
+ 
+ # *******************************************************************************
+ # Common useful functions and rules for Bazel
