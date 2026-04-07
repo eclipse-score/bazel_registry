@@ -78,7 +78,7 @@ def test_plan_handles_missing_module_file():
 def _get_warnings(capsys: pytest.CaptureFixture[str]) -> list[str]:
     return [
         line
-        for line in capsys.readouterr().out.splitlines()
+        for line in capsys.readouterr().err.splitlines()
         if "warning" in line.lower()
     ]
 

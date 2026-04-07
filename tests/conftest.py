@@ -28,18 +28,19 @@ class MockLogger(Logger):
 
     def __init__(self):
         super().__init__("test")
+        self.clear()
         self.debug_messages: list[str] = []
         self.info_messages: list[str] = []
-        self.warning_messages: list[str] = []
+        self.warning_log_messages: list[str] = []
         self.error_messages: list[str] = []
 
-    def _print(self, prefix: str, msg: str, *, stderr: bool = False) -> None:
+    def _print(self, prefix: str, msg: str) -> None:
         if prefix == "debug":
             self.debug_messages.append(msg)
         elif prefix == "info":
             self.info_messages.append(msg)
         elif prefix == "warning":
-            self.warning_messages.append(msg)
+            self.warning_log_messages.append(msg)
         elif prefix == "error":
             self.error_messages.append(msg)
 

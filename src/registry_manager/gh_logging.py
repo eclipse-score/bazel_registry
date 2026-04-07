@@ -14,36 +14,42 @@
 import sys
 from typing import NoReturn
 
+_all_warnings_singleton: list[str] = []
+
 
 class Logger:
     """Minimal logger."""
 
     def __init__(self, name: str):
         self.name = name
-        self.warnings: list[str] = []
 
     def clear(self) -> None:
-        self.warnings.clear()
+        _all_warnings_singleton.clear()
 
-    def _print(self, prefix: str, msg: str, *, stderr: bool = False) -> None:
+    @property
+    def warnings(self) -> list[str]:
+        return _all_warnings_singleton
+
+    @classmethod
+    def warning_messages(cls) -> list[str]:
+        return list(_all_warnings_singleton)
+
+    def _print(self, prefix: str, msg: str) -> None:
         print(
             f"{prefix.upper()}: {self.name} {msg}",
-            file=sys.stderr if stderr else sys.stdout,
+            file=sys.stderr,
         )
 
     def debug(self, msg: str) -> None:
-        self._print("debug", msg, stderr=True)
-
-    def info(self, msg: str) -> None:
-        self._print("info", msg)
-
-    def notice(self, msg: str) -> None:
-        self._print("notice", msg)
+        """Prints a debug message to stderr, prefixed with the module name."""
+        self._print("debug", msg)
 
     def warning(self, msg: str) -> None:
-        self.warnings.append(msg)
+        """Prints a warning message to stderr and stores it in the warnings list."""
+        _all_warnings_singleton.append(msg)
         self._print("warning", msg)
 
     def fatal(self, msg: str) -> NoReturn:
+        """Prints an error message to stderr and exits the program."""
         self._print("error", msg)
         raise SystemExit(1)

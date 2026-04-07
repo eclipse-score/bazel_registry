@@ -20,6 +20,7 @@ class TestArgumentParsing:
     def test_parse_args_no_arguments(self):
         args = parse_args([])
         assert args.github_token is None
+        assert args.format is None
         assert args.modules == []
 
     def test_parse_args_with_token(self):
@@ -34,3 +35,7 @@ class TestArgumentParsing:
         args = parse_args(["--github-token", "token123", "score_alpha", "score_beta"])
         assert args.github_token == "token123"
         assert args.modules == ["score_alpha", "score_beta"]
+
+    def test_parse_args_with_json_format(self):
+        args = parse_args(["--format", "json"])
+        assert args.format == "json"

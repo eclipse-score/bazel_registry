@@ -77,24 +77,28 @@ jobs:
         run: uv sync --dev
 
       - name: 🧩 Run update script
+        id: registry_manager
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -o pipefail
           set -eu
+          uv run registry-manager --format json ${{ github.event.inputs.module }} | tee /tmp/result.json
+          jq -r '.pr_body' /tmp/result.json > /tmp/output.log
           {
-            printf "This PR updates the modules to their latest versions.\n"
-            printf "Please review and merge if everything looks good.\n\n"
-            uv run registry-manager ${{ github.event.inputs.module }}
-          } | tee /tmp/output.log
+            echo "pr_title=$(jq -r '.pr_title' /tmp/result.json)"
+            echo "commit_msg<<EOF"
+            jq -r '.pr_commit_msg' /tmp/result.json
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: 📤 Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
-          title: Update modules
+          title: ${{ steps.registry_manager.outputs.pr_title }}
           author: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
           body-path: /tmp/output.log
-          commit-message: Update modules
+          commit-message: ${{ steps.registry_manager.outputs.commit_msg }}
           base: main
           branch: bot/modules-update
           token: ${{ secrets.SCORE_BOT_CLASSIC_PAT }} # PAT belongs to eclipse-score-bot

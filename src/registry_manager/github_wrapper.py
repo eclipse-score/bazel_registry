@@ -71,7 +71,7 @@ class GithubWrapper:
                         )
                     )
                 else:
-                    log.notice(
+                    log.debug(
                         f"Skipping release {release.tag_name} in {org_and_repo} "
                         f"because it is not published yet."
                     )

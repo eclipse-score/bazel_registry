@@ -12,9 +12,11 @@
 # *******************************************************************************
 
 import argparse
+import json
 import os
 import subprocess
 import sys
+from dataclasses import dataclass
 
 from . import ModuleUpdateInfo
 from .bazel_wrapper import (
@@ -28,6 +30,95 @@ from .github_wrapper import GithubWrapper
 from .version import Version
 
 log = Logger(__name__)
+
+
+@dataclass(frozen=True)
+class RegistryRunResult:
+    updated_modules: list[ModuleUpdateInfo]
+    warnings: list[str]
+
+    def _render_update_lines(self) -> list[str]:
+        lines: list[str] = []
+        for update in self.updated_modules:
+            if update.module.versions:
+                lines.append(
+                    f"- {update.module.name}: {update.module.latest_version} -> {update.release.version}"
+                )
+            else:
+                lines.append(f"- {update.module.name}: add {update.release.version}")
+        return lines
+
+    @property
+    def has_updates(self) -> bool:
+        return bool(self.updated_modules)
+
+    @property
+    def commit_msg(self) -> str | None:
+        if not self.updated_modules:
+            return None
+
+        if len(self.updated_modules) == 1:
+            update = self.updated_modules[0]
+            return f"chore: update {update.module.name} to {update.release.version}"
+
+        title = "chore: update multiple modules"
+        lines = [
+            f"- {update.module.name} -> {update.release.version}"
+            for update in self.updated_modules
+        ]
+        return title + "\n\n" + "\n".join(lines)
+
+    @property
+    def pr_title(self) -> str:
+        if self.commit_msg:
+            return self.commit_msg.splitlines()[0]
+        return "Update modules"
+
+    @property
+    def pr_commit_msg(self) -> str:
+        return self.commit_msg or "Update modules"
+
+    @property
+    def pr_body(self) -> str:
+        lines = [
+            "This PR updates the modules to their latest versions.",
+            "Please review and merge if everything looks good.",
+            "",
+        ]
+        if self.updated_modules:
+            lines.extend(self._render_update_lines())
+        else:
+            lines.append("No module updates were needed.")
+        return "\n".join(lines)
+
+    def render_text(self) -> str:
+        if not self.updated_modules:
+            return "All modules are up to date; no updates needed."
+
+        header = f"Updated {len(self.updated_modules)} module(s):"
+        return "\n".join([header, *self._render_update_lines()])
+
+    def to_json(self) -> dict[str, object]:
+        return {
+            "has_updates": self.has_updates,
+            "commit_msg": self.commit_msg,
+            "pr_title": self.pr_title,
+            "pr_commit_msg": self.pr_commit_msg,
+            "pr_body": self.pr_body,
+            "updated_modules": [
+                {
+                    "name": update.module.name,
+                    "from_version": (
+                        str(update.module.latest_version)
+                        if update.module.versions
+                        else None
+                    ),
+                    "to_version": str(update.release.version),
+                }
+                for update in self.updated_modules
+            ],
+            "warnings": list(self.warnings),
+        }
 
 
 def parse_args(args: list[str]) -> argparse.Namespace:
@@ -48,6 +139,15 @@ def parse_args(args: list[str]) -> argparse.Namespace:
         nargs="*",
         help="If not provided, all modules are processed according to their "
         "periodic-pull setting. Otherwise the provided modules are processed.",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["json"],
+        default=None,
+        help=(
+            "Output format. When 'json', emits a single JSON object on stdout. "
+            "All diagnostics are written to stderr."
+        ),
     )
     return parser.parse_args(args)
 
@@ -212,6 +312,23 @@ def plan_module_updates(
     return updated_modules
 
 
+def apply_updates(plan: list[ModuleUpdateInfo]) -> None:
+    for task in plan:
+        if task.module.versions:
+            log.debug(
+                f"Updating {task.module.name} "
+                f"from {task.module.latest_version} to {task.release.version}"
+            )
+        else:
+            log.debug(
+                f"Adding first version to {task.module.name}: {task.release.version}"
+            )
+        ModuleUpdateRunner(task).generate_files()
+
+    if not plan:
+        log.debug("All modules are up to date; no updates needed.")
+
+
 def main(args: list[str]) -> None:
     """Main entry point for the registry manager.
 
@@ -222,28 +339,28 @@ def main(args: list[str]) -> None:
     p = parse_args(args)
     modules = read_modules(p.modules)
     gh = GithubWrapper(get_token(p))
+
+    # 1. Plan updates
     plan = plan_module_updates(p, gh, modules)
 
-    log.debug("---------------------------------------------------")
+    # 2. Perform updates
+    apply_updates(plan)
 
-    for task in plan:
-        if task.module.versions:
-            log.notice(
-                f"Updating {task.module.name} "
-                f"from {task.module.latest_version} to {task.release.version}"
-            )
-        else:
-            log.notice(
-                f"Adding first version to {task.module.name}: {task.release.version}"
-            )
-        ModuleUpdateRunner(task).generate_files()
+    # 3. Construct result
+    result = RegistryRunResult(
+        updated_modules=plan,
+        warnings=Logger.warning_messages(),
+    )
 
-    if not plan:
-        log.notice("All modules are up to date; no updates needed.")
+    # 4. Output result in requested format
+    if p.format == "json":
+        print(json.dumps(result.to_json()))
+    else:
+        print(result.render_text())
 
-    if log.warnings:
+    if result.warnings:
         # If any warnings were issued, exit with non-zero code
-        log.fatal(f"Completed with {len(log.warnings)} warnings.")
+        log.fatal(f"Completed with {len(result.warnings)} warnings.")
 
 
 def cli() -> None:
