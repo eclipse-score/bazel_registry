@@ -38,8 +38,7 @@ def _parse_versions(raw_versions: object, metadata_path: Path) -> list[Version]:
 
     if not isinstance(raw_versions, list):
         log.fatal(
-            f"{metadata_path} has invalid versions field; expected list of semantic version strings",
-            file=metadata_path,
+            f"{metadata_path} has invalid versions field; expected list of semantic version strings"
         )
 
     versions: list[Version] = [Version(v) for v in raw_versions]  # pyright: ignore[reportUnknownVariableType]

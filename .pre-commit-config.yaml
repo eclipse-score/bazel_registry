@@ -51,6 +51,8 @@ repos:
         entry: uv run pytest
         language: system
         types_or: [python, pyi]
+        # pytest needs to run on all modified files, not only when a pytest file was changed
+        pass_filenames: false
 
       - id: basedpyright
         name: basedpyright (uv)
