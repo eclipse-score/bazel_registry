@@ -37,17 +37,6 @@ class RegistryRunResult:
     updated_modules: list[ModuleUpdateInfo]
     warnings: list[str]
 
-    def _render_update_lines(self) -> list[str]:
-        lines: list[str] = []
-        for update in self.updated_modules:
-            if update.module.versions:
-                lines.append(
-                    f"- {update.module.name}: {update.module.latest_version} -> {update.release.version}"
-                )
-            else:
-                lines.append(f"- {update.module.name}: add {update.release.version}")
-        return lines
-
     @property
     def has_updates(self) -> bool:
         return bool(self.updated_modules)
@@ -74,51 +63,77 @@ class RegistryRunResult:
             return self.commit_msg.splitlines()[0]
         return "Update modules"
 
-    @property
-    def pr_commit_msg(self) -> str:
-        return self.commit_msg or "Update modules"
+    def _generate_report(self) -> str:
+        lines = []
+        if not self.updated_modules:
+            lines.append("All modules are up to date; no updates needed.")
+        else:
+            lines.append(f"Updated {len(self.updated_modules)} module(s):")
+            lines.extend(
+                (
+                    f"- {u.module.name}: {u.module.latest_version} -> {u.release.version}"
+                    if u.module.versions
+                    else f"- {u.module.name}: add {u.release.version}"
+                )
+                for u in self.updated_modules
+            )
+
+        if self.warnings:
+            lines.append("")
+            lines.append(f"{len(self.warnings)} warning(s):")
+            for w in self.warnings:
+                lines.append(f"- {w}")
+
+        return "\n".join(lines)
 
     @property
     def pr_body(self) -> str:
-        lines = [
-            "This PR updates the modules to their latest versions.",
-            "Please review and merge if everything looks good.",
-            "",
-        ]
-        if self.updated_modules:
-            lines.extend(self._render_update_lines())
-        else:
-            lines.append("No module updates were needed.")
-        return "\n".join(lines)
+        return """This PR updates the modules to their latest versions.
+Please review and merge if everything looks good.
 
-    def render_text(self) -> str:
-        if not self.updated_modules:
-            return "All modules are up to date; no updates needed."
+""" + self._generate_report()
 
-        header = f"Updated {len(self.updated_modules)} module(s):"
-        return "\n".join([header, *self._render_update_lines()])
-
-    def to_json(self) -> dict[str, object]:
-        return {
-            "has_updates": self.has_updates,
-            "commit_msg": self.commit_msg,
-            "pr_title": self.pr_title,
-            "pr_commit_msg": self.pr_commit_msg,
-            "pr_body": self.pr_body,
-            "updated_modules": [
+    def _get_outputs(self) -> dict[str, object]:
+        outputs: dict[str, object] = {"has_updates": self.has_updates}
+        if self.has_updates:
+            outputs.update(
                 {
-                    "name": update.module.name,
-                    "from_version": (
-                        str(update.module.latest_version)
-                        if update.module.versions
-                        else None
-                    ),
-                    "to_version": str(update.release.version),
+                    "commit_msg": self.commit_msg,
+                    "pr_title": self.pr_title,
+                    "pr_body": self.pr_body,
                 }
-                for update in self.updated_modules
-            ],
-            "warnings": list(self.warnings),
-        }
+            )
+        return outputs
+
+    def render(self, mode: str | None) -> str:
+        if not mode:  # cli by default
+            return self._generate_report()
+
+        outputs = self._get_outputs()
+        if mode == "json":
+            return json.dumps(outputs, indent=2) + "\n"
+        else:  # github_output
+            return "".join(_format_github_output(k, v) for k, v in outputs.items())
+
+
+def _format_github_output(name: str, value: object) -> str:
+    """Format a GitHub Actions output variable according to the rules in
+    https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#about-yaml-syntax-for-github-actions
+    """
+
+    if isinstance(value, bool):
+        return f"{name}={'true' if value else 'false'}\n"
+
+    text = json.dumps(value, indent=2) if isinstance(value, list | dict) else str(value)
+
+    if "\n" not in text:
+        return f"{name}={text}\n"
+    else:
+        delimiter = "EOF"
+        # Make the delimiter unique
+        while delimiter in text:
+            delimiter += "_X"
+        return f"{name}<<{delimiter}\n{text}\n{delimiter}\n"
 
 
 def parse_args(args: list[str]) -> argparse.Namespace:
@@ -142,10 +157,11 @@ def parse_args(args: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--format",
-        choices=["json"],
+        choices=["json", "github_output"],
         default=None,
         help=(
-            "Output format. When 'json', emits a single JSON object on stdout. "
+            "Output format. 'json' emits a single JSON object on stdout. "
+            "'github_output' emits GitHub Actions output syntax on stdout. "
             "All diagnostics are written to stderr."
         ),
     )
@@ -353,10 +369,7 @@ def main(args: list[str]) -> None:
     )
 
     # 4. Output result in requested format
-    if p.format == "json":
-        print(json.dumps(result.to_json()))
-    else:
-        print(result.render_text())
+    print(result.render(p.format))
 
     if result.warnings:
         # If any warnings were issued, exit with non-zero code

@@ -65,7 +65,7 @@ def read_modules(module_names: list[str] | None) -> list[BazelModuleInfo]:
             else:
                 log.fatal(f"Module '{module_name}' could not be found or parsed.")
     else:
-        for module_dir in Path("modules").iterdir():
+        for module_dir in sorted(Path("modules").iterdir(), key=lambda p: p.name):
             if m := try_parse_metadata_json(module_dir / "metadata.json"):  # noqa: SIM102
                 if not m.obsolete:
                     modules.append(m)

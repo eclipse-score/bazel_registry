@@ -81,23 +81,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -o pipefail
           set -eu
-          uv run registry-manager --format json ${{ github.event.inputs.module }} | tee /tmp/result.json
-          jq -r '.pr_body' /tmp/result.json > /tmp/output.log
-          {
-            echo "pr_title=$(jq -r '.pr_title' /tmp/result.json)"
-            echo "commit_msg<<EOF"
-            jq -r '.pr_commit_msg' /tmp/result.json
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          uv run registry-manager --format github_output ${{ github.event.inputs.module }} >> "$GITHUB_OUTPUT"
 
       - name: 📤 Create Pull Request
+        if: steps.registry_manager.outputs.has_updates == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           title: ${{ steps.registry_manager.outputs.pr_title }}
           author: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
-          body-path: /tmp/output.log
+          body: ${{ steps.registry_manager.outputs.pr_body }}
           commit-message: ${{ steps.registry_manager.outputs.commit_msg }}
           base: main
           branch: bot/modules-update

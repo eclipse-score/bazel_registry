@@ -39,3 +39,7 @@ class TestArgumentParsing:
     def test_parse_args_with_json_format(self):
         args = parse_args(["--format", "json"])
         assert args.format == "json"
+
+    def test_parse_args_with_github_format(self):
+        args = parse_args(["--format", "github_output"])
+        assert args.format == "github_output"

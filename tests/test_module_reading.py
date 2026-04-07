@@ -92,6 +92,25 @@ class TestModuleReading:
         assert github_module in names
         assert gitlab_module not in names
 
+    def test_read_all_modules_sorted_by_name(
+        self, setup_module_metadata: SetupModuleMetadata
+    ) -> None:
+        setup_module_metadata(
+            {
+                "score_beta": {
+                    "repository": ["github:org/beta"],
+                },
+                "score_alpha": {
+                    "repository": ["github:org/alpha"],
+                },
+            }
+        )
+        os.chdir("/")
+
+        modules = read_modules(None)
+
+        assert [module.name for module in modules] == ["score_alpha", "score_beta"]
+
     def test_versions_sorted_semver_desc(
         self, setup_module_metadata: SetupModuleMetadata
     ) -> None:
