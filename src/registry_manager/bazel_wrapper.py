@@ -84,7 +84,7 @@ def try_parse_metadata_json(metadata_json: Path) -> BazelModuleInfo | None:
         return None
 
     if not module_path.name.startswith("score_"):
-        log.warning(f"{module_path} is not prefixed with 'score_'", file=metadata_json)
+        log.warning(f"{module_path} is not prefixed with 'score_'")
 
     try:
         with open(metadata_json) as f:
@@ -99,17 +99,13 @@ def try_parse_metadata_json(metadata_json: Path) -> BazelModuleInfo | None:
         or len(data["repository"]) != 1
     ):
         log.warning(
-            f"{metadata_json} has invalid repository field; expected one element",
-            file=metadata_json,
+            f"{metadata_json} has invalid repository field; expected one element"
         )
         return None
 
     repo = data["repository"][0]
     if not isinstance(repo, str) or not repo.startswith("github:"):
-        log.warning(
-            f"{metadata_json} has non-GitHub repository '{repo}'; skipping",
-            file=metadata_json,
-        )
+        log.warning(f"{metadata_json} has non-GitHub repository '{repo}'; skipping")
         return None
 
     versions = _parse_versions(data.get("versions", []), metadata_json)

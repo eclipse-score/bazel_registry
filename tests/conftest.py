@@ -33,15 +33,7 @@ class MockLogger(Logger):
         self.warning_messages: list[str] = []
         self.error_messages: list[str] = []
 
-    def _print(
-        self,
-        prefix: str,
-        msg: str,
-        *,
-        file: Path | None = None,
-        line: int | None = None,
-        stderr: bool = False,
-    ) -> None:
+    def _print(self, prefix: str, msg: str, *, stderr: bool = False) -> None:
         if prefix == "debug":
             self.debug_messages.append(msg)
         elif prefix == "info":
