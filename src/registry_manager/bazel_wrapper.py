@@ -82,7 +82,9 @@ def try_parse_metadata_json(metadata_json: Path) -> BazelModuleInfo | None:
         log.warning(f"{metadata_json} does not exist; skipping")
         return None
 
-    if not module_path.name.startswith("score_"):
+    # rules_rust is an exception for historical reasons.
+    # No further exceptions will be allowed.
+    if not module_path.name.startswith("score_") and module_path.name != "rules_rust":
         log.warning(f"{module_path} is not prefixed with 'score_'")
 
     try:
