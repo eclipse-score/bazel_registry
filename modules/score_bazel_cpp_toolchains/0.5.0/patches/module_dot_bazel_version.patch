@@ -1,0 +1,14 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -11,7 +11,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+ 
+-module(name = "score_bazel_cpp_toolchains")
++module(name = "score_bazel_cpp_toolchains",
++    version = "0.5.0",
++    compatibility_level = 0
++)
+ 
+ # *******************************************************************************
+ # Common useful functions and rules for Bazel
