@@ -1,0 +1,9 @@
+{
+    "homepage": "https://github.com/eclipse-score/qnx_unit_tests",
+    "periodic-pull": true,
+    "repository": [
+        "github:eclipse-score/qnx_unit_tests"
+    ],
+    "versions": [],
+    "yanked_versions": {}
+}
