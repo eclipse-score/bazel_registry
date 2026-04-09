@@ -1,0 +1,12 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -12,7 +12,8 @@
+ # *******************************************************************************
+ module(
+     name = "score_qnx_unit_tests",
+-    version = "0.0.1",
++    version = "0.1.0",
++    compatibility_level = 0
+ )
+ 
+ # Core Bazel dependencies

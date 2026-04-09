@@ -1,0 +1,110 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_qnx_unit_tests",
+    version = "0.1.0",
+    compatibility_level = 0
+)
+
+# Core Bazel dependencies
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "rules_rust", version = "0.61.0")
+bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "rules_pkg", version = "1.2.0")
+
+# Testing
+bazel_dep(name = "googletest", version = "1.17.0", dev_dependency = True)
+
+# Score platform definitions (provides platforms + config_settings for QNX)
+bazel_dep(name = "score_bazel_platforms", version = "0.1.2", dev_dependency = True)
+
+# QCC C++ cross-compiler toolchain
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.5.0", dev_dependency = True)
+
+gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_x86_64_toolchain",
+    sdp_version = "8.0.3",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_aarch64_toolchain",
+    sdp_version = "8.0.3",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(
+    gcc,
+    "score_gcc_x86_64_toolchain",
+    "score_qcc_aarch64_toolchain",
+    "score_qcc_aarch64_toolchain_pkg",
+    "score_qcc_x86_64_toolchain",
+    "score_qcc_x86_64_toolchain_pkg",
+)
+
+# QNX IFS (Image File System) toolchain for building boot images
+bazel_dep(name = "score_rules_imagefs", version = "0.0.3")
+
+imagefs = use_extension("@score_rules_imagefs//extensions:imagefs.bzl", "imagefs", dev_dependency = True)
+imagefs.toolchain(
+    name = "score_qnx_x86_64_ifs_toolchain",
+    sdp_to_import = "@score_qcc_x86_64_toolchain_pkg",
+    sdp_version = "8.0.0",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    type = "ifs",
+)
+imagefs.toolchain(
+    name = "score_qnx_aarch64_ifs_toolchain",
+    sdp_to_import = "@score_qcc_aarch64_toolchain_pkg",
+    sdp_version = "8.0.0",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    type = "ifs",
+)
+use_repo(
+    imagefs,
+    "score_qnx_aarch64_ifs_toolchain",
+    "score_qnx_x86_64_ifs_toolchain",
+)
+
+# Score tooling (copyright checker, format checker, starpls)
+bazel_dep(name = "score_tooling", version = "1.1.2", dev_dependency = True)
+
+# Implicit dependencies for score_tooling
+bazel_dep(name = "aspect_rules_lint", version = "2.3.0", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1", dev_dependency = True)
+bazel_dep(name = "score_rust_policies", version = "0.0.5", dev_dependency = True)
+
+# Rust toolchain (Ferrocene, matching reference_integration setup)
+bazel_dep(name = "score_toolchains_rust", version = "0.4.0", dev_dependency = True)
+
+git_override(
+    module_name = "rules_rust",
+    commit = "293337fd6402ec3dfbeb8f2d589f38ad9124dadd",
+    remote = "https://github.com/pawelrutkaq/rules_rust.git",
+)

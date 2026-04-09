@@ -4,6 +4,8 @@
     "repository": [
         "github:eclipse-score/qnx_unit_tests"
     ],
-    "versions": [],
+    "versions": [
+        "0.1.0"
+    ],
     "yanked_versions": {}
 }
