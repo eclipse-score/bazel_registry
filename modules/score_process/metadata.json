@@ -1,6 +1,32 @@
 {
     "homepage": "https://eclipse-score.github.io/process_description",
     "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Markus Schu",
+            "email": "markus.schu@accenture.com",
+            "github": "masc2023",
+            "github_user_id": 142009492
+        },
+        {
+            "name": "Alexander Schemmel",
+            "email": "alexander.schemmel@bmw.de",
+            "github": "aschemmel-tech",
+            "github_user_id":
+        },
+        {
+            "name": "Philipp Ahmann",
+            "email": "Philipp.Ahmann@de.bosch.com",
+            "github": "pahmann",
+            "github_user_id":
+        },
+        {
+            "name": "Volker Häusler",
+            "email": "volker.haeussler@qorix.ai",
+            "github": "PandaeDo",
+            "github_user_id":
+        }
+    ],
     "repository": [
         "github:eclipse-score/process_description"
     ],

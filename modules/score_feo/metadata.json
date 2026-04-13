@@ -1,15 +1,34 @@
 {
     "homepage": "https://github.com/eclipse-score/feo",
     "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Markus Schu",
+            "email": "markus.schu@accenture.com",
+            "github": "masc2023",
+            "github_user_id": 142009492
+        },
+        {
+            "name": "Armin Bartsch",
+            "email": " armin.bartsch@accenture.com",
+            "github": "armin-acn",
+            "github_user_id":
+        },
+        {
+            "name": "Johannes Glamsch",
+            "email": "johannes.glamsch@accenture.com",
+            "github": "johannes-esr",
+            "github_user_id":
+        }
     "repository": [
-        "github:eclipse-score/feo"
-    ],
-    "versions": [
-        "1.0.5",
-        "1.0.4",
-        "1.0.3",
-        "1.0.2",
-        "1.0.1"
-    ],
-    "yanked_versions": {}
-}
+            "github:eclipse-score/feo"
+        ],
+        "versions": [
+            "1.0.5",
+            "1.0.4",
+            "1.0.3",
+            "1.0.2",
+            "1.0.1"
+        ],
+        "yanked_versions": {}
+    }
