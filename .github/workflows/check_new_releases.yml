@@ -37,6 +37,12 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: 🛡️ Harden Runner
+        if: github.repository_owner == 'eclipse-score'
+        uses: step-security/harden-runner@v2.17.0
+        with:
+          egress-policy: audit
+
       - name: 📥 Check out
         uses: actions/checkout@v6
         with:

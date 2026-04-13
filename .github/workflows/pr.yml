@@ -22,6 +22,12 @@ jobs:
     name: 🔬 Self Test
     runs-on: ubuntu-latest
     steps:
+      - name: 🛡️ Harden Runner
+        if: github.repository_owner == 'eclipse-score'
+        uses: step-security/harden-runner@v2.17.0
+        with:
+          egress-policy: audit
+
       - name: 📥 Check out
         uses: actions/checkout@v6
 

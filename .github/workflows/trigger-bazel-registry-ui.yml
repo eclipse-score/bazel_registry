@@ -27,6 +27,12 @@ jobs:
       TARGET_REPOSITORY: ${{ github.repository_owner }}/bazel_registry_ui
       TARGET_WORKFLOW: deploy.yml
     steps:
+      - name: 🛡️ Harden Runner
+        if: github.repository_owner == 'eclipse-score'
+        uses: step-security/harden-runner@v2.17.0
+        with:
+          egress-policy: audit
+
       - name: Dispatch repository event to bazel_registry_ui
         env:
           GH_TOKEN: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
