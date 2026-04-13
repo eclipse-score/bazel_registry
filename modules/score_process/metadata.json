@@ -21,7 +21,7 @@
             "github_user_id": 2428012
         },
         {
-            "name": "Volker Häusler",
+            "name": "Volker H\u00e4usler",
             "email": "volker.haeussler@qorix.ai",
             "github": "PandaeDo",
             "github_user_id": 193153210
@@ -31,6 +31,7 @@
         "github:eclipse-score/process_description"
     ],
     "versions": [
+        "1.5.2",
         "1.5.1",
         "1.5.0",
         "1.4.4",
