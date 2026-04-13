@@ -20,15 +20,16 @@
             "github": "johannes-esr",
             "github_user_id":
         }
+    ]
     "repository": [
-            "github:eclipse-score/feo"
-        ],
-        "versions": [
-            "1.0.5",
-            "1.0.4",
-            "1.0.3",
-            "1.0.2",
-            "1.0.1"
-        ],
-        "yanked_versions": {}
-    }
+        "github:eclipse-score/feo"
+    ],
+    "versions": [
+        "1.0.5",
+        "1.0.4",
+        "1.0.3",
+        "1.0.2",
+        "1.0.1"
+    ],
+    "yanked_versions": {}
+}
