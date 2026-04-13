@@ -48,9 +48,9 @@ class RegistryRunResult:
 
         if len(self.updated_modules) == 1:
             update = self.updated_modules[0]
-            return f"chore: update {update.module.name} to {update.release.version}"
+            return f"feat: update {update.module.name} to {update.release.version}"
 
-        title = "chore: update multiple modules"
+        title = "feat: update multiple modules"
         lines = [
             f"- {update.module.name} -> {update.release.version}"
             for update in self.updated_modules

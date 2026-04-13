@@ -74,8 +74,8 @@ def test_render_json_with_single_update() -> None:
 
     assert json.loads(result.render("json")) == {
         "has_updates": True,
-        "commit_msg": "chore: update score_demo to 2.0.0",
-        "pr_title": "chore: update score_demo to 2.0.0",
+        "commit_msg": "feat: update score_demo to 2.0.0",
+        "pr_title": "feat: update score_demo to 2.0.0",
         "pr_body": (
             "This PR updates the modules to their latest versions.\n"
             "Please review and merge if everything looks good.\n\n"
@@ -104,11 +104,11 @@ def test_render_json_with_multiple_updates() -> None:
     assert json.loads(result.render("json")) == {
         "has_updates": True,
         "commit_msg": (
-            "chore: update multiple modules\n\n"
+            "feat: update multiple modules\n\n"
             "- score_alpha -> 2.0.0\n"
             "- score_beta -> 3.0.0"
         ),
-        "pr_title": "chore: update multiple modules",
+        "pr_title": "feat: update multiple modules",
         "pr_body": (
             "This PR updates the modules to their latest versions.\n"
             "Please review and merge if everything looks good.\n\n"
@@ -138,8 +138,8 @@ def test_render_github_output_with_single_update() -> None:
     assert (
         result.render("github_output")
         == """has_updates=true
-commit_msg=chore: update score_demo to 2.0.0
-pr_title=chore: update score_demo to 2.0.0
+commit_msg=feat: update score_demo to 2.0.0
+pr_title=feat: update score_demo to 2.0.0
 pr_body<<EOF
 This PR updates the modules to their latest versions.
 Please review and merge if everything looks good.

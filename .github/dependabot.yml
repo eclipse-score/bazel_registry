@@ -27,9 +27,8 @@ updates:
       all-in-one:
         patterns:
           - "*"
-        update-types:
-          - minor
-          - patch
+    commit-message:
+      prefix: chore(github-actions)
 
   - package-ecosystem: pip
     directory: /
@@ -39,6 +38,16 @@ updates:
       all-in-one:
         patterns:
           - "*"
-        update-types:
-          - minor
-          - patch
+    commit-message:
+      prefix: chore(pip)
+
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      all-in-one:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: chore(pre-commit)
