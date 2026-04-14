@@ -14,7 +14,7 @@
 # Please see the documentation for all configuration options:
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
-# As problems are rare, we group all areas into "all-in-one" PRs; Except for major updates.
+# As problems are rare, we group each ecosystem into "all-in-one" PRs.
 
 version: 2
 
@@ -24,7 +24,7 @@ updates:
     schedule:
       interval: weekly
     groups:
-      all-in-one:
+      github-actions:
         patterns:
           - "*"
     commit-message:
@@ -35,7 +35,7 @@ updates:
     schedule:
       interval: weekly
     groups:
-      all-in-one:
+      python:
         patterns:
           - "*"
     commit-message:
@@ -46,7 +46,7 @@ updates:
     schedule:
       interval: weekly
     groups:
-      all-in-one:
+      pre-commit:
         patterns:
           - "*"
     commit-message:
