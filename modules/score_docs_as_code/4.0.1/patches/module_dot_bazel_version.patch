@@ -1,0 +1,14 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -12,7 +12,10 @@
+ # *******************************************************************************
+ 
+ # Versioning is handled by GitHub Releases.
+-module(name = "score_docs_as_code")
++module(name = "score_docs_as_code",
++    version = "4.0.1",
++    compatibility_level = 4
++)
+ 
+ ###############################################################################
+ #
