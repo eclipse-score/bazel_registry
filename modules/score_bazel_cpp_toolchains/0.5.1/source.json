@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-iMyMvsEPZgwBmzOlTC4IA824rjf0WixlfQJuRvmVwfY=",
+    "strip_prefix": "bazel_cpp_toolchains-0.5.1",
+    "url": "https://github.com/eclipse-score/bazel_cpp_toolchains/archive/refs/tags/v0.5.1.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-FGPIeZv36sxq+eRy3JENT1bu9+7SuVE3AY4NLliIff8="
+    }
+}
