@@ -3,6 +3,12 @@
     "periodic-pull": true,
     "maintainers": [
         {
+            "name": "Jan Schlosser",
+            "email": "Jan.Schlosser@bmw.de",
+            "github": "castler",
+            "github_user_id": 3033530
+        },
+        {
             "name": "Ulrich Huber",
             "email": "Ulrich.UH.Huber@bmw.de",
             "github": "LittleHuba",
