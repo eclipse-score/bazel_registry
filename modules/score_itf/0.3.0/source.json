@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-KGOTh7DEL8vLYe3CN8tg/rv87Knq3bhYFrEFxzV7GIg=",
+    "strip_prefix": "itf-0.3.0",
+    "url": "https://github.com/eclipse-score/itf/archive/refs/tags/0.3.0.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-LW71ZzsgyRoyyfg7M10ydE06+h3wDuX4W6wMexYotc0="
+    }
+}
