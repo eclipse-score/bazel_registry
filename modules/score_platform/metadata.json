@@ -1,6 +1,32 @@
 {
     "homepage": "https://eclipse-score.github.io/score/",
     "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Frank Scholter Peres",
+            "email": "frank.scholter_peres@mercedes-benz.com",
+            "github": "FScholPer",
+            "github_user_id": 145544737
+        },
+        {
+            "name": "Andreas Mittag",
+            "email": "Andreas.Mittag@etas.com",
+            "github": "anmittag",
+            "github_user_id": 119171581
+        },
+        {
+            "name": "Lars Bauhofer",
+            "email": "Lars.Bauhofer@qorix.ai",
+            "github": "qor-lb",
+            "github_user_id": 155632781
+        },
+        {
+            "name": "Anton Krivoborodov",
+            "email": "Anton.Krivoborodov@bmw.de",
+            "github": "antonkri",
+            "github_user_id": 63401640
+        }
+    ],
     "repository": [
         "github:eclipse-score/score"
     ],
