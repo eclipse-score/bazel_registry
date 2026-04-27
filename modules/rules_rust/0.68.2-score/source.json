@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-sD64dj+Y/wuH+51184i5E/gR7bat0j2Md7+XACdX6Cg=",
+    "strip_prefix": "rules_rust-0.68.2-score",
+    "url": "https://github.com/eclipse-score/rules_rust/archive/refs/tags/0.68.2-score.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-7coIeT9ClzHWJVSNicQZDKUO0RiwYeZBInZXRC0ePlI="
+    }
+}
