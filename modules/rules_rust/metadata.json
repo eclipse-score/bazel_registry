@@ -19,6 +19,7 @@
         "github:eclipse-score/rules_rust"
     ],
     "versions": [
+        "0.68.2-score",
         "0.68.1-score"
     ],
     "yanked_versions": {}
