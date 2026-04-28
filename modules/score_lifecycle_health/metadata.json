@@ -1,6 +1,20 @@
 {
     "homepage": "https://github.com/eclipse-score/lifecycle",
     "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Pawel Rutka",
+            "email": "Pawel.Rutka.ext@qorix.ai",
+            "github": "pawelrutkaq",
+            "github_user_id": 195489054
+        },
+        {
+            "name": "Nicolas Fußberger",
+            "email": "nicolas.fussberger@etas.com",
+            "github": "NicolasFussberger",
+            "github_user_id": 145956508
+        }
+    ],
     "repository": [
         "github:eclipse-score/lifecycle"
     ],
