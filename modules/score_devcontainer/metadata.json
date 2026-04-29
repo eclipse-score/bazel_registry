@@ -1,0 +1,9 @@
+{
+    "homepage": "https://github.com/eclipse-score/devcontainer",
+    "periodic-pull": true,
+    "repository": [
+        "github:eclipse-score/devcontainer"
+    ],
+    "versions": [],
+    "yanked_versions": {}
+}
