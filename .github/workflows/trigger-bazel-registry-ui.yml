@@ -39,23 +39,24 @@ jobs:
         run: |
           set -euxo pipefail
 
-          gh_output="$(
+          run_url="$(
             gh workflow run "$TARGET_WORKFLOW" \
               --repo "$TARGET_REPOSITORY" \
               --field bcrCommitHash="$GITHUB_SHA"
           )"
 
+          # run_url will contain the url only, e.g.:
+          # https://github.com/eclipse-score/bazel_registry_ui/actions/runs/25116888648
 
-          run_id="$(
-            grep -Eo 'gh run view [0-9]+' <<< "$gh_output" | cut -d' ' -f4 || true
-          )"
+          # Extract the part behind the last slash, which is the run ID
+          run_id="${run_url##*/}"
           if [ -n "$run_id" ]; then
-            run_url="$GITHUB_SERVER_URL/$TARGET_REPOSITORY/actions/runs/$run_id"
+            # Print to step summary and to console
             printf 'Triggered %s workflow run [%s](%s)\n' \
               "$TARGET_REPOSITORY" "$run_id" "$run_url" >> "$GITHUB_STEP_SUMMARY"
             printf 'Triggered %s workflow run %s: %s\n' \
               "$TARGET_REPOSITORY" "$run_id" "$run_url"
           else
-            printf 'GitHub CLI output:\n%s\n' "$gh_output" >&2
+            printf 'GitHub CLI output:\n%s\n' "$run_url" >&2
             exit 1
           fi
