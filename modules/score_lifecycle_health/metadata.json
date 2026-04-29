@@ -9,7 +9,7 @@
             "github_user_id": 195489054
         },
         {
-            "name": "Nicolas Fußberger",
+            "name": "Nicolas Fu\u00dfberger",
             "email": "nicolas.fussberger@etas.com",
             "github": "NicolasFussberger",
             "github_user_id": 145956508
@@ -19,6 +19,7 @@
         "github:eclipse-score/lifecycle"
     ],
     "versions": [
+        "0.2.0",
         "0.1.0"
     ],
     "yanked_versions": {}

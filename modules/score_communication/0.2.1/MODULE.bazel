@@ -1,0 +1,332 @@
+# *******************************************************************************
+# Copyright (c) 2024-2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(name = "score_communication",
+    version = "0.2.1",
+    compatibility_level = 0
+)
+
+# Dependencies that will get propagated to our users as transitive dependencies
+bazel_dep(name = "bazel_skylib", version = "1.8.1")
+bazel_dep(name = "boost.interprocess", version = "1.83.0.bcr.4")
+bazel_dep(name = "boost.program_options", version = "1.83.0.bcr.4")
+bazel_dep(name = "download_utils", version = "1.2.2")
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "nlohmann_json", version = "3.11.3")
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_cc", version = "0.1.5")
+bazel_dep(name = "rules_python", version = "1.5.1")
+bazel_dep(name = "rules_rust", version = "0.68.1-score")
+bazel_dep(name = "score_baselibs", version = "0.2.6")
+bazel_dep(name = "score_baselibs_rust", version = "0.1.0")
+bazel_dep(name = "score_bazel_platforms", version = "0.1.2")
+bazel_dep(name = "score_crates", version = "0.0.9", repo_name = "score_communication_crate_index")
+
+download_archive = use_repo_rule("@download_utils//download/archive:defs.bzl", "download_archive")
+
+download_archive(
+    name = "jsonschema",
+    build = "//third_party/jsonschema:jsonschema.BUILD",
+    strip_prefix = "jsonschema-4.23.0",
+    urls = ["https://github.com/python-jsonschema/jsonschema/archive/refs/tags/v4.23.0.tar.gz"],
+)
+
+bazel_dep(name = "score_tooling", dev_dependency = True)
+git_override(
+    module_name = "score_tooling",
+    commit = "ef7659a233722e07d7cd227c10fb3584bfd37e71",
+    remote = "https://github.com/eclipse-score/tooling.git",
+)
+
+# Dependencies required for development that will not get propagated to our users as transitive dependencies
+bazel_dep(name = "gcc_toolchain", version = "0.9.0", dev_dependency = True)
+
+gcc_toolchains = use_extension("@gcc_toolchain//toolchain:module_extensions.bzl", "gcc_toolchains", dev_dependency = True)
+gcc_toolchains.toolchain(
+    name = "gcc_toolchain_x86_64",
+    extra_cxxflags = [
+        "-fdiagnostics-color=always",  # Adds copt to always use coloring in build output
+    ],
+    extra_ldflags = [
+        "-lstdc++",
+        "-lrt",
+        "-latomic",
+    ],
+    gcc_version = "15.2.0",
+    target_arch = "x86_64",
+)
+use_repo(gcc_toolchains, "gcc_toolchain_x86_64")
+
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.3.0", dev_dependency = True)
+git_override(
+    module_name = "score_bazel_cpp_toolchains",
+    commit = "79982259df6dfa9d82cc458163a6d9b08bd24471",
+    remote = "https://github.com/eclipse-score/bazel_cpp_toolchains.git",
+)
+
+score_gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+score_gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_base_constraints_only = True,
+    use_default_package = True,
+    version = "12.2.0",
+)
+score_gcc.toolchain(
+    name = "score_gcc_aarch64_toolchain",
+    target_cpu = "aarch64",
+    target_os = "linux",
+    use_base_constraints_only = True,
+    use_default_package = True,
+    version = "12.2.0",
+)
+score_gcc.toolchain(
+    name = "score_qcc_x86_64_toolchain",
+    sdp_version = "8.0.0",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+score_gcc.toolchain(
+    name = "score_qcc_aarch64_toolchain",
+    sdp_version = "8.0.0",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(
+    score_gcc,
+    "score_gcc_aarch64_toolchain",
+    "score_gcc_x86_64_toolchain",
+    "score_qcc_aarch64_toolchain",
+    "score_qcc_x86_64_toolchain",
+)
+
+bazel_dep(name = "score_itf", version = "0.3.0", dev_dependency = True)
+
+# For the moment we still need the old toolchain for ifs generation.
+# Migrate once rules_imagefs is ready to be used (https://github.com/eclipse-score/rules_imagefs/pull/1).
+bazel_dep(name = "score_toolchains_qnx", version = "0.0.7", dev_dependency = True)
+
+toolchains_qnx = use_extension(
+    "@score_toolchains_qnx//:extensions.bzl",
+    "toolchains_qnx",
+    dev_dependency = True,
+)
+toolchains_qnx.sdp(
+    sha256 = "f2e0cb21c6baddbcb65f6a70610ce498e7685de8ea2e0f1648f01b327f6bac63",
+    strip_prefix = "installation",
+    url = "https://www.qnx.com/download/download/79858/installation.tgz",
+)
+use_repo(toolchains_qnx, "toolchains_qnx_ifs")
+
+bazel_dep(name = "toolchains_llvm", version = "1.5.0", dev_dependency = True)
+
+llvm = use_extension(
+    "@toolchains_llvm//toolchain/extensions:llvm.bzl",
+    "llvm",
+    dev_dependency = True,
+)
+llvm.toolchain(
+    compile_flags = {"": [
+        "-march=nehalem",
+        "-ffp-model=strict",
+        # Security
+        "-U_FORTIFY_SOURCE",  # https://github.com/google/sanitizers/issues/247
+        "-fstack-protector",
+        "-fno-omit-frame-pointer",
+        # Diagnostics
+        "-fcolor-diagnostics",
+        "-Wno-deprecated-declarations",
+        "-Wno-error=self-assign-overloaded",
+        "-Wthread-safety",
+    ]},
+    cxx_standard = {"": "c++17"},
+    link_libs = {"": [
+        "-lrt",
+        # This is the agreed way to ensure linking for targets using std::atomic operations.
+        "-latomic",
+    ]},
+    llvm_version = "19.1.7",
+)
+use_repo(llvm, "llvm_toolchain")
+
+bazel_dep(name = "score_toolchains_rust", version = "0.8.0", dev_dependency = True)
+
+gcc_ferrocene = use_extension(
+    "@score_toolchains_rust//extensions:ferrocene_toolchain_ext.bzl",
+    "ferrocene_toolchain_ext",
+    dev_dependency = True,
+)
+gcc_ferrocene.toolchain(
+    name = "ferrocene_x86_64_unknown_linux_gnu_llvm",
+    coverage_tools_sha256 = "497958e925bc94833ea226d68f6d5ba38bd890f571c73e230141d2923e30dd94",
+    coverage_tools_strip_prefix = "779fbed05ae9e9fe2a04137929d99cc9b3d516fd/x86_64-unknown-linux-gnu",
+    coverage_tools_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.0.1/coverage-tools-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    extra_rustc_flags = [
+        "-Clink-arg=-Wl,--no-as-needed",
+        "-Clink-arg=-lc++",
+        "-Clink-arg=-lm",
+        "-Clink-arg=-lc",
+    ],
+    sha256 = "4c08b41eaafd39cff66333ca4d4646a5331c780050b8b9a8447353fcd301dddc",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    target_triple = "x86_64-unknown-linux-gnu",
+    url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.0.1/ferrocene-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+)
+use_repo(
+    gcc_ferrocene,
+    "ferrocene_x86_64_unknown_linux_gnu_llvm",
+)
+
+# We use here a pre-compiled fully static and hermetic clang_format binary
+# and not the one provided by llvm_toolchain, because the one from llvm_toolchain is not fully hermetic (and different version for now)
+download_file = use_repo_rule("@download_utils//download/file:defs.bzl", "download_file")
+
+download_file(
+    name = "clang_format",
+    dev_dependency = True,
+    executable = True,
+    output = "executable",
+    urls = ["https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-2da3e7b/clang-format-19_linux-amd64"],
+)
+
+bazel_dep(name = "aspect_rules_lint", version = "2.2.0", dev_dependency = True)
+bazel_dep(name = "google_benchmark", version = "1.9.5", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.1.2", dev_dependency = True)
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    commit = "4f28899228fb3ad0126897876f147ca15026151e",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+)
+
+download_archive(
+    name = "json_schema_validator",
+    build = "//third_party/json_schema_validator:json_schema_validator.BUILD",
+    dev_dependency = True,
+    strip_prefix = "json-schema-validator-2.1.0",
+    urls = ["https://github.com/pboettch/json-schema-validator/archive/refs/tags/2.1.0.tar.gz"],
+)
+
+bazel_dep(name = "rules_doxygen", version = "2.6.1", dev_dependency = True)
+
+# Apply patch to fix Doxyfile template for our use cases
+single_version_override(
+    module_name = "rules_doxygen",
+    patch_strip = 1,
+    patches = ["//third_party/rule_doxygen:Doxyfile.patch"],
+)
+
+bazel_dep(name = "score_docs_as_code", version = "3.0.1", dev_dependency = True)
+
+# Force score_docs_as_code to 3.0.1 to resolve compatibility conflict between score_logging and score_baselibs
+single_version_override(
+    module_name = "score_docs_as_code",
+    version = "3.0.1",
+)
+
+# Doxygen extension for documentation generation
+doxygen_extension = use_extension("@rules_doxygen//:extensions.bzl", "doxygen_extension", dev_dependency = True)
+use_repo(doxygen_extension, "doxygen")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
+python.toolchain(
+    python_version = "3.12",
+)
+
+# Python pip dependencies
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip", dev_dependency = True)
+pip.parse(
+    hub_name = "score_communication_pip",
+    python_version = "3.12",
+    requirements_lock = "//:requirements_lock.txt",
+)
+use_repo(pip, "score_communication_pip")
+
+pip.parse(
+    hub_name = "codeql_coding_standards_pip_hub",
+    python_version = "3.12",
+    requirements_lock = "//third_party/codeql:requirements_lock.txt",
+)
+use_repo(pip, "codeql_coding_standards_pip_hub")
+
+# TRLC dependency for requirements traceability
+bazel_dep(name = "trlc", version = "0.0.0", dev_dependency = True)
+git_override(
+    module_name = "trlc",
+    commit = "3a71fd56001b95dfbb5270a49449ec0a631cd56c",  #TRLC 2.0.4
+    remote = "https://github.com/bmw-software-engineering/trlc.git",
+)
+
+# Lobster dependency for requirements traceability
+bazel_dep(name = "lobster", version = "0.0.0", dev_dependency = True)
+git_override(
+    module_name = "lobster",
+    commit = "d528fbdec2cd72ff7967b51546fb0bd935810258",
+    remote = "https://github.com/bmw-software-engineering/lobster.git",
+)
+
+# Use lobster's upstream requirements.txt directly for this module's Python hub
+pip.parse(
+    hub_name = "lobster_dependencies",
+    python_version = "3.12",
+    requirements_lock = "@lobster//:requirements.txt",
+)
+use_repo(pip, "lobster_dependencies")
+
+bazel_dep(name = "rules_oci", version = "2.2.7", dev_dependency = True)
+bazel_dep(name = "rules_distroless", version = "0.6.2", dev_dependency = True)
+
+apt = use_extension(
+    "@rules_distroless//apt:extensions.bzl",
+    "apt",
+    dev_dependency = True,
+)
+apt.install(
+    name = "ubuntu24_04",
+    lock = "@@//quality/integration_testing/environments/ubuntu24_04_docker:ubuntu24_04.lock.json",
+    manifest = "//quality/integration_testing/environments/ubuntu24_04_docker:ubuntu24_04.yaml",
+)
+use_repo(apt, "ubuntu24_04")
+
+bazel_dep(name = "rules_pkg", version = "1.2.0", dev_dependency = True)
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "codeql_bundle",
+    build_file = "//third_party/codeql:codeql.BUILD",
+    sha256 = "",
+    url = "https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.23.6/codeql-bundle-linux64.tar.gz",
+)
+
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "codeql_coding_standards",
+    build_file = "//third_party/codeql:codeql_coding_standards.BUILD",
+    commit = "781f1eecfa2fc9970fb08447588a0b4d19a7908d",
+    remote = "https://github.com/github/codeql-coding-standards.git",
+)
+
+register_toolchains(
+    "//bazel/toolchains:sphinx_toolchain",
+    dev_dependency = True,
+)

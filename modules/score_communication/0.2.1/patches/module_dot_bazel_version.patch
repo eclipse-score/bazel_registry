@@ -1,0 +1,14 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -10,7 +10,10 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+-module(name = "score_communication")
++module(name = "score_communication",
++    version = "0.2.1",
++    compatibility_level = 0
++)
+ 
+ # Dependencies that will get propagated to our users as transitive dependencies
+ bazel_dep(name = "bazel_skylib", version = "1.8.1")
