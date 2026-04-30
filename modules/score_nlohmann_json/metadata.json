@@ -5,6 +5,7 @@
         "github:eclipse-score/nlohmann_json"
     ],
     "versions": [
+        "3.12.0-tsf.1"
     ],
     "yanked_versions": {}
 }

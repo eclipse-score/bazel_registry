@@ -1,0 +1,14 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -11,7 +11,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+ 
+-module(name = "score_nlohmann_json")
++module(name = "score_nlohmann_json",
++    version = "3.12.0-tsf.1",
++    compatibility_level = 3
++)
+ 
+ bazel_dep(name = "rules_license", version = "1.0.0")
+ 
