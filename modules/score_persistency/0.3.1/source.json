@@ -1,5 +1,5 @@
 {
-    "integrity": "sha256-+FKlYgGA1mZCgLwVCaFtrfio9QTv/je8WaZc2kAqAOU=",
+    "integrity": "sha256-z6UR+w5j8kqMtSctnq/t6aBTuthUedh/akYvoToDmRw=",
     "strip_prefix": "persistency-0.3.1",
     "url": "https://github.com/eclipse-score/persistency/archive/refs/tags/v0.3.1.tar.gz",
     "patch_strip": 1,
