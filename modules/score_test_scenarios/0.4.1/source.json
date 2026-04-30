@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-k+RNyqPiE9IFE0hphyKkx/O53SWVksqtRMSH8zRr0kM=",
+    "strip_prefix": "testing_tools-0.4.1",
+    "url": "https://github.com/eclipse-score/testing_tools/archive/refs/tags/v0.4.1.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-G4i8zgeEaIygYlKPPC7ZnHyaTvEZuzpmbDvGGE7Cux4="
+    }
+}
