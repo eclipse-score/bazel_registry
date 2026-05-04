@@ -4,6 +4,8 @@
     "repository": [
         "github:eclipse-score/devcontainer"
     ],
-    "versions": [],
+    "versions": [
+        "1.5.0"
+    ],
     "yanked_versions": {}
 }

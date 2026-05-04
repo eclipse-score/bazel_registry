@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-Ugwgkh4NMyWRzbF3AcmDv/0ocRQhwtQrbC0ss0ug0ec=",
+    "strip_prefix": "devcontainer-1.5.0",
+    "url": "https://github.com/eclipse-score/devcontainer/archive/refs/tags/v1.5.0.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-SUH2hZFgb3mf/rVHBaXuamHbCO41Y55AW52wv4AfCp8="
+    }
+}

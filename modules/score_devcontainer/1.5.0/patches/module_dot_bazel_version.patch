@@ -1,0 +1,14 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -11,7 +11,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+ 
+-module(name = "score_devcontainer")
++module(name = "score_devcontainer",
++    version = "1.5.0",
++    compatibility_level = 1
++)
+ 
+ bazel_dep(name = "rules_multitool", version = "1.11.1")
+ 
