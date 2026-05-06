@@ -19,6 +19,7 @@
         "github:eclipse-score/persistency"
     ],
     "versions": [
+        "0.3.2",
         "0.3.1",
         "0.3.0",
         "0.2.2",
