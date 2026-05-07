@@ -1,6 +1,20 @@
 {
     "homepage": "https://github.com/eclipse-score/itf",
     "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Lukasz Tekieli",
+            "email": "lukasz.tekieli@bmw.de",
+            "github": "ltekieli",
+            "github_user_id": 800113
+        },
+        {
+            "name": "Dragan Bjedov",
+            "email": "dragan.db.bjedov@bmw.de",
+            "github": "draganbjedov",
+            "github_user_id": 4594303
+        }
+    ],
     "repository": [
         "github:eclipse-score/itf"
     ],
