@@ -19,13 +19,13 @@
             "email": "volker.haeussler@qorix.ai",
             "github": "PandaeDo",
             "github_user_id": 193153210
-        }
+        },
         {
             "name": "Uwe Maucher",
             "email": "uwe.maucher@bmw.de",
             "github": "umaucher",
             "github_user_id": 205777204
-        }        
+        }
     ],
     "repository": [
         "github:eclipse-score/persistency"
