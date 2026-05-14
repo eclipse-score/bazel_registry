@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-exclude: ^modules/ # don't touch modules, they must remain unchanged
+exclude: ^modules/(?!.*metadata\.json$) # don't touch modules, they must remain unchanged
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
