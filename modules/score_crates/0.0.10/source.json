@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-BDlDjKQOHe6tbY29sHgFgN6jtQvm4Kp4m0X+uBI8FeU=",
+    "strip_prefix": "score-crates-0.0.10",
+    "url": "https://github.com/eclipse-score/score-crates/archive/refs/tags/v0.0.10.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-btrO99u1NfaKsRFx84dzbfNRlC7g+FeQuxUAwvRa0iQ="
+    }
+}
