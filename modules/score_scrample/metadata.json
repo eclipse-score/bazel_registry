@@ -5,6 +5,7 @@
         "github:eclipse-score/scrample"
     ],
     "versions": [
+        "0.1.2-simple-app",
         "0.1.1",
         "0.1.0",
         "0.1.0-test"

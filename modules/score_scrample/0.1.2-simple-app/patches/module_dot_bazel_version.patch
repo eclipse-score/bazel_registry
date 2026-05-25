@@ -1,0 +1,12 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -12,7 +12,8 @@
+ # *******************************************************************************
+ module(
+     name = "score_scrample",
+-    version = "0.1.0",
++    version = "0.1.2-simple-app",
++    compatibility_level = 0
+ )
+ 
+ # Configure and register the python toolchain.
