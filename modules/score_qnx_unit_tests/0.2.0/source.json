@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-FedVON5hHXgxRbLm4tV5Md76RhmwaAEzg9aioiSJyA4=",
+    "strip_prefix": "qnx_unit_tests-0.2.0",
+    "url": "https://github.com/eclipse-score/qnx_unit_tests/archive/refs/tags/0.2.0.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-cyXYLzm9MLVUYzP6eZSLKoGlJu4oJ79DMuwgqjTcseE="
+    }
+}
