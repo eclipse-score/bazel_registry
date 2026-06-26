@@ -34,7 +34,6 @@ jobs:
     # permissions must be set even when using a PAT
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - name: 🛡️ Harden Runner
@@ -90,15 +89,14 @@ jobs:
           set -eu
           uv run registry-manager --format github_output ${{ github.event.inputs.module }} >> "$GITHUB_OUTPUT"
 
-      - name: 📤 Create Pull Request
+      - name: 📤 Push to main
         if: steps.registry_manager.outputs.has_updates == 'true'
-        uses: peter-evans/create-pull-request@v8
-        with:
-          title: ${{ steps.registry_manager.outputs.pr_title }}
-          author: eclipse-score-bot <187756813+eclipse-score-bot@users.noreply.github.com>
-          body: ${{ steps.registry_manager.outputs.pr_body }}
-          commit-message: ${{ steps.registry_manager.outputs.commit_msg }}
-          base: main
-          branch: bot/modules-update
-          token: ${{ secrets.SCORE_BOT_CLASSIC_PAT }} # PAT belongs to eclipse-score-bot
-          labels: automation
+        run: |
+          git config user.name "eclipse-score-bot"
+          git config user.email "187756813+eclipse-score-bot@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${SCORE_BOT_CLASSIC_PAT}@github.com/${{ github.repository }}.git"
+          git add -A
+          git commit -m "${{ steps.registry_manager.outputs.commit_msg }}"
+          git push origin HEAD:main
+        env:
+          SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
