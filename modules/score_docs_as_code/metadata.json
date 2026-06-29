@@ -18,6 +18,7 @@
         "github:eclipse-score/docs-as-code"
     ],
     "versions": [
+        "4.6.0",
         "4.5.0",
         "4.4.1",
         "4.4.0",
