@@ -1,0 +1,17 @@
+{
+    "homepage": "https://github.com/eclipse-score/time",
+    "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Valery Lavrov",
+            "email": "valery.lavrov@bmw.de",
+            "github": "lavrovvalera",
+            "github_user_id": 34768723
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/time"
+    ],
+    "versions": [],
+    "yanked_versions": {}
+}
