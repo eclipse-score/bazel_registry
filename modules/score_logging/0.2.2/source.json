@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-kiLePWmsoc7ZTDy8PIaE4pZ46Ci0gnPQhCshLj+VywQ=",
+    "strip_prefix": "logging-0.2.2",
+    "url": "https://github.com/eclipse-score/logging/archive/refs/tags/v0.2.2.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-fr/2KNCCQXA8fdEqTxP0FlU+/g5ubLe97x7FKWsbfhk="
+    }
+}
