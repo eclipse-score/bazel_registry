@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-Ool/B7KUtDwwHIXtheDXWAtSlc4fLcbOT9+CJLmkIO4=",
+    "strip_prefix": "score-0.6.1",
+    "url": "https://github.com/eclipse-score/score/archive/refs/tags/v0.6.1.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-CNXD5/bTnGlrit6Ak6QTZcBb3so1XxaNMA11QRMLvdA="
+    }
+}
