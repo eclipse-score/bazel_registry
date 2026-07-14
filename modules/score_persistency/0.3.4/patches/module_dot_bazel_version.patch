@@ -1,0 +1,14 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -10,7 +10,10 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+-module(name = "score_persistency")
++module(name = "score_persistency",
++    version = "0.3.4",
++    compatibility_level = 0
++)
+ 
+ ## Toolchains (dependencies and config)
+ # python
