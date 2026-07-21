@@ -1,0 +1,13 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -12,7 +12,9 @@
+ # *******************************************************************************
+ 
+ module(
+-    name = "score_tools"
++    name = "score_tools",
++    version = "0.0.1",
++    compatibility_level = 0
+ )
+ # CR_CHECKER
+ bazel_dep(name = "aspect_rules_py", version = "1.6.3")
