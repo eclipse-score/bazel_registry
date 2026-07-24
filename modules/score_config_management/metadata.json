@@ -1,0 +1,17 @@
+{
+    "homepage": "https://github.com/eclipse-score/config_management",
+    "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Michael Saborov",
+            "email": "Michael.Saborov@bmw.de",
+            "github": "michaelsaborov",
+            "github_user_id": 118626184
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/config_management"
+    ],
+    "versions": [],
+    "yanked_versions": {}
+}
