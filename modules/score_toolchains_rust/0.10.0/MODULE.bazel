@@ -1,0 +1,193 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(
+    name = "score_toolchains_rust",
+    version = "0.10.0",
+    compatibility_level = 0,
+)
+
+bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "score_bazel_platforms", version = "0.0.3")
+bazel_dep(name = "rules_rust", version = "0.56.0")
+bazel_dep(name = "rules_shell", version = "0.3.0")
+
+# Prebuilt Ferrocene Rust toolchains (QNX + Linux) from:
+# https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/tag/1.3.1
+ferrocene = use_extension(
+    "//extensions:ferrocene_toolchain_ext.bzl",
+    "ferrocene_toolchain_ext",
+)
+
+ferrocene_rules_rust_miri = use_extension(
+    "//extensions:ferrocene_toolchain_ext.bzl",
+    "ferrocene_rules_rust_miri_toolchain_ext",
+)
+
+ferrocene.toolchain(
+    name = "ferrocene_x86_64_unknown_linux_gnu",
+    coverage_tools_sha256 = "9cf5d76b2e505bf2a8b2b47c60f191ac1273f87851ed387e53080b8e5d14dedf",
+    coverage_tools_strip_prefix = "779fbed05ae9e9fe2a04137929d99cc9b3d516fd/x86_64-unknown-linux-gnu",
+    coverage_tools_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/coverage-tools-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    extra_rustc_flags = [
+        "-Clink-arg=-Wl,--no-as-needed",
+        "-Clink-arg=-lstdc++",
+        "-Clink-arg=-lm",
+        "-Clink-arg=-lc",
+    ],
+    miri_sysroot_sha256 = "143260fe3873249160d57b370717005828e129d3b6782448a32d8cc578384fe0",
+    miri_sysroot_strip_prefix = "x86_64-unknown-linux-gnu",
+    miri_sysroot_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/miri-sysroot-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    sha256 = "6fd7c7053a80463b2bfd24202de02e16959b18ed185c55b738148e9caac42eff",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    target_triple = "x86_64-unknown-linux-gnu",
+    url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/ferrocene-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+)
+ferrocene.toolchain(
+    name = "ferrocene_aarch64_unknown_linux_gnu",
+    coverage_tools_sha256 = "9cf5d76b2e505bf2a8b2b47c60f191ac1273f87851ed387e53080b8e5d14dedf",
+    coverage_tools_strip_prefix = "779fbed05ae9e9fe2a04137929d99cc9b3d516fd/x86_64-unknown-linux-gnu",
+    coverage_tools_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/coverage-tools-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    extra_rustc_flags = [
+        "-Clink-arg=-Wl,--no-as-needed",
+        "-Clink-arg=-lstdc++",
+        "-Clink-arg=-lm",
+        "-Clink-arg=-lc",
+        "-Clink-arg=-lgcc",
+    ],
+    miri_sysroot_sha256 = "4059e74c79147b942eb595c14a5f998ebdb1063764ea756b4f32c21bf5903a16",
+    miri_sysroot_strip_prefix = "aarch64-unknown-linux-gnu",
+    miri_sysroot_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/miri-sysroot-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-aarch64-unknown-linux-gnu.tar.gz",
+    sha256 = "06ee88a935083068325b69028e9d4e9adc696542cea9b4322642a55dafcae552",
+    target_compatible_with = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+    ],
+    target_triple = "aarch64-unknown-linux-gnu",
+    url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/ferrocene-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-aarch64-unknown-linux-gnu.tar.gz",
+)
+ferrocene.toolchain(
+    name = "ferrocene_x86_64_pc_nto_qnx800",
+    coverage_tools_sha256 = "9cf5d76b2e505bf2a8b2b47c60f191ac1273f87851ed387e53080b8e5d14dedf",
+    coverage_tools_strip_prefix = "779fbed05ae9e9fe2a04137929d99cc9b3d516fd/x86_64-unknown-linux-gnu",
+    coverage_tools_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/coverage-tools-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    extra_rustc_flags = [
+        "-Clink-arg=-Wl,--no-as-needed",
+        "-Clink-arg=-lc++",
+        "-Clink-arg=-lm",
+        "-Clink-arg=-lc",
+    ],
+    miri_sysroot_sha256 = "9684ea089c883a0739f402165fc6aa374a69641e763957c314688779e8124931",
+    miri_sysroot_strip_prefix = "x86_64-pc-nto-qnx800",
+    miri_sysroot_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/miri-sysroot-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-pc-nto-qnx800.tar.gz",
+    sha256 = "655ad0d212baf63f4dd03065735ca55cddadc86cf6bd005aeb19689e348a0023",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:qnx",
+    ],
+    target_triple = "x86_64-pc-nto-qnx800",
+    url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/ferrocene-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-pc-nto-qnx800.tar.gz",
+)
+ferrocene.toolchain(
+    name = "ferrocene_aarch64_unknown_nto_qnx800",
+    coverage_tools_sha256 = "9cf5d76b2e505bf2a8b2b47c60f191ac1273f87851ed387e53080b8e5d14dedf",
+    coverage_tools_strip_prefix = "779fbed05ae9e9fe2a04137929d99cc9b3d516fd/x86_64-unknown-linux-gnu",
+    coverage_tools_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/coverage-tools-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-x86_64-unknown-linux-gnu.tar.gz",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    extra_rustc_flags = [
+        "-Clink-arg=-Wl,--no-as-needed",
+        "-Clink-arg=-lc++",
+        "-Clink-arg=-lm",
+        "-Clink-arg=-lc",
+    ],
+    miri_sysroot_sha256 = "3077170b7384d6bcf2cf8f53db8b670d48fc7e2237285b4fd799c64e7412bdff",
+    miri_sysroot_strip_prefix = "aarch64-unknown-nto-qnx800",
+    miri_sysroot_url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/miri-sysroot-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-aarch64-unknown-nto-qnx800.tar.gz",
+    sha256 = "a8e80da21c6abebfb31063f3815cd3a4bbb5a1466855a12043d7c243ef152715",
+    target_compatible_with = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:qnx",
+    ],
+    target_triple = "aarch64-unknown-nto-qnx800",
+    url = "https://github.com/eclipse-score/ferrocene_toolchain_builder/releases/download/1.3.1/ferrocene-779fbed05ae9e9fe2a04137929d99cc9b3d516fd-aarch64-unknown-nto-qnx800.tar.gz",
+)
+
+ferrocene_rules_rust_miri.toolchain(
+    name = "ferrocene_x86_64_unknown_linux_gnu_rules_rust_miri",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    ferrocene_repo_name = "ferrocene_x86_64_unknown_linux_gnu",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+ferrocene_rules_rust_miri.toolchain(
+    name = "ferrocene_aarch64_unknown_linux_gnu_rules_rust_miri",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    ferrocene_repo_name = "ferrocene_aarch64_unknown_linux_gnu",
+    target_compatible_with = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+    ],
+)
+ferrocene_rules_rust_miri.toolchain(
+    name = "ferrocene_x86_64_pc_nto_qnx800_rules_rust_miri",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    ferrocene_repo_name = "ferrocene_x86_64_pc_nto_qnx800",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:qnx",
+    ],
+)
+ferrocene_rules_rust_miri.toolchain(
+    name = "ferrocene_aarch64_unknown_nto_qnx800_rules_rust_miri",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    ferrocene_repo_name = "ferrocene_aarch64_unknown_nto_qnx800",
+    target_compatible_with = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:qnx",
+    ],
+)
+
+use_repo(
+    ferrocene,
+    "ferrocene_aarch64_unknown_linux_gnu",
+    "ferrocene_aarch64_unknown_nto_qnx800",
+    "ferrocene_x86_64_pc_nto_qnx800",
+    "ferrocene_x86_64_unknown_linux_gnu",
+)
+
+use_repo(
+    ferrocene_rules_rust_miri,
+    "ferrocene_aarch64_unknown_linux_gnu_rules_rust_miri",
+    "ferrocene_aarch64_unknown_nto_qnx800_rules_rust_miri",
+    "ferrocene_x86_64_pc_nto_qnx800_rules_rust_miri",
+    "ferrocene_x86_64_unknown_linux_gnu_rules_rust_miri",
+)
