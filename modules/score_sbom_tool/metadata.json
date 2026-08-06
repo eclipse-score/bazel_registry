@@ -4,8 +4,6 @@
     "repository": [
         "github:eclipse-score/sbom-tool"
     ],
-    "versions": [
-        "0.0.1"
-    ],
+    "versions": [],
     "yanked_versions": {}
 }
