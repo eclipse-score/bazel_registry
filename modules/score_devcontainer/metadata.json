@@ -14,5 +14,7 @@
         "1.6.0",
         "1.5.0"
     ],
-    "yanked_versions": {}
+    "yanked_versions": {
+        "1.9.2": "score_devcontainer 1.9.2 has been yanked. Please use a different version."
+    }
 }
