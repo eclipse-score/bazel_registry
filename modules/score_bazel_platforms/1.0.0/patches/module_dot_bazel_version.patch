@@ -1,0 +1,14 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -14,7 +14,10 @@
+ """ This module contains the global definitions of constraint_settings, constraint_values and platforms.
+ """
+ 
+-module(name = "score_bazel_platforms")
++module(name = "score_bazel_platforms",
++    version = "1.0.0",
++    compatibility_level = 1
++)
+ 
+ #############################################################
+ #

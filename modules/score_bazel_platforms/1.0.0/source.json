@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-TBS36iy9BrwIIkiZCut37zc+sIDUlFj6znM80CUkP8c=",
+    "strip_prefix": "bazel_platforms-1.0.0",
+    "url": "https://github.com/eclipse-score/bazel_platforms/archive/refs/tags/v1.0.0.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-Cb20ZhN5jyOJ36engrUE/DQgsCOWwaA9Gyq1ng0qHDU="
+    }
+}
