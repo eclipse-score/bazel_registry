@@ -1,0 +1,9 @@
+{
+    "integrity": "sha256-rdPKkcbtILdCvncDpe3/hkqeUIJoRu30S51As82dUsE=",
+    "strip_prefix": "sbom-tool-0.0.2",
+    "url": "https://github.com/eclipse-score/sbom-tool/archive/refs/tags/v0.0.2.tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-pBrdmEGXOhLPHwsxAsLz2HWGV+1exG3Tq/qCIXUECRU="
+    }
+}
