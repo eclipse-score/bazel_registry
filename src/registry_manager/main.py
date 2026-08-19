@@ -328,7 +328,7 @@ def plan_module_updates(
     return updated_modules
 
 
-def apply_updates(plan: list[ModuleUpdateInfo]) -> None:
+def apply_updates(plan: list[ModuleUpdateInfo], token: str | None = None) -> None:
     for task in plan:
         if task.module.versions:
             log.debug(
@@ -339,7 +339,7 @@ def apply_updates(plan: list[ModuleUpdateInfo]) -> None:
             log.debug(
                 f"Adding first version to {task.module.name}: {task.release.version}"
             )
-        ModuleUpdateRunner(task).generate_files()
+        ModuleUpdateRunner(task, token).generate_files()
 
     if not plan:
         log.debug("All modules are up to date; no updates needed.")
@@ -354,13 +354,14 @@ def main(args: list[str]) -> None:
 
     p = parse_args(args)
     modules = read_modules(p.modules)
-    gh = GithubWrapper(get_token(p))
+    token = get_token(p)
+    gh = GithubWrapper(token)
 
     # 1. Plan updates
     plan = plan_module_updates(p, gh, modules)
 
     # 2. Perform updates
-    apply_updates(plan)
+    apply_updates(plan, token)
 
     # 3. Construct result
     result = RegistryRunResult(
