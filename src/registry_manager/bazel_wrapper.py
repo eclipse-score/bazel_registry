@@ -204,8 +204,12 @@ class _TokenSafeRedirectHandler(urllib.request.HTTPRedirectHandler):
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
         new_req = super().redirect_request(req, fp, code, msg, headers, newurl)
-        if new_req is not None and not _is_allowed_token_url(newurl):
-            new_req.remove_header("Authorization")
+        if new_req is not None:
+            if _is_allowed_token_url(newurl):
+                log.debug(f"Redirect {code} to allowlisted host: {newurl}")
+            else:
+                log.debug(f"Redirect {code} to non-allowlisted host, stripping token: {newurl}")
+                new_req.remove_header("Authorization")
         return new_req
 
 
@@ -227,6 +231,9 @@ def sha256_from_url(url: str, token: str | None = None) -> str:
                 f"an allowlisted GitHub archive host: {url!r}"
             )
         req.add_header("Authorization", f"Bearer {token}")
+        log.debug(f"Downloading tarball with token from {url}")
+    else:
+        log.debug(f"Downloading tarball without token from {url}")
 
     opener = urllib.request.build_opener(_TokenSafeRedirectHandler)
     with opener.open(req, timeout=10) as resp:
