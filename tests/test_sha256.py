@@ -87,7 +87,7 @@ def test_sha256_from_url_rejects_token_for_non_github_host(
     captured: dict[str, urllib.request.Request] = {}
     _patch_opener(monkeypatch, captured)
 
-    with pytest.raises(ValueError, match="non-GitHub URL"):
+    with pytest.raises(ValueError, match="URL must use HTTPS and target"):
         sha256_from_url("https://example.com/file.tar.gz", token="secret-token")
 
     assert "req" not in captured  # no request was ever opened
@@ -99,7 +99,7 @@ def test_sha256_from_url_rejects_token_over_plain_http(
     captured: dict[str, urllib.request.Request] = {}
     _patch_opener(monkeypatch, captured)
 
-    with pytest.raises(ValueError, match="non-GitHub URL"):
+    with pytest.raises(ValueError, match="URL must use HTTPS and target"):
         sha256_from_url(
             "http://github.com/org/repo/archive/refs/tags/v1.0.0.tar.gz",
             token="secret-token",

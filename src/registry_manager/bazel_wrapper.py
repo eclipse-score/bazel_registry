@@ -223,7 +223,8 @@ def sha256_from_url(url: str, token: str | None = None) -> str:
     if token:
         if not _is_allowed_token_url(url):
             raise ValueError(
-                f"Refusing to send GitHub token to non-GitHub URL: {url!r}"
+                "Refusing to send GitHub token: URL must use HTTPS and target "
+                f"an allowlisted GitHub archive host: {url!r}"
             )
         req.add_header("Authorization", f"Bearer {token}")
 
