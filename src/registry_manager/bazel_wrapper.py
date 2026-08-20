@@ -283,6 +283,7 @@ class ModuleUpdateRunner:
             "integrity": integrity,
             "strip_prefix": self.info.release.strip_prefix,
             "url": self.info.release.tarball,
+            "archive_type": "tar.gz",
         }
 
         if self.patches:

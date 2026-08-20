@@ -55,7 +55,7 @@ class TestFileGeneration:
         ):
             runner.generate_files()
 
-        # Verify source.json contains the correct URL, strip_prefix, and integrity
+        # Verify source.json contains the correct URL, strip_prefix, integrity, and archive_type
         source_file = Path("/modules/score_demo/1.0.0/source.json")
         assert source_file.exists()
         source = json.loads(source_file.read_text())
@@ -67,6 +67,7 @@ class TestFileGeneration:
         # so short-sha is '1234567', owner is 'org', repo is 'repo'
         assert source["strip_prefix"] == "org-repo-1234567"
         assert source["integrity"] == mock_sha256
+        assert source["archive_type"] == "tar.gz"
 
     def test_generates_module_file(
         self,
