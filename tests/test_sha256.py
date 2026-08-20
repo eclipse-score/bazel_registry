@@ -21,7 +21,7 @@ from src.registry_manager.bazel_wrapper import (
     sha256_from_url,
 )
 
-GITHUB_ARCHIVE_URL = "https://github.com/org/repo/archive/refs/tags/v1.0.0.tar.gz"
+GITHUB_ARCHIVE_URL = "https://api.github.com/repos/org/repo/tarball/v1.0.0"
 
 
 class _FakeResp:
