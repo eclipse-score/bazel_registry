@@ -89,7 +89,7 @@ class GithubWrapper:
                             tag_name=release.tag_name,
                             published_at=release.published_at,
                             prerelease=release.prerelease,
-                            commit_sha=release.target_commitish,
+                            commit_sha=repo.get_commit(release.tag_name).sha,
                         )
                     )
                 else:
