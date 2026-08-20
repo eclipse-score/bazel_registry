@@ -55,14 +55,17 @@ class TestFileGeneration:
         ):
             runner.generate_files()
 
-        # Verify source.json contains the correct URL and integrity
+        # Verify source.json contains the correct URL, strip_prefix, and integrity
         source_file = Path("/modules/score_demo/1.0.0/source.json")
         assert source_file.exists()
         source = json.loads(source_file.read_text())
         assert (
             source["url"]
-            == f"https://github.com/{org_repo}/archive/refs/tags/v{version}.tar.gz"
+            == f"https://api.github.com/repos/{org_repo}/tarball/v{version}"
         )
+        # Default commit_sha in make_release_info is '1234567890abcdef...'
+        # so short-sha is '1234567', owner is 'org', repo is 'repo'
+        assert source["strip_prefix"] == "org-repo-1234567"
         assert source["integrity"] == mock_sha256
 
     def test_generates_module_file(

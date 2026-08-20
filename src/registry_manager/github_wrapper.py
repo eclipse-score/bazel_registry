@@ -29,10 +29,31 @@ class GitHubReleaseInfo:
     tag_name: str
     published_at: datetime
     prerelease: bool
+    commit_sha: str
 
     @property
     def tarball(self):
-        return f"https://github.com/{self.org_and_repo}/archive/refs/tags/{self.tag_name}.tar.gz"
+        """GitHub REST API archive URL (supports authentication for private repos).
+
+        Uses the API endpoint which supports GitHub App installation tokens.
+        The archive has a top-level directory named '{owner}-{repo}-{short-sha}'.
+        """
+        return (
+            f"https://api.github.com/repos/{self.org_and_repo}/tarball/{self.tag_name}"
+        )
+
+    @property
+    def strip_prefix(self) -> str:
+        """The strip_prefix for extracting the API tarball archive.
+
+        GitHub's API tarball endpoint produces archives with a top-level
+        directory named '{owner}-{repo}-{short-sha}' where short-sha is
+        the first 7 characters of the commit SHA.
+        """
+        repo = self.org_and_repo.split("/")[-1]
+        short_sha = self.commit_sha[:7]
+        owner = self.org_and_repo.split("/")[0]
+        return f"{owner}-{repo}-{short_sha}"
 
 
 class GithubWrapper:
@@ -68,6 +89,7 @@ class GithubWrapper:
                             tag_name=release.tag_name,
                             published_at=release.published_at,
                             prerelease=release.prerelease,
+                            commit_sha=release.target_commitish,
                         )
                     )
                 else:

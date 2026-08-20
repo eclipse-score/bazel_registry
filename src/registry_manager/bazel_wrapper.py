@@ -185,7 +185,9 @@ def _sha256_from_bytes(stream: Iterable[bytes]) -> str:
 
 # Hosts GitHub uses to serve repository archives. A token may only ever be sent
 # to these hosts (over HTTPS); anything else risks leaking the credential.
-_GITHUB_ARCHIVE_HOSTS = frozenset({"github.com", "codeload.github.com"})
+_GITHUB_ARCHIVE_HOSTS = frozenset(
+    {"github.com", "codeload.github.com", "api.github.com"}
+)
 
 
 def _is_allowed_token_url(url: str) -> bool:
@@ -273,11 +275,13 @@ class ModuleUpdateRunner:
 
     def _generate_source_json(self) -> None:
         """Generate source.json with integrity hash and patch metadata."""
-        repo = self.info.module.org_and_repo.split("/")[-1]
+        # GitHub API tarball archives have a top-level directory named
+        # '{owner}-{repo}-{short-sha}' rather than '{repo}-{version}'.
+        # We fetch the commit SHA from the release to calculate the correct prefix.
         integrity = sha256_from_url(self.info.release.tarball, self.token)
         source_dict: dict[str, object] = {
             "integrity": integrity,
-            "strip_prefix": f"{repo}-{self.info.release.version}",
+            "strip_prefix": self.info.release.strip_prefix,
             "url": self.info.release.tarball,
         }
 
