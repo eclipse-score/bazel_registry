@@ -265,14 +265,31 @@ def _archive_top_level_dir(archive: IO[bytes]) -> str:
     Raises ``ValueError`` if the archive does not contain exactly one top-level
     directory, which would be unexpected for a GitHub source archive.
     """
+    # A valid GitHub source archive has a single top-level directory (e.g.
+    # ``{owner}-{repo}-{sha}``) with all entries nested below it.  An archive
+    # that instead contains a bare top-level file (e.g. ``README``) must be
+    # rejected, otherwise that filename would be returned as ``strip_prefix``
+    # and produce unusable ``source.json`` metadata.
     with tarfile.open(fileobj=archive, mode="r:gz") as tar:
-        top_dirs: set[str] = {
-            member.name.split("/", 1)[0] for member in tar.getmembers() if member.name
-        }
-    if len(top_dirs) != 1:
+        top_dirs: set[str] = set()
+        top_files: set[str] = set()
+        for member in tar.getmembers():
+            if not member.name:
+                continue
+            first, sep, _ = member.name.partition("/")
+            if sep:
+                # Nested entry: lives under a top-level directory.
+                top_dirs.add(first)
+            elif member.isdir():
+                # Explicit top-level directory entry.
+                top_dirs.add(first)
+            else:
+                # Bare top-level file with no containing directory.
+                top_files.add(first)
+    if top_files or len(top_dirs) != 1:
         raise ValueError(
             "expected exactly one top-level directory in archive, got "
-            f"{sorted(top_dirs)}"
+            f"directories={sorted(top_dirs)}, files={sorted(top_files)}"
         )
     return top_dirs.pop()
 
