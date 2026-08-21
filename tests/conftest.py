@@ -113,7 +113,6 @@ def make_release_info(
     tag_name: str | None = None,
     prerelease: bool = False,
     org_and_repo: str = "org/repo",
-    commit_sha: str = "1234567890abcdef1234567890abcdef12345678",
 ) -> GitHubReleaseInfo:
     if tag_name is None:
         tag_name = f"v{version}"
@@ -124,7 +123,6 @@ def make_release_info(
         tag_name=tag_name,
         published_at=datetime(2024, 1, 1),
         prerelease=prerelease,
-        commit_sha=commit_sha,
     )
 
 
@@ -167,8 +165,8 @@ def run_file_generation(
 ) -> ModuleUpdateRunner:
     runner = ModuleUpdateRunner(update_info)
     with patch(
-        "src.registry_manager.bazel_wrapper.sha256_from_url",
-        return_value="sha256-test",
+        "src.registry_manager.bazel_wrapper.download_github_archive",
+        return_value=("sha256-test", "org-repo-1234567"),
     ):
         runner.generate_files()
     return runner

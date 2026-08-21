@@ -16,10 +16,13 @@ import difflib
 import hashlib
 import json
 import re
+import tarfile
+import tempfile
 import urllib.parse
 import urllib.request
 from collections.abc import Iterable
 from pathlib import Path
+from typing import IO
 
 from . import (
     BazelModuleInfo,
@@ -211,15 +214,12 @@ class _TokenSafeRedirectHandler(urllib.request.HTTPRedirectHandler):
         return new_req
 
 
-def sha256_from_url(url: str, token: str | None = None) -> str:
-    """Download file from URL and compute its SHA256 hash.
+def _build_archive_request(url: str, token: str | None) -> urllib.request.Request:
+    """Build a Request for a GitHub archive URL.
 
-    A GitHub token is required for downloading archives of private repositories;
-    without it, GitHub responds with 404 (it hides private repos) rather than 401.
-
-    To avoid disclosing the token, token-authenticated downloads are restricted
-    to HTTPS GitHub archive hosts, and the Authorization header is stripped from
-    any redirect that leaves that allowlist.
+    A token is required to download private-repository archives; GitHub hides
+    them with a 404 rather than a 401 without one. The token is only attached
+    to allowlisted HTTPS GitHub hosts to avoid leaking it on redirects.
     """
     req = urllib.request.Request(url)
     if token:
@@ -229,15 +229,52 @@ def sha256_from_url(url: str, token: str | None = None) -> str:
                 f"an allowlisted GitHub archive host: {url!r}"
             )
         req.add_header("Authorization", f"Bearer {token}")
+    return req
 
+
+def download_github_archive(url: str, token: str | None = None) -> tuple[str, str]:
+    """Download a GitHub source archive.
+
+    Returns ``(integrity, strip_prefix)`` where ``integrity`` is the
+    ``sha256-<base64>`` hash of the bytes and ``strip_prefix`` is the archive's
+    actual top-level directory name.
+    """
+    # GitHub names a tarball's top-level directory ``{owner}-{repo}-{sha}``, but
+    # the SHA length depends on repository visibility — 7 characters for public
+    # repos and the full 40 characters for private ones — so it cannot be
+    # predicted from the API response. Reading it from the downloaded archive is
+    # the only reliable way to set ``strip_prefix``.
+
+    req = _build_archive_request(url, token)
     opener = urllib.request.build_opener(_TokenSafeRedirectHandler)
-    with opener.open(req, timeout=10) as resp:
 
-        def chunk_iter():
-            while chunk := resp.read(1024 * 1024):
-                yield chunk
+    h = hashlib.sha256()
+    with opener.open(req, timeout=10) as resp, tempfile.TemporaryFile() as tmp:
+        while chunk := resp.read(1024 * 1024):
+            tmp.write(chunk)
+            h.update(chunk)
+        integrity = "sha256-" + base64.b64encode(h.digest()).decode("ascii")
+        tmp.seek(0)
+        strip_prefix = _archive_top_level_dir(tmp)
+    return integrity, strip_prefix
 
-        return _sha256_from_bytes(chunk_iter())
+
+def _archive_top_level_dir(archive: IO[bytes]) -> str:
+    """Return the single top-level directory name inside a tar.gz archive.
+
+    Raises ``ValueError`` if the archive does not contain exactly one top-level
+    directory, which would be unexpected for a GitHub source archive.
+    """
+    with tarfile.open(fileobj=archive, mode="r:gz") as tar:
+        top_dirs: set[str] = {
+            member.name.split("/", 1)[0] for member in tar.getmembers() if member.name
+        }
+    if len(top_dirs) != 1:
+        raise ValueError(
+            "expected exactly one top-level directory in archive, got "
+            f"{sorted(top_dirs)}"
+        )
+    return top_dirs.pop()
 
 
 def sha256_from_string(content: str) -> str:
@@ -275,13 +312,16 @@ class ModuleUpdateRunner:
 
     def _generate_source_json(self) -> None:
         """Generate source.json with integrity hash and patch metadata."""
-        # GitHub API tarball archives have a top-level directory named
-        # '{owner}-{repo}-{short-sha}' rather than '{repo}-{version}'.
-        # We fetch the commit SHA from the release to calculate the correct prefix.
-        integrity = sha256_from_url(self.info.release.tarball, self.token)
+        # GitHub names a tarball's top-level directory '{owner}-{repo}-{sha}',
+        # but the SHA length depends on repository visibility, so the actual
+        # prefix must be read from the downloaded archive (see
+        # download_github_archive) rather than guessed from the commit SHA.
+        integrity, strip_prefix = download_github_archive(
+            self.info.release.tarball, self.token
+        )
         source_dict: dict[str, object] = {
             "integrity": integrity,
-            "strip_prefix": self.info.release.strip_prefix,
+            "strip_prefix": strip_prefix,
             "url": self.info.release.tarball,
             "archive_type": "tar.gz",
         }

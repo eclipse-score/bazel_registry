@@ -12,13 +12,16 @@
 # *******************************************************************************
 
 import io
+import tarfile
 import urllib.request
 from http.client import HTTPMessage
 
 import pytest
 from src.registry_manager.bazel_wrapper import (
+    _archive_top_level_dir,  # pyright: ignore[reportPrivateUsage]
+    _build_archive_request,  # pyright: ignore[reportPrivateUsage]
     _TokenSafeRedirectHandler,  # pyright: ignore[reportPrivateUsage]
-    sha256_from_url,
+    download_github_archive,
 )
 
 GITHUB_ARCHIVE_URL = "https://api.github.com/repos/org/repo/tarball/v1.0.0"
@@ -42,8 +45,23 @@ class _FakeResp:
         return False
 
 
+def _make_targz(top_dir: str, files: dict[str, bytes] | None = None) -> bytes:
+    """Build an in-memory .tar.gz whose entries live under ``top_dir``."""
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        info = tarfile.TarInfo(name=top_dir)
+        info.type = tarfile.DIRTYPE
+        tar.addfile(info)
+        for name, data in (files or {"README": b"hi"}).items():
+            member = tarfile.TarInfo(name=f"{top_dir}/{name}")
+            member.size = len(data)
+            tar.addfile(member, io.BytesIO(data))
+    return buf.getvalue()
+
+
 def _patch_opener(
     monkeypatch: pytest.MonkeyPatch,
+    response_data: bytes,
     captured: dict[str, urllib.request.Request],
 ) -> None:
     def fake_open(
@@ -52,60 +70,94 @@ def _patch_opener(
         timeout: float | None = None,
     ) -> _FakeResp:
         captured["req"] = req
-        return _FakeResp(b"hello")
+        return _FakeResp(response_data)
 
     monkeypatch.setattr(urllib.request.OpenerDirector, "open", fake_open)
 
 
-def test_sha256_from_url_without_token_makes_unauthenticated_request(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    captured: dict[str, urllib.request.Request] = {}
-    _patch_opener(monkeypatch, captured)
+class TestBuildArchiveRequest:
+    """Test token handling when building the archive request."""
 
-    result = sha256_from_url("https://example.com/file.tar.gz")
+    def test_without_token_no_authorization_header(self) -> None:
+        req = _build_archive_request(GITHUB_ARCHIVE_URL, token=None)
+        assert not req.has_header("Authorization")
 
-    assert result.startswith("sha256-")
-    assert not captured["req"].has_header("Authorization")
+    def test_with_token_sends_bearer_header(self) -> None:
+        req = _build_archive_request(GITHUB_ARCHIVE_URL, token="secret-token")
+        assert req.has_header("Authorization")
+        assert req.get_header("Authorization") == "Bearer secret-token"
 
+    def test_rejects_token_for_non_github_host(self) -> None:
+        with pytest.raises(ValueError, match="URL must use HTTPS and target"):
+            _build_archive_request(
+                "https://example.com/file.tar.gz", token="secret-token"
+            )
 
-def test_sha256_from_url_with_token_sends_bearer_header(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    captured: dict[str, urllib.request.Request] = {}
-    _patch_opener(monkeypatch, captured)
-
-    sha256_from_url(GITHUB_ARCHIVE_URL, token="secret-token")
-
-    assert captured["req"].has_header("Authorization")
-    assert captured["req"].get_header("Authorization") == "Bearer secret-token"
-
-
-def test_sha256_from_url_rejects_token_for_non_github_host(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    captured: dict[str, urllib.request.Request] = {}
-    _patch_opener(monkeypatch, captured)
-
-    with pytest.raises(ValueError, match="URL must use HTTPS and target"):
-        sha256_from_url("https://example.com/file.tar.gz", token="secret-token")
-
-    assert "req" not in captured  # no request was ever opened
+    def test_rejects_token_over_plain_http(self) -> None:
+        with pytest.raises(ValueError, match="URL must use HTTPS and target"):
+            _build_archive_request(
+                "http://github.com/org/repo/archive/refs/tags/v1.0.0.tar.gz",
+                token="secret-token",
+            )
 
 
-def test_sha256_from_url_rejects_token_over_plain_http(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    captured: dict[str, urllib.request.Request] = {}
-    _patch_opener(monkeypatch, captured)
+class TestDownloadGithubArchive:
+    """Test download_github_archive integrity + strip_prefix extraction."""
 
-    with pytest.raises(ValueError, match="URL must use HTTPS and target"):
-        sha256_from_url(
-            "http://github.com/org/repo/archive/refs/tags/v1.0.0.tar.gz",
-            token="secret-token",
-        )
+    def test_returns_integrity_and_strip_prefix_from_archive(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # A 40-char (private-repo style) SHA in the top-level dir, which the old
+        # commit_sha[:7] guess would have gotten wrong.
+        top_dir = "etas-eng-vsps_ids-ab76c9089eaa5f208daf6ffe6031ae9c87a460fd"
+        payload = _make_targz(top_dir)
+        captured: dict[str, urllib.request.Request] = {}
+        _patch_opener(monkeypatch, payload, captured)
 
-    assert "req" not in captured
+        integrity, strip_prefix = download_github_archive(GITHUB_ARCHIVE_URL)
+
+        assert integrity.startswith("sha256-")
+        assert strip_prefix == top_dir
+        # No token passed -> no Authorization header on the wire.
+        assert not captured["req"].has_header("Authorization")
+
+    def test_sends_bearer_token_to_allowed_host(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        payload = _make_targz("org-repo-1234567")
+        captured: dict[str, urllib.request.Request] = {}
+        _patch_opener(monkeypatch, payload, captured)
+
+        download_github_archive(GITHUB_ARCHIVE_URL, token="secret-token")
+
+        assert captured["req"].has_header("Authorization")
+        assert captured["req"].get_header("Authorization") == "Bearer secret-token"
+
+    def test_rejects_token_for_non_github_host(self) -> None:
+        with pytest.raises(ValueError, match="URL must use HTTPS and target"):
+            download_github_archive("https://example.com/file.tar.gz", token="t")
+
+
+class TestArchiveTopLevelDir:
+    """Test _archive_top_level_dir extraction."""
+
+    def test_returns_single_top_level_dir(self) -> None:
+        top_dir = "org-repo-deadbeef"
+        payload = _make_targz(top_dir, {"src/main.py": b"print('hi')"})
+        assert _archive_top_level_dir(io.BytesIO(payload)) == top_dir
+
+    def test_rejects_multiple_top_level_dirs(self) -> None:
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+            for d in ("a", "b"):
+                info = tarfile.TarInfo(name=d)
+                info.type = tarfile.DIRTYPE
+                tar.addfile(info)
+        buf.seek(0)
+        with pytest.raises(
+            ValueError, match="expected exactly one top-level directory"
+        ):
+            _archive_top_level_dir(buf)
 
 
 def _redirect(from_url: str, to_url: str) -> urllib.request.Request:
