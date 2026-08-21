@@ -46,12 +46,12 @@ class TestFileGeneration:
         update_info = make_update_info(version=version)
         # Note: make_update_info defaults to org/repo, but we're being explicit here
 
-        # Mock sha256 calculation to return a test value
+        # Mock archive download to return a test integrity + strip_prefix.
         mock_sha256 = "sha256-test"
         runner = ModuleUpdateRunner(update_info)
         with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value=mock_sha256,
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=(mock_sha256, "org-repo-1234567"),
         ):
             runner.generate_files()
 
@@ -63,8 +63,8 @@ class TestFileGeneration:
             source["url"]
             == f"https://api.github.com/repos/{org_repo}/tarball/v{version}"
         )
-        # Default commit_sha in make_release_info is '1234567890abcdef...'
-        # so short-sha is '1234567', owner is 'org', repo is 'repo'
+        # strip_prefix is read from the (mocked) downloaded archive;
+        # see download_github_archive.
         assert source["strip_prefix"] == "org-repo-1234567"
         assert source["integrity"] == mock_sha256
         assert source["archive_type"] == "tar.gz"
@@ -83,8 +83,8 @@ class TestFileGeneration:
 
         runner = ModuleUpdateRunner(update_info)
         with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value="sha256-test",
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=("sha256-test", "org-repo-1234567"),
         ):
             runner.generate_files()
 
@@ -141,8 +141,8 @@ class TestFileGeneration:
 
         runner = ModuleUpdateRunner(update_info)
         with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value="sha256-test",
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=("sha256-test", "org-repo-1234567"),
         ):
             runner.generate_files()
 
@@ -183,8 +183,8 @@ class TestFileGeneration:
 
         runner = ModuleUpdateRunner(update_info)
         with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value="sha256-test",
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=("sha256-test", "org-repo-1234567"),
         ):
             runner.generate_files()
 
@@ -212,8 +212,8 @@ class TestFileGeneration:
 
         runner = ModuleUpdateRunner(update_info)
         with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value="sha256-test",
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=("sha256-test", "org-repo-1234567"),
         ):
             runner.generate_files()
 
@@ -259,8 +259,8 @@ bazel_dep(name = "rules_go", version = "0.41.0")
 
         runner = ModuleUpdateRunner(update_info)
         with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value="sha256-test",
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=("sha256-test", "org-repo-1234567"),
         ):
             runner.generate_files()
 
@@ -326,8 +326,8 @@ bazel_dep(name = "protobuf", version = "21.7")
 
         runner = ModuleUpdateRunner(update_info)
         with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value="sha256-test",
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=("sha256-test", "org-repo-1234567"),
         ):
             runner.generate_files()
 
@@ -408,8 +408,8 @@ bazel_dep(name = "buildifier_prebuilt", version = "6.1.0", dev_dependency = True
 
         runner = ModuleUpdateRunner(update_info)
         with patch(
-            "src.registry_manager.bazel_wrapper.sha256_from_url",
-            return_value="sha256-test",
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=("sha256-test", "org-repo-1234567"),
         ):
             runner.generate_files()
 
