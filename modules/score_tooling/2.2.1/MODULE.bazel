@@ -1,0 +1,479 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
+module(name = "score_tooling",
+    version = "2.2.1",
+    compatibility_level = 2
+)
+
+###############################################################################
+# Core Dependencies
+###############################################################################
+bazel_dep(name = "aspect_rules_py", version = "1.4.0")  # py_binary/py_library loads in cli_helper.bzl:13, cr_checker.bzl:16, defs.bzl:16, etc.
+
+# NOT a dev_dependency: third_party/format/macros.bzl (use_format_targets,
+# public consumer API) load()s @aspect_rules_lint//format:defs.bzl, which
+# must resolve from score_tooling's own repo mapping in CONSUMER builds too.
+bazel_dep(name = "aspect_rules_lint", version = "2.5.0")
+bazel_dep(name = "rules_multitool", version = "1.9.0")
+bazel_dep(name = "rules_java", version = "8.15.1")  # required for dash
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.0.2")
+
+## Rules Score
+bazel_dep(name = "rules_cc", version = "0.2.14")
+bazel_dep(name = "rules_python", version = "1.8.5")
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_shell", version = "0.5.0")
+bazel_dep(name = "rules_rust", version = "0.68.1-score")
+bazel_dep(name = "score_rust_policies", version = "0.0.2")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "flatbuffers", version = "25.9.23")
+bazel_dep(name = "download_utils", version = "1.2.2")
+bazel_dep(name = "trlc", version = "3.0.1")
+bazel_dep(name = "lobster", version = "1.0.6")
+bazel_dep(name = "rules_distroless", version = "0.8.0")
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+
+bazel_dep(name = "toolchains_llvm", version = "1.8.0", dev_dependency = True)  # Libclang Tooling
+
+bazel_dep(name = "rules_jvm_external", version = "6.10")  # PlantUML
+
+# flatbuffers depends on this transitively, but older grpc-java version
+# The main problem is that there the command `bazel mod deps` is broken, which
+# we want and need to support for dependant modules
+bazel_dep(name = "grpc-java", version = "1.75.0.bcr.1")
+
+###############################################################################
+# CC Toolchain
+###############################################################################
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.3.1", dev_dependency = True)
+
+score_gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+score_gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_base_constraints_only = True,
+    use_default_package = True,
+    version = "12.2.0",
+)
+score_gcc.toolchain(
+    name = "score_qcc_x86_64_toolchain",
+    sdp_version = "8.0.0",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(
+    score_gcc,
+    "score_gcc_x86_64_toolchain",
+    "score_qcc_x86_64_toolchain",
+)
+
+###############################################################################
+# Rust Toolchain
+###############################################################################
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(edition = "2021")
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
+
+###############################################################################
+# Rust Crates (crate_universe)
+###############################################################################
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate.spec(
+    package = "pest",
+    version = "2.8.3",
+)
+crate.spec(
+    package = "pest_derive",
+    version = "2.8.3",
+)
+crate.spec(
+    features = ["derive"],
+    package = "clap",
+    version = "4.5.0",
+)
+crate.spec(
+    package = "thiserror",
+    version = "1.0.44",
+)
+crate.spec(
+    package = "log",
+    version = "0.4",
+)
+crate.spec(
+    package = "env_logger",
+    version = "0.10",
+)
+crate.spec(
+    features = [
+        "derive",
+        "rc",
+    ],
+    package = "serde",
+    version = "1.0",
+)
+crate.spec(
+    package = "serde_json",
+    version = "1.0",
+)
+crate.spec(
+    package = "serde_yaml",
+    version = "0.9",
+)
+crate.spec(
+    package = "strsim",
+    version = "0.11",
+)
+crate.spec(
+    package = "once_cell",
+    version = "1.19",
+)
+crate.spec(
+    package = "flatbuffers",
+    version = "25.9.23",
+)
+crate.spec(
+    package = "clang",
+    version = "=1.0.3",
+)
+crate.spec(
+    package = "clang-sys",
+    version = "=1.8.1",
+)
+crate.spec(
+    package = "libloading",
+    version = ">=0.9.0",
+)
+crate.spec(
+    package = "assert-json-diff",
+    version = "2.0.0",
+)
+
+# Annotations for libclang
+crate.annotation(
+    crate = "clang-sys",
+    crate_features = [
+        "runtime",
+        "clang_18_0",
+    ],
+    deps = ["@crates//:libloading"],
+)
+crate.annotation(
+    crate = "clang",
+    crate_features = ["runtime"],
+)
+crate.from_specs()
+use_repo(crate, "crates")
+
+###############################################################################
+# Python Toolchain
+###############################################################################
+DEFAULT_PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    configure_coverage_tool = True,
+    python_version = "3.11",
+)
+python.toolchain(
+    configure_coverage_tool = True,
+    is_default = True,
+    python_version = DEFAULT_PYTHON_VERSION,
+)
+
+###############################################################################
+# Pip Hub
+###############################################################################
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+
+# Python Tooling
+[
+    pip.parse(
+        envsubst = ["PIP_INDEX_URL"],
+        extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+        hub_name = "pip_tooling",
+        python_version = "3.{}".format(version),
+        requirements_lock = "//python_basics:requirements_3_{}.txt".format(version),
+    )
+    for version in [
+        "11",
+        "12",
+    ]
+]
+
+# Lobster Bazel
+use_repo(pip, "pip_tooling")
+
+# Coverage pipeline Python deps (pyyaml for justify.py), kept in its own hub
+# so the reusable coverage component stays independent of the other tools.
+[
+    pip.parse(
+        envsubst = ["PIP_INDEX_URL"],
+        extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+        hub_name = "pip_coverage",
+        python_version = "3.{}".format(version),
+        requirements_lock = "//coverage:requirements_3_{}.txt".format(version),
+    )
+    for version in [
+        "11",
+        "12",
+    ]
+]
+
+use_repo(pip, "pip_coverage")
+
+[
+    pip.parse(
+        envsubst = ["PIP_INDEX_URL"],
+        extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+        hub_name = "pip_lobster_bazel",
+        python_version = "3.{}".format(version),
+        requirements_lock = "//lobster_bazel:requirements_3_{}.txt".format(version),
+    )
+    for version in [
+        "11",
+        "12",
+    ]
+]
+
+use_repo(pip, "pip_lobster_bazel")
+
+# Rules Score Python Deps
+[
+    pip.parse(
+        envsubst = ["PIP_INDEX_URL"],
+        extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+        hub_name = "pip_rules_score",
+        python_version = "3.{}".format(version),
+        requirements_lock = "//bazel/rules/rules_score:requirements_3_{}.txt".format(version),
+    )
+    for version in [
+        "11",
+        "12",
+    ]
+]
+
+use_repo(pip, "pip_rules_score")
+
+# cr_checker's own Python deps (e.g. rapidfuzz), kept separate from the
+# shared pip_tooling hub (pytest/basedpyright/pylint) since cr_checker is a
+# standalone, independently reusable component.
+[
+    pip.parse(
+        envsubst = ["PIP_INDEX_URL"],
+        extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+        hub_name = "pip_cr_checker",
+        python_version = "3.{}".format(version),
+        requirements_lock = "//cr_checker:requirements_3_{}.txt".format(version),
+    )
+    for version in [
+        "11",
+        "12",
+    ]
+]
+
+use_repo(pip, "pip_cr_checker")
+
+###############################################################################
+# Multitool Hub (for ruff, pyright, actionlint, etc.)
+###############################################################################
+# Note: the default "multitool" hub (ruff, ty, yamlfmt, etc.) is
+# already populated by aspect_rules_lint's own multitool.hub() calls (see its
+# format/multitool.lock.json and lint/multitool.lock.json), since
+# rules_multitool merges all hub() calls sharing the same hub_name across the
+# module graph. score_tooling doesn't declare its own lockfile for that
+# default hub to avoid overriding those (pinned, multi-platform) entries with
+# a narrower one, and doesn't `use_repo` it either: third_party/format and
+# third_party/lint consume those tools indirectly via
+# @aspect_rules_lint//lint:ruff_bin, //lint:ty_bin, //format:ruff,
+# //format:yamlfmt -- none of which require score_tooling itself to see the
+# "multitool" repo name.
+multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
+
+# Actionlint Hub -- actionlint has no equivalent in aspect_rules_lint's bundled
+# hub, so score_tooling keeps its own dedicated hub for it.
+multitool.hub(
+    hub_name = "actionlint_hub",
+    lockfile = "tools/actionlint.lock.json",
+)
+use_repo(multitool, "actionlint_hub", "multitool")
+
+register_toolchains("@actionlint_hub//toolchains:all")
+
+###############################################################################
+# lcov deb package (provides genhtml + lcov for combined coverage reports)
+###############################################################################
+deb = use_repo_rule("@download_utils//download/deb:defs.bzl", "download_deb")
+
+deb(
+    name = "lcov_deb",
+    integrity = "sha256-Ip14IkKavqBtkQ7mh6AXzr/6YyHpvSAZ0veMmw1+N80=",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/universe/l/lcov/lcov_2.0-4ubuntu2_all.deb"],
+)
+
+###############################################################################
+# Hermetic apt packages (docs_runtime sysroot + LLVM toolchain sysroot)
+#
+# Both use the upstream (BCR-published) rules_distroless manifest/lock API --
+# no fork/override needed. Pinned to the Ubuntu 24.04 (noble) snapshot in each
+# manifest.yaml so the package closure is reproducible.
+###############################################################################
+# bsdtar (used by //bazel/rules/exec_in_sysroot to extract sysroot archives).
+bazel_dep(name = "tar.bzl", version = "0.6.0")
+
+apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
+
+# Distroless rootfs providing graphviz + fakechroot for hermetic dot execution
+# via //third_party/docs_runtime:dot (exec_in_sysroot).
+apt.install(
+    name = "docs_runtime",
+    manifest = "//third_party/docs_runtime:manifest.yaml",
+    nolock = True,
+)
+use_repo(apt, "docs_runtime")
+
+# Hermetic sysroot for the LLVM toolchain (see cpp/libclang), so that
+# cpp_parser's cc_common-derived flags (and any normal C++ compile using this
+# toolchain) resolve libc/libstdc++ headers from a pinned rootfs instead of the
+# build host, matching eclipse-score-communication2's ubuntu24_04_sysroot setup.
+apt.install(
+    name = "tooling_sysroot",
+    manifest = "//third_party/tooling_sysroot:manifest.yaml",
+    nolock = True,
+)
+use_repo(apt, "tooling_sysroot", "tooling_sysroot_resolve")
+
+# Unpacks the tooling_sysroot lockfile's packages into a flat, fetch-time
+# sysroot directory -- our own replacement for the LittleHuba fork's fork-only
+# apt.sysroot(), so no rules_distroless override is needed (see
+# //bazel/rules/sysroot_from_lock:sysroot_from_lock.bzl for attribution).
+sysroot_from_lock = use_repo_rule(
+    "//bazel/rules/sysroot_from_lock:sysroot_from_lock.bzl",
+    "sysroot_from_lock",
+)
+
+sysroot_from_lock(
+    name = "tooling_sysroot_amd64",
+    architecture = "amd64",
+    lock = "@tooling_sysroot_resolve//:lock.json",
+)
+
+register_toolchains(
+    "//bazel/rules/rules_score:sphinx_default_toolchain",
+)
+
+###############################################################################
+# Blueprint Maven
+###############################################################################
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "blueprint_maven_dependencies",
+    artifacts = [
+        "net.sourceforge.plantuml:plantuml:1.2025.9",
+    ],
+    repositories = ["https://repo1.maven.org/maven2"],
+)
+use_repo(maven, "blueprint_maven_dependencies")
+
+###############################################################################
+# Dependencies for Manual Analysis
+###############################################################################
+[
+    pip.parse(
+        envsubst = ["PIP_INDEX_URL"],
+        extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+        hub_name = "manual_analysis_deps",
+        python_version = "3.{}".format(version),
+        requirements_lock = "//manual_analysis:requirements_3_{}.txt".format(version),
+    )
+    for version in [
+        "11",
+        "12",
+    ]
+]
+
+use_repo(pip, "manual_analysis_deps")
+
+###############################################################################
+# Dependencies for AI Checker
+###############################################################################
+
+# Make the copilot CLI binary executable (rules_python strips +x from wheels)
+pip.whl_mods(
+    copy_executables = {"site-packages/copilot/bin/copilot": "copilot_cli"},
+    hub_name = "ai_checker_whl_mods",
+    whl_name = "github_copilot_sdk",
+)
+use_repo(pip, "ai_checker_whl_mods")
+
+# Core + LangChain + GitHub Copilot SDK dependencies
+[
+    pip.parse(
+        envsubst = ["PIP_INDEX_URL"],
+        extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+        hub_name = "pip_ai_checker",
+        python_version = "3.{}".format(version),
+        requirements_lock = "//validation/ai_checker:requirements_3_{}.txt".format(version),
+        whl_modifications = {
+            "@ai_checker_whl_mods//:github_copilot_sdk.json": "github-copilot-sdk",
+        },
+    )
+    for version in [
+        "11",
+        "12",
+    ]
+]
+
+use_repo(pip, "pip_ai_checker")
+
+###############################################################################
+# LLVM Toolchain
+###############################################################################
+llvm = use_extension(
+    "@toolchains_llvm//toolchain/extensions:llvm.bzl",
+    "llvm",
+    dev_dependency = True,
+)
+llvm.toolchain(
+    compile_flags = {"": [
+        "-march=nehalem",
+        "-ffp-model=strict",
+        # Security
+        "-U_FORTIFY_SOURCE",  # https://github.com/google/sanitizers/issues/247
+        "-fstack-protector",
+        "-fno-omit-frame-pointer",
+        # Diagnostics
+        "-fcolor-diagnostics",
+        "-Wno-deprecated-declarations",
+        "-Wno-error=self-assign-overloaded",
+        "-Wthread-safety",
+    ]},
+    cxx_standard = {"": "c++17"},
+    extra_link_libs = {"": [
+        "-lrt",
+        # This is the agreed way to ensure linking for targets using std::atomic operations.
+        "-latomic",
+    ]},
+    llvm_version = "19.1.7",
+)
+llvm.sysroot(
+    name = "llvm_toolchain",
+    label = "@tooling_sysroot_amd64//sysroot",
+    targets = ["linux-x86_64"],
+)
+use_repo(llvm, "llvm_toolchain", "llvm_toolchain_llvm")
