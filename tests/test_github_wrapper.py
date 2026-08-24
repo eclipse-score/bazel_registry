@@ -21,14 +21,31 @@ from src.registry_manager.version import Version
 class TestGitHubReleaseInfo:
     """Test GitHubReleaseInfo class."""
 
-    def test_tarball_url_uses_tag_name(self) -> None:
-        """Test that tarball URL uses the tag name."""
+    def test_tarball_url_uses_codeload_for_public_repo(self) -> None:
+        """Public repos use the cache-friendly codeload archive URL."""
         release_info = GitHubReleaseInfo(
             org_and_repo="org/repo",
             version=Version("1.2.3"),
             tag_name="v1.2.3",
             published_at=datetime(2024, 1, 1),
             prerelease=False,
+            private=False,
+        )
+
+        assert (
+            release_info.tarball
+            == "https://github.com/org/repo/archive/refs/tags/v1.2.3.tar.gz"
+        )
+
+    def test_tarball_url_uses_api_for_private_repo(self) -> None:
+        """Private repos use the REST API tarball endpoint (authenticatable)."""
+        release_info = GitHubReleaseInfo(
+            org_and_repo="org/repo",
+            version=Version("1.2.3"),
+            tag_name="v1.2.3",
+            published_at=datetime(2024, 1, 1),
+            prerelease=False,
+            private=True,
         )
 
         assert (
@@ -50,6 +67,7 @@ class TestGithubWrapper:
 
         mock_repo = MagicMock()
         mock_repo.get_releases.return_value = [mock_release]
+        mock_repo.private = False  # public repo
 
         with patch.object(GithubWrapper, "__init__", lambda x, y: None):
             wrapper = GithubWrapper(None)
@@ -64,7 +82,7 @@ class TestGithubWrapper:
             assert result.tag_name == "v1.0.0"
             assert str(result.version) == "1.0.0"
             assert result.tarball == (
-                "https://api.github.com/repos/eclipse-score/devcontainer/tarball/v1.0.0"
+                "https://github.com/eclipse-score/devcontainer/archive/refs/tags/v1.0.0.tar.gz"
             )
 
     def test_get_latest_release_multiple_releases_picks_latest_by_date(self) -> None:
@@ -84,6 +102,7 @@ class TestGithubWrapper:
 
         mock_repo = MagicMock()
         mock_repo.get_releases.return_value = [older_release, newer_release]
+        mock_repo.private = False  # public repo
 
         with patch.object(GithubWrapper, "__init__", lambda x, y: None):
             wrapper = GithubWrapper(None)

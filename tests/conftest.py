@@ -113,6 +113,7 @@ def make_release_info(
     tag_name: str | None = None,
     prerelease: bool = False,
     org_and_repo: str = "org/repo",
+    private: bool = False,
 ) -> GitHubReleaseInfo:
     if tag_name is None:
         tag_name = f"v{version}"
@@ -123,6 +124,7 @@ def make_release_info(
         tag_name=tag_name,
         published_at=datetime(2024, 1, 1),
         prerelease=prerelease,
+        private=private,
     )
 
 

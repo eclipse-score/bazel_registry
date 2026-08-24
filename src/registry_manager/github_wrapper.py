@@ -29,13 +29,21 @@ class GitHubReleaseInfo:
     tag_name: str
     published_at: datetime
     prerelease: bool
+    private: bool = False
 
     @property
-    def tarball(self):
-        """GitHub REST API archive URL (supports authentication for private repos)."""
-        return (
-            f"https://api.github.com/repos/{self.org_and_repo}/tarball/{self.tag_name}"
-        )
+    def tarball(self) -> str:
+        """Archive URL for this release.
+
+        Public repositories use the browser-oriented ``codeload`` archive URL
+        (``github.com/.../archive/refs/tags/...``), which is served via GitHub's
+        CDN and is therefore cache-friendly. Private repositories use the REST
+        API tarball endpoint, which is the only archive URL that supports
+        authentication.
+        """
+        if self.private:
+            return f"https://api.github.com/repos/{self.org_and_repo}/tarball/{self.tag_name}"
+        return f"https://github.com/{self.org_and_repo}/archive/refs/tags/{self.tag_name}.tar.gz"
 
 
 class GithubWrapper:
@@ -71,6 +79,7 @@ class GithubWrapper:
                             tag_name=release.tag_name,
                             published_at=release.published_at,
                             prerelease=release.prerelease,
+                            private=repo.private,
                         )
                     )
                 else:

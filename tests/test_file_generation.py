@@ -61,7 +61,7 @@ class TestFileGeneration:
         source = json.loads(source_file.read_text())
         assert (
             source["url"]
-            == f"https://api.github.com/repos/{org_repo}/tarball/v{version}"
+            == f"https://github.com/{org_repo}/archive/refs/tags/v{version}.tar.gz"
         )
         # strip_prefix is read from the (mocked) downloaded archive;
         # see download_github_archive.
