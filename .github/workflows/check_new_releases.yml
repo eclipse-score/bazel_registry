@@ -98,7 +98,6 @@ jobs:
         env:
           SCORE_BOT_CLASSIC_PAT: ${{ secrets.SCORE_BOT_CLASSIC_PAT }}
         run: |
-          exit 1
           set -eu
           git config user.name "eclipse-score-bot"
           git config user.email "187756813+eclipse-score-bot@users.noreply.github.com"
