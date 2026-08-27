@@ -1,6 +1,6 @@
 {
     "homepage": "https://github.com/eclipse-score/lifecycle",
-    "periodic-pull": false,
+    "periodic-pull": true,
     "maintainers": [
         {
             "name": "Pawel Rutka",
@@ -19,9 +19,6 @@
         "github:eclipse-score/lifecycle"
     ],
     "versions": [
-        "0.3.0",
-        "0.2.0",
-        "0.1.0"
     ],
     "yanked_versions": {}
 }
