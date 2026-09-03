@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-LVFJfFLZqRmLWZxX4usaxi8Ks+uzIeNEjuqiGSWXQhU=",
+    "strip_prefix": "config_management-0.2.0",
+    "url": "https://github.com/eclipse-score/config_management/archive/refs/tags/v0.2.0.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-aVLibal/avNf/1y65/7kMtMFNI/82TKUmR20knKXwbM="
+    }
+}

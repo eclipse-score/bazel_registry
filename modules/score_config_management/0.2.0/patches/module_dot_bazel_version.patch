@@ -1,0 +1,14 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -10,7 +10,10 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+-module(name = "score_config_management")
++module(name = "score_config_management",
++    version = "0.2.0",
++    compatibility_level = 0
++)
+ 
+ bazel_dep(name = "bazel_skylib", version = "1.9.0")
+ bazel_dep(name = "rules_python", version = "1.8.5")

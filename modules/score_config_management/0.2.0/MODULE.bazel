@@ -1,0 +1,191 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(name = "score_config_management",
+    version = "0.2.0",
+    compatibility_level = 0
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "rules_python", version = "1.8.5")
+bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "platforms", version = "1.0.0")
+
+PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    is_default = True,
+    python_version = PYTHON_VERSION,
+)
+use_repo(python)
+
+# Add GoogleTest dependency
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+
+# Rust rules for Bazel
+bazel_dep(name = "rules_rust", version = "0.68.1-score")
+
+# C/C++ rules for Bazel
+bazel_dep(name = "rules_cc", version = "0.2.17")
+
+# LLVM Toolchains Rules - host configuration
+bazel_dep(name = "toolchains_llvm", version = "1.6.0", dev_dependency = True)
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
+llvm.toolchain(
+    cxx_standard = {"": "c++17"},
+    llvm_version = "19.1.0",
+)
+use_repo(llvm, "llvm_toolchain")
+use_repo(llvm, "llvm_toolchain_llvm")
+
+register_toolchains(
+    "@llvm_toolchain//:all",
+    dev_dependency = True,
+)
+
+# Score C++ toolchain — used for --config=host_gcc in CI (tests, static-analysis)
+bazel_dep(name = "score_bazel_platforms", version = "1.0.0", dev_dependency = True)
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.5.4", dev_dependency = True)
+
+gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+
+# QNX cross-compiler toolchains (QCC)
+gcc.toolchain(
+    name = "score_qcc_x86_64_toolchain",
+    sdp_version = "8.0.4",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_aarch64_toolchain",
+    sdp_version = "8.0.4",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(
+    gcc,
+    "score_gcc_x86_64_toolchain",
+    "score_qcc_aarch64_toolchain",
+    "score_qcc_aarch64_toolchain_pkg",
+    "score_qcc_x86_64_toolchain",
+    "score_qcc_x86_64_toolchain_pkg",
+)
+
+# UTs on QNX — run_under wrapper that boots QEMU
+bazel_dep(name = "score_qnx_unit_tests", version = "0.2.0", dev_dependency = True)
+bazel_dep(name = "score_rules_imagefs", version = "0.0.4", dev_dependency = True)
+
+imagefs = use_extension("@score_rules_imagefs//extensions:imagefs.bzl", "imagefs", dev_dependency = True)
+imagefs.toolchain(
+    name = "score_qnx_x86_64_ifs_toolchain",
+    sdp_to_import = "@score_qcc_x86_64_toolchain_pkg",
+    sdp_version = "8.0.0",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    type = "ifs",
+)
+imagefs.toolchain(
+    name = "score_qnx_aarch64_ifs_toolchain",
+    sdp_to_import = "@score_qcc_aarch64_toolchain_pkg",
+    sdp_version = "8.0.0",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    type = "ifs",
+)
+use_repo(imagefs, "score_qnx_aarch64_ifs_toolchain", "score_qnx_x86_64_ifs_toolchain")
+
+# Ferrocene (safety-certified Rust) — needed for Rust targets on QNX
+bazel_dep(name = "score_toolchains_rust", version = "0.9.1", dev_dependency = True)
+
+# tooling
+bazel_dep(name = "score_tooling", version = "1.2.0")
+
+# NOTE: git_override to get sphinx_module + docs_library_deps + dependable_element _rst target.
+# NOTE: To be removed once score_tooling releases a stable version with these features.
+git_override(
+    module_name = "score_tooling",
+    commit = "835f219a1121b316c4c7809d983db1b4d31ebbcf",
+    patch_strip = 1,
+    patches = ["//bazel/patches:score_tooling_remove_svglib.patch"],
+    remote = "https://github.com/eclipse-score/tooling.git",
+)
+
+bazel_dep(name = "aspect_rules_lint", version = "2.3.0")
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1")
+
+# Pin grpc-java (plain bazel_dep, not single_version_override, so it propagates to consumers) to work around BCR grpc@1.70.1 breakage (see eclipse-score/lifecycle, https://github.com/grpc/grpc-java/issues/12165).
+bazel_dep(name = "grpc-java", version = "1.70.0")
+
+# s-core base libs
+bazel_dep(name = "score_baselibs", version = "0.2.9")
+git_override(
+    module_name = "score_baselibs",
+    commit = "82f9402474d6dd210fb0cfe5d1867f0d757318c4",
+    remote = "https://github.com/eclipse-score/baselibs.git",
+)
+
+# s-core communication
+bazel_dep(name = "score_communication")
+git_override(
+    module_name = "score_communication",
+    commit = "4658ffb26a18dacdc1e903e6bad7282113c4a739",
+    remote = "https://github.com/Chahult/communication.git",
+)
+
+bazel_dep(name = "score_logging", version = "0.2.1")
+git_override(
+    module_name = "score_logging",
+    # Commit after fix: "Suppress unused variable warnings in SignalHandling::WithSigTermBlocked"
+    # (cafa286e27609db638b78261256b39143c66550f, May 15 2026) which resolves the
+    # -Werror,-Wunused-variable build failure caused by 'block_result' in score_logging v0.2.1.
+    commit = "7669689f72a9668f4c56797a391f00cac1de4436",
+    remote = "https://github.com/eclipse-score/logging.git",
+)
+
+bazel_dep(name = "score_lifecycle", version = "0.5.0")
+
+# s-core persistency
+bazel_dep(name = "score_persistency", version = "0.3.2")
+single_version_override(
+    module_name = "score_persistency",
+    patch_strip = 1,
+    patches = ["//bazel/patches:score_persistency_fix_string_view_to_string.patch"],
+)
+
+# TRLC dependency — commit matches score_tooling ade2a09e
+bazel_dep(name = "trlc", version = "0.0.0", dev_dependency = True)
+git_override(
+    module_name = "trlc",
+    commit = "8d25f639ff44976893d7866ba421a04db5698ebe",
+    remote = "https://github.com/bmw-software-engineering/trlc.git",
+)
+
+# lobster dependency — commit matches score_tooling ade2a09e
+bazel_dep(name = "lobster", version = "0.0.0", dev_dependency = True)
+git_override(
+    module_name = "lobster",
+    commit = "2792e2daee2cf524fdc7b1545fd3537791ebc36c",
+    remote = "https://github.com/bmw-software-engineering/lobster.git",
+)
