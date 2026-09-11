@@ -412,11 +412,13 @@ class ModuleUpdateRunner:
         if not self.info.mod_file:
             raise ValueError("Module file content not available")
 
-        # Ensure that version is not None (set it if none was found in module file)
-        if self.info.mod_file.version is None:
+        # Keep track of missing versions before using a sentinel for logging and
+        # version replacement below.
+        version_was_missing = self.info.mod_file.version is None
+        if version_was_missing:
             self.info.mod_file.version = Version("0.0.0")
         # Check if no patch is needed
-        if self.info.mod_file.version == self.info.release.version:
+        if not version_was_missing and self.info.mod_file.version == self.info.release.version:
             log.debug("MODULE.bazel version matches release version; no patch needed.")
             return None  # No patch needed
 

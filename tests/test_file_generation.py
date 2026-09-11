@@ -357,6 +357,31 @@ bazel_dep(name = "protobuf", version = "21.7")
         assert 'bazel_dep(name = "rules_python", version = "0.26.0")' in module_content
         assert 'bazel_dep(name = "protobuf", version = "21.7")' in module_content
 
+    def test_patch_adds_version_for_zero_zero_zero_release_without_version(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """Ensure a missing version is patched for a 0.0.0 release."""
+        basic_registry_setup()
+        os.chdir("/")
+
+        module_content_str = """module(
+    name = "score_demo",
+)
+"""
+        update_info = make_update_info(version="0.0.0")
+        update_info.mod_file = parse_MODULE_file_content(module_content_str)
+
+        runner = ModuleUpdateRunner(update_info)
+        with patch(
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=("sha256-test", "org-repo-1234567"),
+        ):
+            runner.generate_files()
+
+        module_file = Path("/modules/score_demo/0.0.0/MODULE.bazel")
+        assert 'version = "0.0.0"' in module_file.read_text()
+
     def test_patch_preserves_complex_module_structure(
         self,
         basic_registry_setup: Callable[..., None],
