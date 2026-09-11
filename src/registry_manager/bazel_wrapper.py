@@ -140,12 +140,11 @@ def parse_MODULE_file_content(content: str) -> ModuleFileContent:  # noqa: N802
     if m_ver := re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", module_content):
         version = str(m_ver.group(1))
 
-    # If version or comp_level are missing we add a placeholder
-    # This will assist us in replacing / adding those later in patches
+    # If version is missing we add a placeholder.
+    # This will assist us in replacing / adding it later in patches.
     has_version = version is not None
-    has_comp_level = comp_level is not None
 
-    if not has_version or not has_comp_level:
+    if not has_version:
         module_start = module_match.start()
         module_end = module_match.end()
 
@@ -156,10 +155,7 @@ def parse_MODULE_file_content(content: str) -> ModuleFileContent:  # noqa: N802
         # unsure if the amount of spaces here is okay or should be dynamic?
         if not has_version:
             to_insert += '\n    version = ""'
-        if not has_comp_level:
-            if not has_version:
-                to_insert += ","
-            to_insert += "\n    compatibility_level = 0\n"
+            to_insert += "\n"
 
         # replacing the entire module() block seemed easier than adding it
         new_module = "module(" + module_content.rstrip() + to_insert + ")"
@@ -404,14 +400,13 @@ class ModuleUpdateRunner:
     def _create_patch_for_module_version_if_mismatch(self) -> str | None:
         """Create a patch if MODULE.bazel version doesn't match release version.
 
-        If the downloaded MODULE.bazel declares a different version or
-        compatibility_level than the release, a patch is created to stamp
-        the correct version.
+        If the downloaded MODULE.bazel declares a different version than the
+        release, a patch is created to stamp the correct version.
 
         Note: this is based on rather fragile regex replacements and may need
         adjustments for more complex MODULE.bazel files.
         Example that would fail:
-        # module(this_is_just_a_comment, version='1.0.0', compatibility_level=1)
+        # module(this_is_just_a_comment, version='1.0.0')
         module(real_module)
         """
         if not self.info.mod_file:
@@ -421,16 +416,13 @@ class ModuleUpdateRunner:
         if self.info.mod_file.version is None:
             self.info.mod_file.version = Version("0.0.0")
         # Check if no patch is needed
-        if (
-            self.info.mod_file.version == self.info.release.version
-            and self.info.mod_file.major_version == self.info.mod_file.comp_level
-        ):
+        if self.info.mod_file.version == self.info.release.version:
             log.debug("MODULE.bazel version matches release version; no patch needed.")
             return None  # No patch needed
 
         # Build metadata strings for logging
-        file_meta = f"(version={self.info.mod_file.version}, comp_level={self.info.mod_file.comp_level})"
-        release_meta = f"(version={self.info.release.version}, comp_level={self.info.mod_file.major_version})"
+        file_meta = f"(version={self.info.mod_file.version})"
+        release_meta = f"(version={self.info.release.version})"
         log.debug(
             f"MODULE.bazel {file_meta} doesn't match release {release_meta}; creating patch"
         )
@@ -443,17 +435,6 @@ class ModuleUpdateRunner:
             self.info.mod_file.content,
             count=1,
         )
-
-        if self.info.release.version.semver:
-            major_version = self.info.release.version.semver.major
-
-            # Replace compatibility_level with major version
-            stamped_content = re.sub(
-                r"(compatibility_level\s*=\s*)(\d+)",
-                lambda m: f"{m.group(1)}{major_version}",
-                stamped_content,
-                count=1,
-            )
 
         # Generate Patch difference
         patch_text = "".join(

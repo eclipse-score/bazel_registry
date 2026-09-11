@@ -134,12 +134,14 @@ def make_module_content(
 ) -> ModuleFileContent:
     """Factory for creating ModuleFileContent objects."""
 
-    if comp_level is None:
-        comp_level = int(version.split(".")[0])
+    if comp_level is not None:
+        content = f'module(version="{version}", compatibility_level={comp_level})'
+    else:
+        content = f'module(version="{version}")'
 
     return ModuleFileContent(
-        raw_content='module(name="module")',
-        content=f'module(version="{version}", compatibility_level={comp_level})',
+        raw_content=content,
+        content=content,
         comp_level=comp_level,
         version=Version(version),
     )

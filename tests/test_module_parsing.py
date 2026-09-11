@@ -63,7 +63,6 @@ class TestModuleFileParsing:
             """
         parsed = parse_MODULE_file_content(content)
         assert 'version = ""' in parsed.content
-        assert "compatibility_level = 0" in parsed.content
         assert parsed.version is None
 
     def test_parse_minimal_module_declaration(self):

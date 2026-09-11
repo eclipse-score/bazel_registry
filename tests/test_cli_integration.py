@@ -78,9 +78,7 @@ def test_cli_applies_updates_and_prints_text_report(
         mock_gh = MagicMock()
         mock_gh_class.return_value = mock_gh
         mock_gh.get_latest_release.return_value = make_release_info(version="2.0.0")
-        mock_gh.try_get_module_file_content.return_value = (
-            'module(version="2.0.0", compatibility_level=2)'
-        )
+        mock_gh.try_get_module_file_content.return_value = 'module(version="2.0.0")'
 
         main(["--github-token", "FAKE_TOKEN"])
 
