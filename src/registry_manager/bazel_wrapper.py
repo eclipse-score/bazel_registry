@@ -418,7 +418,10 @@ class ModuleUpdateRunner:
         if version_was_missing:
             self.info.mod_file.version = Version("0.0.0")
         # Check if no patch is needed
-        if not version_was_missing and self.info.mod_file.version == self.info.release.version:
+        if (
+            not version_was_missing
+            and self.info.mod_file.version == self.info.release.version
+        ):
             log.debug("MODULE.bazel version matches release version; no patch needed.")
             return None  # No patch needed
 
