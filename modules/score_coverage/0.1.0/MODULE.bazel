@@ -1,0 +1,91 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
+# score_coverage: LLVM source-based code coverage pipeline for Eclipse S-CORE.
+# The version is intentionally absent; the S-CORE Bazel registry patches it in
+# from the release tag (same mechanism as score_tooling).
+module(name = "score_coverage",
+    version = "0.1.0"
+)
+
+###############################################################################
+# Runtime dependencies of the pipeline (visible to consumers)
+###############################################################################
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_cc", version = "0.2.16")  # cc_args/cc_feature for the death-test feature
+bazel_dep(name = "rules_python", version = "1.8.5")
+
+# CrateInfo provider consumed by the coverage-scope aspect (coverage_scope.bzl).
+bazel_dep(name = "rules_rust", version = "0.68.2-score")
+
+###############################################################################
+# Python toolchain
+###############################################################################
+# Python 3.12 only: every S-CORE consumer defaults to 3.12, and the qualified
+# environment pins one interpreter version.
+PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    configure_coverage_tool = True,
+    is_default = True,
+    python_version = PYTHON_VERSION,
+)
+
+###############################################################################
+# Pip hub (pyyaml for justify.py). Hub name is unique to this module so it
+# never collides with the legacy pip_coverage hub still declared by
+# score_tooling < 3.
+###############################################################################
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    envsubst = ["PIP_INDEX_URL"],
+    extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+    hub_name = "pip_score_coverage",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//score_coverage:requirements_3_12.txt",
+)
+use_repo(pip, "pip_score_coverage")
+
+###############################################################################
+# Development-only dependencies (repository hygiene: copyright, formatting)
+###############################################################################
+bazel_dep(name = "score_tooling", version = "2.2.0", dev_dependency = True)
+
+# use_format_targets() (from score_tooling) loads these from the ROOT module's
+# repo mapping, so the root has to declare them itself.
+bazel_dep(name = "aspect_rules_lint", version = "2.7.1", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1", dev_dependency = True)
+
+# Starlark analysis tests for the coverage_scope rule/aspect, incl. Rust fixtures
+# built with the standard Ferrocene toolchain (registered in .bazelrc).
+bazel_dep(name = "rules_testing", version = "0.9.0", dev_dependency = True)
+
+# External-repository header fixture for the analysis tests (a workspace target
+# vendoring a header from another module, eclipse-score/baselibs#558).
+bazel_dep(name = "coverage_external_fixture", version = "0.0.0", dev_dependency = True)
+local_path_override(
+    module_name = "coverage_external_fixture",
+    path = "score_coverage/tests/starlark/external_fixture",
+)
+
+bazel_dep(name = "score_toolchains_rust", version = "0.10.0", dev_dependency = True)
+
+###############################################################################
+# Documentation (docs-as-code with the S-CORE process needs for `satisfies` /
+# `realizes` links). NOT dev dependencies: reference_integration and the Tool
+# Verification Report in eclipse-score/score consume //docs:needs_json and the
+# docs bundle of this module, which requires these to resolve from a consumer.
+###############################################################################
+bazel_dep(name = "score_docs_as_code", version = "8.1.1")
+bazel_dep(name = "score_process_description", version = "2.1.2")

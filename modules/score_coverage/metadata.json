@@ -1,0 +1,37 @@
+{
+    "homepage": "https://github.com/eclipse-score/coverage_tool",
+    "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Dan Calavrezo",
+            "email": "Dan.Calavrezo.ext@qorix.ai",
+            "github": "dcalavrezo-qorix",
+            "github_user_id": 195309321
+        },
+        {
+            "name": "Alexander Lanin",
+            "email": "alexander.lanin@etas.com",
+            "github": "AlexanderLanin",
+            "github_user_id": 5074553
+        },
+        {
+            "name": "Maximilian Soeren Pollak",
+            "email": "maximilian.pollak@qorix.com",
+            "github": "MaximilianSoerenPollak",
+            "github_user_id": 74557518
+        },
+        {
+            "name": "Nikola Radakovic",
+            "email": "nikola.ra.radakovic@bmw.de",
+            "github": "nradakovic",
+            "github_user_id": 35235060
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/coverage_tool"
+    ],
+    "versions": [
+        "0.1.0"
+    ],
+    "yanked_versions": {}
+}

@@ -1,0 +1,13 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -14,7 +14,9 @@
+ # score_coverage: LLVM source-based code coverage pipeline for Eclipse S-CORE.
+ # The version is intentionally absent; the S-CORE Bazel registry patches it in
+ # from the release tag (same mechanism as score_tooling).
+-module(name = "score_coverage")
++module(name = "score_coverage",
++    version = "0.1.0"
++)
+ 
+ ###############################################################################
+ # Runtime dependencies of the pipeline (visible to consumers)
