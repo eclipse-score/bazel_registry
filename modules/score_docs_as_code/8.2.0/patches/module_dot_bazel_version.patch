@@ -1,0 +1,13 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -12,7 +12,9 @@
+ # *******************************************************************************
+ 
+ # Versioning is handled by GitHub Releases.
+-module(name = "score_docs_as_code")
++module(name = "score_docs_as_code",
++    version = "8.2.0"
++)
+ 
+ # For bzl-unittests
+ bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
