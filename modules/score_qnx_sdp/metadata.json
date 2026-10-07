@@ -1,0 +1,17 @@
+{
+    "homepage": "https://github.com/eclipse-score/qnx_sdp",
+    "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Nikola Radakovic",
+            "email": "nikola.ra.radakovic@bmw.de",
+            "github": "nradakovic",
+            "github_user_id": 35235060
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/qnx_sdp"
+    ],
+    "versions": [],
+    "yanked_versions": {}
+}
