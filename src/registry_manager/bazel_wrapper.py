@@ -217,7 +217,7 @@ def _build_archive_request(url: str, token: str | None) -> urllib.request.Reques
     them with a 404 rather than a 401 without one. The token is only attached
     to allowlisted HTTPS GitHub hosts to avoid leaking it on redirects.
     """
-    req = urllib.request.Request(url)
+    req = urllib.request.Request(url, headers={"User-Agent": "score-bazel-registry"})
     if token:
         if not _is_allowed_token_url(url):
             raise ValueError(
@@ -270,9 +270,13 @@ def _archive_top_level_dir(archive: IO[bytes]) -> str:
         top_dirs: set[str] = set()
         top_files: set[str] = set()
         for member in tar.getmembers():
-            if not member.name:
+            name = member.name.removeprefix("./").lstrip("/")
+            if not name:
                 continue
-            first, sep, _ = member.name.partition("/")
+            first, sep, _ = name.partition("/")
+            # Skip POSIX tar/git archive PaxHeaders metadata entries
+            if member.name == "pax_global_header" or first.startswith("PaxHeaders."):
+                continue
             if sep:
                 # Nested entry: lives under a top-level directory.
                 top_dirs.add(first)
@@ -339,15 +343,39 @@ class ModuleUpdateRunner:
             "archive_type": "tar.gz",
         }
 
+        patches_map: dict[str, str] = {}
+        patch_strip = 1
+        source_json_path = self.module_version_path / "source.json"
+        if source_json_path.exists():
+            try:
+                with open(source_json_path) as f:
+                    old_source = json.load(f)
+                if isinstance(old_source.get("patches"), dict):
+                    patches_map.update(old_source["patches"])
+                if "patch_strip" in old_source:
+                    patch_strip = old_source["patch_strip"]
+            except (json.JSONDecodeError, OSError):
+                pass
+
         if self.patches:
             source_dict["patch_strip"] = 1
             source_dict["patches"] = {
                 patch_name: sha256_from_string(patch_text)
                 for patch_name, patch_text in self.patches.items()
             }
+            patches_map.update(
+                {
+                    patch_name: sha256_from_string(patch_text)
+                    for patch_name, patch_text in self.patches.items()
+                }
+            )
+
+        if patches_map:
+            source_dict["patch_strip"] = patch_strip
+            source_dict["patches"] = patches_map
 
         self.module_version_path.mkdir(parents=True, exist_ok=True)
-        with open(self.module_version_path / "source.json", "w") as f:
+        with open(source_json_path, "w") as f:
             json.dump(source_dict, f, indent=4)
             f.write("\n")
 
@@ -359,10 +387,11 @@ class ModuleUpdateRunner:
             versions = _parse_versions(metadata.get("versions", []), metadata_path)
 
             if self.info.release.version in versions:
-                raise RuntimeError(
+                log.debug(
                     f"Version {self.info.release.version} already present in metadata"
-                    f" for module {self.info.module.name}"
+                    f" for module {self.info.module.name}; skipping metadata update."
                 )
+                return
 
             # prepend new version. This way we always modify a single line.
             # (otherwise a comma needs to be added to the previous last line)
