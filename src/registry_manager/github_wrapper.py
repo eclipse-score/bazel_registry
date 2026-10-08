@@ -30,19 +30,22 @@ class GitHubReleaseInfo:
     published_at: datetime
     prerelease: bool
     private: bool = False
+    asset_url: str | None = None
 
     @property
     def tarball(self) -> str:
         """Archive URL for this release.
 
-        Public repositories use the browser-oriented ``codeload`` archive URL
-        (``github.com/.../archive/refs/tags/...``), which is served via GitHub's
-        CDN and is therefore cache-friendly. Private repositories use the REST
-        API tarball endpoint, which is the only archive URL that supports
+        Public repositories prefer explicit release assets (e.g. bzlmod-<tag>.tar.gz)
+        attached to the release to guarantee checksum stability. If no explicit asset
+        exists, it falls back to the browser-oriented ``codeload`` archive URL.
+        Private repositories use the REST API tarball endpoint, which is the only
         authentication.
         """
         if self.private:
             return f"https://api.github.com/repos/{self.org_and_repo}/tarball/{self.tag_name}"
+        if self.asset_url:
+            return self.asset_url
         return f"https://github.com/{self.org_and_repo}/archive/refs/tags/{self.tag_name}.tar.gz"
 
 
@@ -68,30 +71,65 @@ class GithubWrapper:
 
         try:
             repo = self.gh.get_repo(org_and_repo)
-            all_releases: list[GitHubReleaseInfo] = []
+            published_releases = []
             for release in repo.get_releases():  # type: ignore
                 # Only published releases count
                 if release.published_at:
-                    all_releases.append(
-                        GitHubReleaseInfo(
-                            org_and_repo=org_and_repo,
-                            version=Version(release.tag_name.lstrip("v")),
-                            tag_name=release.tag_name,
-                            published_at=release.published_at,
-                            prerelease=release.prerelease,
-                            private=repo.private,
-                        )
-                    )
+                    published_releases.append(release)
                 else:
                     log.debug(
                         f"Skipping release {release.tag_name} in {org_and_repo} "
                         f"because it is not published yet."
                     )
 
+            if not published_releases:
+                self._release_cache[org_and_repo] = None
+                return None
+
             sorted_releases = sorted(
-                all_releases, key=lambda r: r.published_at, reverse=True
+                published_releases, key=lambda r: r.published_at, reverse=True
             )
-            result = sorted_releases[0] if sorted_releases else None
+            latest = sorted_releases[0]
+
+            asset_url = None
+            tag_clean = latest.tag_name.lstrip("v")
+            candidate_names = {
+                f"bzlmod-{latest.tag_name}.tar.gz",
+                f"bzlmod-v{tag_clean}.tar.gz",
+                f"bzlmod-{tag_clean}.tar.gz",
+            }
+            assets = list(latest.get_assets())
+            for asset in assets:
+                if asset.name in candidate_names:
+                    asset_url = asset.browser_download_url
+                    break
+            if not asset_url:
+                for asset in assets:
+                    if asset.name.startswith("bzlmod-") and asset.name.endswith(
+                        ".tar.gz"
+                    ):
+                        asset_url = asset.browser_download_url
+                        break
+
+            if asset_url:
+                log.debug(
+                    f"Found explicit release asset for {org_and_repo}@{latest.tag_name}: {asset_url}"
+                )
+            else:
+                log.debug(
+                    f"No explicit release asset found for {org_and_repo}@{latest.tag_name}; "
+                    "falling back to archive link."
+                )
+
+            result = GitHubReleaseInfo(
+                org_and_repo=org_and_repo,
+                version=Version(latest.tag_name.lstrip("v")),
+                tag_name=latest.tag_name,
+                published_at=latest.published_at,
+                prerelease=latest.prerelease,
+                private=repo.private,
+                asset_url=asset_url,
+            )
             self._release_cache[org_and_repo] = result
             return result
 

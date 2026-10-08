@@ -48,11 +48,17 @@ class RegistryRunResult:
 
         if len(self.updated_modules) == 1:
             update = self.updated_modules[0]
+            if update.release.version in update.module.versions:
+                return f"fix: migrate {update.module.name}@{update.release.version} to release asset"
             return f"feat: update {update.module.name} to {update.release.version}"
 
         title = "feat: update multiple modules"
         lines = [
-            f"- {update.module.name} -> {update.release.version}"
+            (
+                f"- migrate {update.module.name}@{update.release.version} to release asset"
+                if update.release.version in update.module.versions
+                else f"- {update.module.name} -> {update.release.version}"
+            )
             for update in self.updated_modules
         ]
         return title + "\n\n" + "\n".join(lines)
@@ -71,9 +77,13 @@ class RegistryRunResult:
             lines.append(f"Updated {len(self.updated_modules)} module(s):")
             lines.extend(
                 (
+                    f"- {u.module.name}: migrate {u.release.version} to release asset"
+                    if u.release.version in u.module.versions
+                    else (
                     f"- {u.module.name}: {u.module.latest_version} -> {u.release.version}"
                     if u.module.versions
                     else f"- {u.module.name}: add {u.release.version}"
+                    )
                 )
                 for u in self.updated_modules
             )
@@ -318,7 +328,47 @@ def plan_module_updates(
                     f"{module.name} at tag {latest_release.tag_name}; skipping."
                 )
         else:
-            log.debug(f"Module {module.name} is up to date ({module.latest_version}).")
+            source_json_path = (
+                module.path / str(latest_release.version) / "source.json"
+            )
+            needs_migration = False
+            if source_json_path.exists() and latest_release.asset_url:
+                try:
+                    with open(source_json_path) as f:
+                        current_source = json.load(f)
+                    current_url = current_source.get("url", "")
+                    if current_url != latest_release.tarball and (
+                        "/archive/refs/tags/" in current_url
+                        or "/tarball/" in current_url
+                    ):
+                        needs_migration = True
+                except (json.JSONDecodeError, OSError):
+                    pass
+
+            if needs_migration:
+                log.info(
+                    f"Migrating in-flight release {module.name}@{latest_release.version} "
+                    f"to explicit release asset: {latest_release.asset_url}"
+                )
+                content = gh.try_get_module_file_content(
+                    module.org_and_repo, str(latest_release.tag_name)
+                )
+                if content:
+                    module_file_content = parse_MODULE_file_content(content)
+                    updated_modules.append(
+                        ModuleUpdateInfo(
+                            module=module,
+                            release=latest_release,
+                            mod_file=module_file_content,
+                        )
+                    )
+                else:
+                    log.warning(
+                        f"Could not retrieve MODULE.bazel for "
+                        f"{module.name} at tag {latest_release.tag_name}; skipping."
+                    )
+            else:
+                log.debug(f"Module {module.name} is up to date ({module.latest_version}).")
 
     if not updated_modules:
         log.debug("No modules need updating.")
@@ -330,7 +380,11 @@ def plan_module_updates(
 
 def apply_updates(plan: list[ModuleUpdateInfo], token: str | None = None) -> None:
     for task in plan:
-        if task.module.versions:
+        if task.release.version in task.module.versions:
+            log.debug(
+                f"Migrating {task.module.name}@{task.release.version} to release asset"
+            )
+        elif task.module.versions:
             log.debug(
                 f"Updating {task.module.name} "
                 f"from {task.module.latest_version} to {task.release.version}"
