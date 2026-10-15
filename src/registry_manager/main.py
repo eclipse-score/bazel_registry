@@ -342,31 +342,24 @@ def plan_module_updates(
                         or "/tarball/" in current_url
                     ):
                         needs_migration = True
-                except (json.JSONDecodeError, OSError):
-                    pass
+                except (json.JSONDecodeError, OSError) as e:
+                    log.warning(
+                        f"Could not read or parse source.json for {module.name}@{latest_release.version}, "
+                        f"skipping migration check: {e}"
+                    )
 
             if needs_migration:
-                log.info(
-                    f"Migrating in-flight release {module.name}@{latest_release.version} "
-                    f"to explicit release asset: {latest_release.asset_url}"
+                log.debug(
+                    f"Planning source-only migration for {module.name}@{latest_release.version} "
+                    f"to use explicit release asset."
                 )
-                content = gh.try_get_module_file_content(
-                    module.org_and_repo, str(latest_release.tag_name)
+                # For a source-only migration, we don't need the upstream MODULE.bazel content.
+                # We signal this by setting mod_file to None. The ModuleUpdateRunner is
+                # then responsible for only updating source.json while preserving existing
+                # MODULE.bazel and patch files.
+                updated_modules.append(
+                    ModuleUpdateInfo(module=module, release=latest_release, mod_file=None)
                 )
-                if content:
-                    module_file_content = parse_MODULE_file_content(content)
-                    updated_modules.append(
-                        ModuleUpdateInfo(
-                            module=module,
-                            release=latest_release,
-                            mod_file=module_file_content,
-                        )
-                    )
-                else:
-                    log.warning(
-                        f"Could not retrieve MODULE.bazel for "
-                        f"{module.name} at tag {latest_release.tag_name}; skipping."
-                    )
             else:
                 log.debug(f"Module {module.name} is up to date ({module.latest_version}).")
 

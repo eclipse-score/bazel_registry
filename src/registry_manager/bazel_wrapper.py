@@ -322,10 +322,53 @@ class ModuleUpdateRunner:
         - patches/ directory with any necessary patches
         - source.json with integrity hash and patch metadata
         """
+        # A source-only migration is signaled by mod_file being None.
+        # It only updates source.json and leaves other files untouched.
+        if self.info.mod_file is None:
+            self._migrate_source_only()
+            return
+
         self._add_version_to_metadata()
         patched_module_file = self._create_patch_for_module_version_if_mismatch()
         self._generate_source_json()
         self._write_files(patched_module_file)
+
+    def _migrate_source_only(self) -> None:
+        """Performs a source-only migration for an existing module version.
+
+        This only updates source.json with a new archive URL, integrity hash,
+        and strip prefix, while preserving all other existing files and metadata
+        (like MODULE.bazel and patches).
+        """
+        source_json_path = self.module_version_path / "source.json"
+        if not source_json_path.exists():
+            log.fatal(
+                f"Cannot perform source-only migration: {source_json_path} does not exist."
+            )
+
+        # 1. Get info for the new archive
+        integrity, strip_prefix = download_github_archive(
+            self.info.release.tarball, self.token
+        )
+
+        # 2. Read existing source.json
+        try:
+            with open(source_json_path) as f:
+                source_data = json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            log.fatal(f"Could not read or parse existing {source_json_path}: {e}")
+
+        # 3. Update only the source-related fields, preserving patch metadata
+        source_data["url"] = self.info.release.tarball
+        source_data["integrity"] = integrity
+        source_data["strip_prefix"] = strip_prefix
+        source_data["archive_type"] = "tar.gz"  # Ensure this is set
+
+        # 4. Write back the updated source.json
+        self.module_version_path.mkdir(parents=True, exist_ok=True)
+        with open(source_json_path, "w") as f:
+            json.dump(source_data, f, indent=4)
+            f.write("\n")
 
     def _generate_source_json(self) -> None:
         """Generate source.json with integrity hash and patch metadata."""
