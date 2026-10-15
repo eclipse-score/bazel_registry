@@ -39,8 +39,10 @@ class GitHubReleaseInfo:
         Public repositories prefer explicit release assets (e.g. bzlmod-<tag>.tar.gz)
         attached to the release to guarantee checksum stability. If no explicit asset
         exists, it falls back to the browser-oriented ``codeload`` archive URL.
-        Private repositories use the REST API tarball endpoint, which is the only
-        authentication.
+        Private repositories use the REST API tarball endpoint, as this is the
+        only archive URL that supports authentication via the GitHub API token.
+        The browser-oriented ``codeload`` and asset download URLs do not accept
+        API tokens for private repository access.
         """
         if self.private:
             return f"https://api.github.com/repos/{self.org_and_repo}/tarball/{self.tag_name}"
@@ -103,13 +105,6 @@ class GithubWrapper:
                 if asset.name in candidate_names:
                     asset_url = asset.browser_download_url
                     break
-            if not asset_url:
-                for asset in assets:
-                    if asset.name.startswith("bzlmod-") and asset.name.endswith(
-                        ".tar.gz"
-                    ):
-                        asset_url = asset.browser_download_url
-                        break
 
             if asset_url:
                 log.debug(
