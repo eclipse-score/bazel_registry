@@ -231,8 +231,8 @@ def _build_archive_request(url: str, token: str | None) -> urllib.request.Reques
 def download_github_archive(url: str, token: str | None = None) -> tuple[str, str]:
     """Download a GitHub source archive.
 
-    Returns ``(integrity, strip_prefix)`` where ``integrity`` is the
-    ``sha256-<base64>`` hash of the bytes and ``strip_prefix`` is the archive's
+    Returns ``(integrity, top_level_dir)`` where ``integrity`` is the
+    ``sha256-<base64>`` hash of the bytes and ``top_level_dir`` is the archive's
     actual top-level directory name.
     """
     # GitHub names a tarball's top-level directory ``{owner}-{repo}-{sha}``, but
@@ -251,8 +251,8 @@ def download_github_archive(url: str, token: str | None = None) -> tuple[str, st
             h.update(chunk)
         integrity = "sha256-" + base64.b64encode(h.digest()).decode("ascii")
         tmp.seek(0)
-        strip_prefix = _archive_top_level_dir(tmp)
-    return integrity, strip_prefix
+        top_level_dir = _archive_top_level_dir(tmp)
+    return integrity, top_level_dir
 
 
 def _archive_top_level_dir(archive: IO[bytes]) -> str:
@@ -346,8 +346,8 @@ class ModuleUpdateRunner:
                 f"Cannot perform source-only migration: {source_json_path} does not exist."
             )
 
-        # 1. Get info for the new archive
-        integrity, strip_prefix = download_github_archive(
+        # 1. Get info for the new archive's root directory
+        integrity, new_archive_root = download_github_archive(
             self.info.release.tarball, self.token
         )
 
@@ -358,13 +358,28 @@ class ModuleUpdateRunner:
         except (json.JSONDecodeError, OSError) as e:
             log.fatal(f"Could not read or parse existing {source_json_path}: {e}")
 
-        # 3. Update only the source-related fields, preserving patch metadata
+        old_strip_prefix = source_data.get("strip_prefix")
+        if not old_strip_prefix:
+            log.fatal(
+                f"Cannot migrate {source_json_path}: missing 'strip_prefix' in existing file."
+            )
+
+        # 3. Preserve the module subdirectory suffix from the old strip_prefix.
+        # The old prefix is formatted as `<archive_root>/<optional_module_subdir>`.
+        # We replace <archive_root> with new_archive_root while preserving the suffix.
+        _old_archive_root, _sep, module_subdir = old_strip_prefix.partition("/")
+
+        new_strip_prefix = (
+            f"{new_archive_root}/{module_subdir}" if module_subdir else new_archive_root
+        )
+
+        # 4. Update only the source-related fields, preserving patch metadata
         source_data["url"] = self.info.release.tarball
         source_data["integrity"] = integrity
-        source_data["strip_prefix"] = strip_prefix
+        source_data["strip_prefix"] = new_strip_prefix
         source_data["archive_type"] = "tar.gz"  # Ensure this is set
 
-        # 4. Write back the updated source.json
+        # 5. Write back the updated source.json
         self.module_version_path.mkdir(parents=True, exist_ok=True)
         with open(source_json_path, "w") as f:
             json.dump(source_data, f, indent=4)
@@ -374,14 +389,14 @@ class ModuleUpdateRunner:
         """Generate source.json with integrity hash and patch metadata."""
         # GitHub names a tarball's top-level directory '{owner}-{repo}-{sha}',
         # but the SHA length depends on repository visibility, so the actual
-        # prefix must be read from the downloaded archive (see
-        # download_github_archive) rather than guessed from the commit SHA.
-        integrity, strip_prefix = download_github_archive(
+        # archive root must be read from the downloaded archive (see
+        # download_github_archive) rather than guessed.
+        integrity, archive_root = download_github_archive(
             self.info.release.tarball, self.token
         )
         source_dict: dict[str, object] = {
             "integrity": integrity,
-            "strip_prefix": strip_prefix,
+            "strip_prefix": archive_root,
             "url": self.info.release.tarball,
             "archive_type": "tar.gz",
         }
