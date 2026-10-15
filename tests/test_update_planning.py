@@ -13,7 +13,6 @@
 
 from argparse import Namespace
 import json
-from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest

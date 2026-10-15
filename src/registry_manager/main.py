@@ -26,7 +26,7 @@ from .bazel_wrapper import (
     read_modules,
 )
 from .gh_logging import Logger
-from .github_wrapper import GithubWrapper
+from .github_wrapper import GitHubReleaseInfo, GithubWrapper
 from .version import Version
 
 log = Logger(__name__)
@@ -267,6 +267,34 @@ def is_release_semver_acceptable(module: BazelModuleInfo, new_version: Version) 
     return True
 
 
+def _is_migration_needed(module: BazelModuleInfo, latest_release: GitHubReleaseInfo) -> bool:
+    """Checks if an existing module version should be migrated to a release asset."""
+    source_json_path = module.path / str(latest_release.version) / "source.json"
+
+    if not source_json_path.exists() or not latest_release.asset_url:
+        return False
+
+    try:
+        with open(source_json_path) as f:
+            current_source = json.load(f)
+        current_url = current_source.get("url", "")
+
+        # A migration is needed if the URL is different and the current URL
+        # points to a dynamic GitHub archive.
+        is_dynamic_archive = (
+            "/archive/refs/tags/" in current_url or "/tarball/" in current_url
+        )
+        if current_url != latest_release.tarball and is_dynamic_archive:
+            return True
+    except (json.JSONDecodeError, OSError) as e:
+        log.warning(
+            f"Could not read or parse source.json for {module.name}@{latest_release.version}, "
+            f"skipping migration check: {e}"
+        )
+
+    return False
+
+
 def plan_module_updates(
     args: argparse.Namespace,
     gh: GithubWrapper,
@@ -328,27 +356,7 @@ def plan_module_updates(
                     f"{module.name} at tag {latest_release.tag_name}; skipping."
                 )
         else:
-            source_json_path = (
-                module.path / str(latest_release.version) / "source.json"
-            )
-            needs_migration = False
-            if source_json_path.exists() and latest_release.asset_url:
-                try:
-                    with open(source_json_path) as f:
-                        current_source = json.load(f)
-                    current_url = current_source.get("url", "")
-                    if current_url != latest_release.tarball and (
-                        "/archive/refs/tags/" in current_url
-                        or "/tarball/" in current_url
-                    ):
-                        needs_migration = True
-                except (json.JSONDecodeError, OSError) as e:
-                    log.warning(
-                        f"Could not read or parse source.json for {module.name}@{latest_release.version}, "
-                        f"skipping migration check: {e}"
-                    )
-
-            if needs_migration:
+            if _is_migration_needed(module, latest_release):
                 log.debug(
                     f"Planning source-only migration for {module.name}@{latest_release.version} "
                     f"to use explicit release asset."
