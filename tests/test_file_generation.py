@@ -453,6 +453,8 @@ bazel_dep(name = "protobuf", version = "21.7")
             mock_gh.get_latest_release.return_value = mock_release
             plan = plan_module_updates(argparse.Namespace(modules=[]), mock_gh, updated_modules)
             assert len(plan) == 0
+    def test_patch_adds_version_for_zero_zero_zero_release_without_version(
+        self,
         basic_registry_setup: Callable[..., None],
     ) -> None:
         """Ensure a missing version is patched for a 0.0.0 release."""
