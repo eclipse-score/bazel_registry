@@ -271,7 +271,7 @@ def _archive_top_level_dir(archive: IO[bytes]) -> str:
         top_files: set[str] = set()
         for member in tar.getmembers():
             name = member.name.removeprefix("./").lstrip("/")
-            if not name:
+            if not name or name == ".":
                 continue
             first, sep, _ = name.partition("/")
             # Skip POSIX tar/git archive PaxHeaders metadata entries
