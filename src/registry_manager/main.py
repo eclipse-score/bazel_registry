@@ -123,10 +123,10 @@ Please review and merge if everything looks good.
         if mode == "json":
             return json.dumps(outputs, indent=2) + "\n"
         else:  # github_output
-            return "".join(_format_github_output(k, v) for k, v in outputs.items())
+            return "".join(format_github_output(k, v) for k, v in outputs.items())
 
 
-def _format_github_output(name: str, value: object) -> str:
+def format_github_output(name: str, value: object) -> str:
     """Format a GitHub Actions output variable according to the rules in
     https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#about-yaml-syntax-for-github-actions
     """

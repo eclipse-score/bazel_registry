@@ -313,6 +313,14 @@ class ModuleUpdateRunner:
         self.module_path = Path("modules") / task_info.module.name
         self.module_version_path = self.module_path / str(task_info.release.version)
 
+    @property
+    def _download_url(self) -> str:
+        """Returns the preferred download URL for the release archive.
+
+        Prefers a stable release asset URL over the dynamic tarball URL.
+        """
+        return self.info.release.asset_url or self.info.release.tarball
+
     def generate_files(self) -> None:
         """Generate all necessary registry files for this module update.
 
@@ -348,7 +356,7 @@ class ModuleUpdateRunner:
 
         # 1. Get info for the new archive's root directory
         integrity, new_archive_root = download_github_archive(
-            self.info.release.tarball, self.token
+            self._download_url, self.token
         )
 
         # 2. Read existing source.json
@@ -374,7 +382,7 @@ class ModuleUpdateRunner:
         )
 
         # 4. Update only the source-related fields, preserving patch metadata
-        source_data["url"] = self.info.release.tarball
+        source_data["url"] = self._download_url
         source_data["integrity"] = integrity
         source_data["strip_prefix"] = new_strip_prefix
         source_data["archive_type"] = "tar.gz"  # Ensure this is set
@@ -391,13 +399,11 @@ class ModuleUpdateRunner:
         # but the SHA length depends on repository visibility, so the actual
         # archive root must be read from the downloaded archive (see
         # download_github_archive) rather than guessed.
-        integrity, archive_root = download_github_archive(
-            self.info.release.tarball, self.token
-        )
+        integrity, archive_root = download_github_archive(self._download_url, self.token)
         source_dict: dict[str, object] = {
             "integrity": integrity,
             "strip_prefix": archive_root,
-            "url": self.info.release.tarball,
+            "url": self._download_url,
             "archive_type": "tar.gz",
         }
 
@@ -494,21 +500,21 @@ class ModuleUpdateRunner:
         if not self.info.mod_file:
             raise ValueError("Module file content not available")
 
-        # Keep track of missing versions before using a sentinel for logging and
-        # version replacement below.
-        version_was_missing = self.info.mod_file.version is None
-        if version_was_missing:
-            self.info.mod_file.version = Version("0.0.0")
+        file_version = self.info.mod_file.version
+        version_was_missing = file_version is None
+
         # Check if no patch is needed
         if (
             not version_was_missing
-            and self.info.mod_file.version == self.info.release.version
+            and file_version == self.info.release.version
         ):
             log.debug("MODULE.bazel version matches release version; no patch needed.")
             return None  # No patch needed
 
+        effective_file_version = file_version or Version("0.0.0")
+
         # Build metadata strings for logging
-        file_meta = f"(version={self.info.mod_file.version})"
+        file_meta = f"(version={effective_file_version})"
         release_meta = f"(version={self.info.release.version})"
         log.debug(
             f"MODULE.bazel {file_meta} doesn't match release {release_meta}; creating patch"
