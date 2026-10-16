@@ -415,23 +415,18 @@ class ModuleUpdateRunner:
             except (json.JSONDecodeError, OSError):
                 pass
 
+        # Add any new patches generated in this run, overwriting any existing
+        # patches with the same name.
         if self.patches:
-            source_dict["patch_strip"] = 1
-            source_dict["patches"] = {
+            new_patches = {
                 patch_name: sha256_from_string(patch_text)
                 for patch_name, patch_text in self.patches.items()
             }
-            patches_map.update(
-                {
-                    patch_name: sha256_from_string(patch_text)
-                    for patch_name, patch_text in self.patches.items()
-                }
-            )
+            patches_map.update(new_patches)
 
         if patches_map:
             source_dict["patch_strip"] = patch_strip
             source_dict["patches"] = patches_map
-
         self.module_version_path.mkdir(parents=True, exist_ok=True)
         with open(source_json_path, "w") as f:
             json.dump(source_dict, f, indent=4)
