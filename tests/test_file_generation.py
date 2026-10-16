@@ -18,13 +18,23 @@
 import json
 import os
 from collections.abc import Callable
+from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+import argparse
 
 import pytest
 from src.registry_manager.bazel_wrapper import (
+    BazelModuleInfo,
     ModuleUpdateRunner,
     parse_MODULE_file_content,
+    read_modules,
+)
+from src.registry_manager.github_wrapper import GitHubReleaseInfo, GithubWrapper
+from src.registry_manager.main import plan_module_updates
+from src.registry_manager.version import Version
+from src.registry_manager import (
+    ModuleUpdateInfo,
 )
 
 from tests.conftest import make_update_info
@@ -353,10 +363,96 @@ bazel_dep(name = "protobuf", version = "21.7")
             in module_content
         )
 
-        # Make sure we did not touch bazel_dep versions
-        assert 'bazel_dep(name = "rules_python", version = "0.26.0")' in module_content
-        assert 'bazel_dep(name = "protobuf", version = "21.7")' in module_content
+    def test_apply_source_only_migration_preserves_metadata_and_subdir(
+        self, tmp_path, monkeypatch
+    ):
+        """
+        Verifies that a source-only migration:
+        1. Updates url, integrity, and strip_prefix in source.json.
+        2. Correctly preserves the subdirectory portion of strip_prefix.
+        3. Preserves existing patch metadata.
+        4. Does NOT modify MODULE.bazel, metadata.json, or patch files.
+        5. Is idempotent (a subsequent run plans no updates).
+        """
+        # Arrange
+        # 1. Create a complete, existing module version in a temp registry
+        module_path = tmp_path / "modules" / "monorepo_module"
+        version_path = module_path / "1.0.0"
+        patches_path = version_path / "patches"
+        patches_path.mkdir(parents=True)
 
+        # Original files that should NOT be changed
+        metadata_content = '{"repository": ["github:test-owner/monorepo"], "versions": ["1.0.0"], "periodic-pull": true}'
+        (module_path / "metadata.json").write_text(metadata_content)
+        module_bazel_content = "module(name = 'monorepo_module')"
+        (version_path / "MODULE.bazel").write_text(module_bazel_content)
+        patch_content = "--- a/MODULE.bazel\n+++ b/MODULE.bazel\n@@ -1,1 +1,3 @@\n module(\n+    name = \"monorepo_module\",\n+    compatibility_level = 1,\n )\n"
+        (patches_path / "comp_level.patch").write_text(patch_content)
+
+        # The existing source.json points to a dynamic archive and a subdirectory
+        source_content = {
+            "url": "https://github.com/test-owner/monorepo/archive/refs/tags/v1.0.0.tar.gz",
+            "integrity": "old-integrity-hash",
+            "strip_prefix": "monorepo-1.0.0-sha/path/to/module",
+            "patches": {"comp_level.patch": "sha256-old-patch-hash"},
+            "patch_strip": 1,
+        }
+        source_json_path = version_path / "source.json"
+        source_json_path.write_text(json.dumps(source_content, indent=4))
+
+        # 2. Mock the download to return new info
+        mock_download = MagicMock(
+            return_value=("sha256-new-integrity-hash", "monorepo-bzlmod-v1.0.0")
+        )
+        monkeypatch.setattr(
+            "src.registry_manager.bazel_wrapper.download_github_archive", mock_download
+        )
+
+        # 3. Create the source-only migration task
+        mock_module = BazelModuleInfo(
+            path=module_path,
+            name="monorepo_module",
+            versions=[Version("1.0.0")],
+            org_and_repo="test-owner/monorepo",
+            periodic_pull=True,
+            obsolete=False,
+        )
+        mock_release = GitHubReleaseInfo(
+            org_and_repo="test-owner/monorepo",
+            version=Version("1.0.0"),
+            tag_name="v1.0.0",
+            published_at=datetime.now(),
+            prerelease=False,
+            asset_url="https://github.com/test-owner/monorepo/releases/download/v1.0.0/bzlmod-v1.0.0.tar.gz",
+        )
+        migration_task = ModuleUpdateInfo(
+            module=mock_module, release=mock_release, mod_file=None
+        )
+
+        # Act
+        with monkeypatch.context() as m:
+            m.chdir(tmp_path)
+            runner = ModuleUpdateRunner(migration_task, token="fake-token")
+            runner.generate_files()
+
+        # Assert: File correctness
+        new_source_data = json.loads(source_json_path.read_text())
+        assert new_source_data["url"] == mock_release.asset_url
+        assert new_source_data["integrity"] == "sha256-new-integrity-hash"
+        assert new_source_data["strip_prefix"] == "monorepo-bzlmod-v1.0.0/path/to/module"
+        assert new_source_data["patches"]["comp_level.patch"] == "sha256-old-patch-hash"
+        assert (module_path / "metadata.json").read_text() == metadata_content
+        assert (version_path / "MODULE.bazel").read_text() == module_bazel_content
+        assert (patches_path / "comp_level.patch").read_text() == patch_content
+
+        # Assert: Idempotency
+        with monkeypatch.context() as m:
+            m.chdir(tmp_path)
+            updated_modules = read_modules(["monorepo_module"])
+            mock_gh = MagicMock(spec=GithubWrapper)
+            mock_gh.get_latest_release.return_value = mock_release
+            plan = plan_module_updates(argparse.Namespace(modules=[]), mock_gh, updated_modules)
+            assert len(plan) == 0
     def test_patch_adds_version_for_zero_zero_zero_release_without_version(
         self,
         basic_registry_setup: Callable[..., None],

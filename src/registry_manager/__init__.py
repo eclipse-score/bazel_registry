@@ -59,4 +59,4 @@ class ModuleUpdateInfo:
     release: GitHubReleaseInfo
 
     # Original module file content
-    mod_file: ModuleFileContent
+    mod_file: ModuleFileContent | None
