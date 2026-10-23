@@ -399,7 +399,9 @@ class ModuleUpdateRunner:
         # but the SHA length depends on repository visibility, so the actual
         # archive root must be read from the downloaded archive (see
         # download_github_archive) rather than guessed.
-        integrity, archive_root = download_github_archive(self._download_url, self.token)
+        integrity, archive_root = download_github_archive(
+            self._download_url, self.token
+        )
         source_dict: dict[str, object] = {
             "integrity": integrity,
             "strip_prefix": archive_root,
@@ -469,7 +471,7 @@ class ModuleUpdateRunner:
         Note: if patched_module_file is provided, it is written as MODULE.bazel;
         otherwise, the original module file content is used.
         """
-        if not self.info.mod_file:
+        if self.info.mod_file is None:
             raise ValueError("Module file content not available")
 
         self.module_version_path.mkdir(parents=True, exist_ok=True)
@@ -497,17 +499,14 @@ class ModuleUpdateRunner:
         # module(this_is_just_a_comment, version='1.0.0')
         module(real_module)
         """
-        if not self.info.mod_file:
+        if self.info.mod_file is None:
             raise ValueError("Module file content not available")
 
         file_version = self.info.mod_file.version
         version_was_missing = file_version is None
 
         # Check if no patch is needed
-        if (
-            not version_was_missing
-            and file_version == self.info.release.version
-        ):
+        if not version_was_missing and file_version == self.info.release.version:
             log.debug("MODULE.bazel version matches release version; no patch needed.")
             return None  # No patch needed
 

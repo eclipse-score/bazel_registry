@@ -80,9 +80,9 @@ class RegistryRunResult:
                     f"- {u.module.name}: migrate {u.release.version} to release asset"
                     if u.release.version in u.module.versions
                     else (
-                    f"- {u.module.name}: {u.module.latest_version} -> {u.release.version}"
-                    if u.module.versions
-                    else f"- {u.module.name}: add {u.release.version}"
+                        f"- {u.module.name}: {u.module.latest_version} -> {u.release.version}"
+                        if u.module.versions
+                        else f"- {u.module.name}: add {u.release.version}"
                     )
                 )
                 for u in self.updated_modules
@@ -267,7 +267,9 @@ def is_release_semver_acceptable(module: BazelModuleInfo, new_version: Version) 
     return True
 
 
-def _is_migration_needed(module: BazelModuleInfo, latest_release: GitHubReleaseInfo) -> bool:
+def _is_migration_needed(
+    module: BazelModuleInfo, latest_release: GitHubReleaseInfo
+) -> bool:
     """Checks if an existing module version should be migrated to a release asset."""
     source_json_path = module.path / str(latest_release.version) / "source.json"
 
@@ -366,10 +368,14 @@ def plan_module_updates(
                 # then responsible for only updating source.json while preserving existing
                 # MODULE.bazel and patch files.
                 updated_modules.append(
-                    ModuleUpdateInfo(module=module, release=latest_release, mod_file=None)
+                    ModuleUpdateInfo(
+                        module=module, release=latest_release, mod_file=None
+                    )
                 )
             else:
-                log.debug(f"Module {module.name} is up to date ({module.latest_version}).")
+                log.debug(
+                    f"Module {module.name} is up to date ({module.latest_version})."
+                )
 
     if not updated_modules:
         log.debug("No modules need updating.")

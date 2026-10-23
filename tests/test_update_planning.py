@@ -11,8 +11,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-from argparse import Namespace
 import json
+from argparse import Namespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -138,7 +138,9 @@ def test_plan_source_only_migration(tmp_path):
     # 3. Mock GithubWrapper to return a release that HAS a stable asset URL
     gh = MagicMock()
     release_info = make_release_info(version="1.0.0")
-    release_info.asset_url = "https://github.com/org/repo/releases/download/v1.0.0/bzlmod-v1.0.0.tar.gz"
+    release_info.asset_url = (
+        "https://github.com/org/repo/releases/download/v1.0.0/bzlmod-v1.0.0.tar.gz"
+    )
     gh.get_latest_release.return_value = release_info
 
     # Act
