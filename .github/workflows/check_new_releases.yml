@@ -29,7 +29,7 @@ on:
 jobs:
   check-updates:
     if: ${{ github.event.repository.fork == false }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     # permissions must be set even when using a PAT
     permissions:

@@ -20,7 +20,7 @@ jobs:
 
   self_test:
     name: 🔬 Self Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: 🛡️ Harden Runner
         if: github.repository_owner == 'eclipse-score'
