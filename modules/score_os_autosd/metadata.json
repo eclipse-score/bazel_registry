@@ -1,0 +1,17 @@
+{
+    "homepage": "https://github.com/eclipse-score/os_autosd",
+    "maintainers": [
+        {
+            "name": "Leonardo Rossetti",
+            "email": "lrossett@redhat.com",
+            "github": "odra",
+            "github_user_id": 2183506
+        }
+    ],
+    "periodic-pull": true,
+    "repository": [
+        "github:eclipse-score/os_autosd"
+    ],
+    "versions": [],
+    "yanked_versions": {}
+}
