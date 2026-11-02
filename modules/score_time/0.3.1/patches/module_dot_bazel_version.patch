@@ -1,0 +1,13 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -10,7 +10,9 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+-module(name = "score_time")
++module(name = "score_time",
++    version = "0.3.1"
++)
+ 
+ ## Configure the C++ toolchain
+ 

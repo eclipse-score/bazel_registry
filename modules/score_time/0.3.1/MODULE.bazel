@@ -1,0 +1,277 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(name = "score_time",
+    version = "0.3.1"
+)
+
+## Configure the C++ toolchain
+
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "1.0.5", dev_dependency = True)
+
+gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_gcc_aarch64_toolchain",
+    target_cpu = "aarch64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_x86_64_toolchain",
+    sdp_version = "8.0.4",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_aarch64_toolchain",
+    sdp_version = "8.0.4",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(
+    gcc,
+    "score_gcc_aarch64_toolchain",
+    "score_gcc_x86_64_toolchain",
+    "score_qcc_aarch64_toolchain",
+    "score_qcc_x86_64_toolchain",
+    "score_qcc_x86_64_toolchain_pkg",
+)
+
+## Custom Module Loading
+
+### Public modules
+
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "score_bazel_platforms", version = "1.1.0")
+bazel_dep(name = "score_logging", version = "0.2.5")
+
+### Modules that are used internally within the repository but not exposed as part of the public API
+
+bazel_dep(name = "score_docs_as_code", version = "8.6.0")
+
+bazel_dep(name = "score_cpp_policies", version = "0.0.1", dev_dependency = True)
+
+# git_override needed because clang_tidy/ support was added after the 0.0.1 registry release.
+# Remove once score_cpp_policies >= 0.0.2 is available in the Bazel registry.
+git_override(
+    module_name = "score_cpp_policies",
+    commit = "9e3800913a3a7ac791d5e6fb9e7339d1e65980f9",
+    remote = "https://github.com/eclipse-score/score_cpp_policies.git",
+)
+
+bazel_dep(name = "score_platform", version = "0.7.4", dev_dependency = True)
+bazel_dep(name = "score_process_description", version = "2.2.2", dev_dependency = True)
+bazel_dep(name = "score_tooling", version = "3.0.2", dev_dependency = True)
+
+# LLVM source-based coverage pipeline (C++): the qualified S-CORE coverage
+# tool, successor of @score_tooling//coverage. See tools/coverage/.
+bazel_dep(name = "score_coverage", version = "0.4.2", dev_dependency = True)
+
+# lobster is a non-dev bazel_dep of score_tooling; its own git_override is ignored
+# by Bazel for non-root modules, so the root module must declare it too.
+bazel_dep(name = "lobster", version = "0.0.0", dev_dependency = True)
+git_override(
+    module_name = "lobster",
+    commit = "2792e2daee2cf524fdc7b1545fd3537791ebc36c",
+    remote = "https://github.com/bmw-software-engineering/lobster.git",
+)
+
+bazel_dep(name = "aspect_rules_lint", version = "2.7.1", dev_dependency = True)
+bazel_dep(name = "toolchains_llvm", version = "1.8.0", dev_dependency = True)
+
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "google_benchmark", version = "1.9.5")
+
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1", dev_dependency = True)
+
+bazel_dep(name = "score_baselibs", version = "0.2.16")
+bazel_dep(name = "score_communication", version = "0.5.0")
+bazel_dep(name = "score_lifecycle", version = "0.9.0")
+
+# LLVM toolchain — provides @llvm_toolchain//:clang-tidy for the clang-tidy aspect.
+llvm = use_extension(
+    "@toolchains_llvm//toolchain/extensions:llvm.bzl",
+    "llvm",
+    dev_dependency = True,
+)
+llvm.toolchain(
+    llvm_version = "19.1.7",
+)
+
+# Coverage-only Clang instance (covmap instrumentation for the LLVM coverage
+# pipeline from @score_coverage; active only under --config=llvm_cov).
+# Separate from the 19.1.7 instance above so clang-tidy behavior is untouched.
+llvm.toolchain(
+    name = "llvm_toolchain_coverage",
+    cxx_standard = {"": "c++17"},
+    extra_known_features = [
+        "@score_coverage//:enable_llvm_coverage_for_death_tests",
+    ],
+    llvm_version = "22.1.7",
+    stdlib = {"": "stdc++"},
+)
+use_repo(llvm, "llvm_toolchain", "llvm_toolchain_coverage", "llvm_toolchain_coverage_llvm")
+
+# grpc-java@1.66.0 has a BCR bug (extension no longer generates
+# com_envoyproxy_protoc_gen_validate). Pulled transitively via
+# score_baselibs, score_lifecycle and score_tooling.
+# Override to a fixed version.
+single_version_override(
+    module_name = "grpc-java",
+    version = "1.78.0.bcr.1",
+)
+
+# TODO: remove once inherited properly from `score_logging`.
+bazel_dep(name = "trlc", version = "0.0.0", dev_dependency = True)
+git_override(
+    module_name = "trlc",
+    commit = "8f369f1208598c2e75f44a77a98d244634ed482a",
+    remote = "https://github.com/bmw-software-engineering/trlc.git",
+)
+
+## Configure the python toolchain
+
+bazel_dep(name = "rules_python", version = "1.8.5", dev_dependency = True)
+
+PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
+python.toolchain(
+    #configure_coverage_tool = True,
+    is_default = True,
+    python_version = PYTHON_VERSION,
+)
+
+## CodeQL static analysis — MISRA C++:2023
+#
+# Three external repositories are required:
+#   @codeql_bundle                   — the CodeQL CLI binary (pre-built bundle)
+#   @codeql_coding_standards         — report scripts and query sources
+#   @codeql_coding_standards_compiled — pre-compiled MISRA C++ query pack
+#
+# Run analysis locally:
+#   bazel run //tools/static_analysis:codeql_lint -- \
+#       --output-dir /tmp/codeql-results \
+#       --output-prefix codeql-time \
+#       --target //score/...
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# CodeQL Coding Standards release used for BOTH the query sources / report
+# scripts (@codeql_coding_standards) and the pre-compiled query pack
+# (@codeql_coding_standards_compiled). These two must always come from the same
+# release, so their version is defined once here.
+CODING_STANDARDS_VERSION = "2.61.0"
+
+# The CodeQL CLI version must be compatible with the coding standards release.
+http_archive(
+    name = "codeql_bundle",
+    build_file = "//third_party/codeql:codeql.BUILD",
+    sha256 = "a94f674bb3c23ea5e9a2ad06b64847dd0277b15014d2517ecd9c41c88e6caa65",
+    url = "https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.21.4/codeql-bundle-linux64.tar.gz",
+)
+
+http_archive(
+    name = "codeql_coding_standards",
+    build_file = "//third_party/codeql:codeql_coding_standards.BUILD",
+    patch_args = ["-p1"],
+    patches = ["//third_party/codeql:codeql_coding_standards_misra.patch"],
+    sha256 = "a0ab708bfcd06e29b5f1ddaf49470bd5f234aa23de527aa893572a25a6ff7f47",
+    strip_prefix = "codeql-coding-standards-{version}".format(version = CODING_STANDARDS_VERSION),
+    urls = ["https://github.com/github/codeql-coding-standards/archive/refs/tags/v{version}.tar.gz".format(version = CODING_STANDARDS_VERSION)],
+)
+
+# Pre-compiled MISRA C++ query pack — avoids compiling queries locally.
+codeql_release_pack = use_repo_rule(
+    "//third_party/codeql:codeql_release_pack.bzl",
+    "codeql_release_pack",
+)
+
+codeql_release_pack(
+    name = "codeql_coding_standards_compiled",
+    pack_tarball = "misra-cpp-coding-standards.tgz",
+    sha256 = "fdddef5a7ca1c66ebdbe6c79c60c7b5b6b274dbc3c9ecbc4bb9a0a13cead20a1",
+    urls = ["https://github.com/github/codeql-coding-standards/releases/download/v{version}/coding-standards-codeql-packs.zip".format(version = CODING_STANDARDS_VERSION)],
+)
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip", dev_dependency = True)
+pip.parse(
+    hub_name = "time_codeql_coding_standards_pip_hub",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//third_party/codeql:requirements_lock.txt",
+)
+use_repo(pip, codeql_coding_standards_pip_hub = "time_codeql_coding_standards_pip_hub")
+## Integration Test Framework dependencies
+
+bazel_dep(name = "score_itf", version = "0.6.0")
+
+bazel_dep(name = "bazel_skylib", version = "1.9.0", dev_dependency = True)
+
+bazel_dep(name = "rules_pkg", version = "1.2.0")
+
+bazel_dep(name = "rules_oci", version = "2.3.0", dev_dependency = True)
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci", dev_dependency = True)
+oci.pull(
+    name = "ubuntu_24_04",
+    digest = "sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30",
+    image = "ubuntu",
+    platforms = ["linux/amd64"],
+    tag = "24.04",
+)
+use_repo(oci, "ubuntu_24_04", "ubuntu_24_04_linux_amd64")
+
+bazel_dep(name = "score_rules_imagefs", version = "0.1.0", dev_dependency = True)
+
+imagefs = use_extension("@score_rules_imagefs//extensions:imagefs.bzl", "imagefs", dev_dependency = True)
+imagefs.toolchain(
+    name = "score_qnx_x86_64_ifs_toolchain",
+    sdp_to_import = "@score_qcc_x86_64_toolchain_pkg",
+    # imagefs extension does not remap 8.0.4 -> 8.0.0 for platform constraints,
+    # so use "8.0.0" here to match the only available sdp_version constraint
+    # value in @score_bazel_platforms. The actual SDP binary version comes
+    # from sdp_to_import (8.0.4).
+    sdp_version = "8.0.0",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    type = "ifs",
+)
+use_repo(imagefs, "score_qnx_x86_64_ifs_toolchain")
+
+## JSON Schema validation (build-time lint)
+
+bazel_dep(name = "nlohmann_json", version = "3.11.3")
+
+http_archive(
+    name = "json_schema_validator",
+    build_file = "//third_party/json_schema_validator:json_schema_validator.BUILD",
+    integrity = "sha256-g/YdgRL0heDT8ectUWELo5JLF5kmqDdq7zwDh3D68gI=",
+    strip_prefix = "json-schema-validator-2.1.0",
+    urls = ["https://github.com/pboettch/json-schema-validator/archive/refs/tags/2.1.0.tar.gz"],
+)
+
+bazel_dep(
+    name = "score_devcontainer",
+    version = "1.11.3",
+)
