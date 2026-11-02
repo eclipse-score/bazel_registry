@@ -1,0 +1,29 @@
+{
+    "homepage": "https://github.com/eclipse-score/openssl",
+    "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Markus Schu",
+            "email": "markus.schu@accenture.com",
+            "github": "masc2023",
+            "github_user_id": 142009492
+        },
+        {
+            "name": "Volker Haussler",
+            "email": "volker.haeussler@qorix.ai",
+            "github": "PandaeDo",
+            "github_user_id": 193153210
+        },
+        {
+            "name": "Athul Mallappallil",
+            "email": "Athul.Mallappallil@etas.com",
+            "github": "ChansAlive",
+            "github_user_id": 80528108
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/openssl"
+    ],
+    "versions": [],
+    "yanked_versions": {}
+}
