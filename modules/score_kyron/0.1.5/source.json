@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-7HScJDkGwPppAfYmZX7b8ztOF4IhM57/533OobzTWIM=",
+    "strip_prefix": "kyron-0.1.5",
+    "url": "https://github.com/eclipse-score/kyron/archive/refs/tags/v0.1.5.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-UIB+l0u0K9Vx0TFD7BfJ2D+3epMwYWcoEflwsuRek/Y="
+    }
+}
