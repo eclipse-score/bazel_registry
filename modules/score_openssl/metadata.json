@@ -24,6 +24,8 @@
     "repository": [
         "github:eclipse-score/openssl"
     ],
-    "versions": [],
+    "versions": [
+        "0.1.0"
+    ],
     "yanked_versions": {}
 }
