@@ -1,0 +1,47 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
+module(name = "score_devcontainer",
+    version = "1.12.0"
+)
+
+bazel_dep(name = "rules_multitool", version = "1.11.1")
+
+# rules_shell provides a stable sh_binary and sh_test API across the supported
+# Bazel versions.
+bazel_dep(name = "rules_shell", version = "0.4.1")
+
+# Python packages live beside the other provider definitions in JSON. Convert
+# that data to a loadable Starlark value in Bazel's cache, without a second
+# maintained package list or a host Python dependency.
+catalog_repository = use_repo_rule("//tools:catalog_repository.bzl", "catalog_repository")
+
+catalog_repository(
+    name = "score_tool_catalog",
+    definitions = "//tools:providers.json",
+)
+
+multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
+multitool.hub(lockfile = "//tools:lockfiles/actionlint.lock.json")
+multitool.hub(lockfile = "//tools:lockfiles/apm.lock.json")
+multitool.hub(lockfile = "//tools:lockfiles/bazelisk.lock.json")
+multitool.hub(lockfile = "//tools:lockfiles/buildifier.lock.json")
+multitool.hub(lockfile = "//tools:lockfiles/opencode.lock.json")
+multitool.hub(lockfile = "//tools:lockfiles/ruff.lock.json")
+multitool.hub(lockfile = "//tools:lockfiles/shellcheck.lock.json")
+multitool.hub(lockfile = "//tools:lockfiles/starpls.lock.json")
+multitool.hub(lockfile = "//tools:lockfiles/uv.lock.json")
+multitool.hub(lockfile = "//tools:lockfiles/yamlfmt.lock.json")
+use_repo(multitool, "multitool")
+
+register_toolchains("@multitool//toolchains:all")
