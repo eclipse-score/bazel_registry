@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-yCHhfva2rtdXpA2EzX28/Twml1WK+RNTL/kcZhfrFJ8=",
+    "strip_prefix": "persistency-0.4.1",
+    "url": "https://github.com/eclipse-score/persistency/archive/refs/tags/v0.4.1.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-oG+HJ/H05v6q5/q5ubhUPECN+JlR1yGQPDQ+F2N1pgk="
+    }
+}
