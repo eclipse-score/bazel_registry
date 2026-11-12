@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-gpnPJoEIZBmQKs+8ydU5it2M8HzU8BURNQ7cKalmC7w=",
+    "strip_prefix": "process_description-2.2.4",
+    "url": "https://github.com/eclipse-score/process_description/archive/refs/tags/v2.2.4.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-gJGZbcbZUUQXz0uckQ+toXTtBN4W5/B4/GodpuACQZo="
+    }
+}
