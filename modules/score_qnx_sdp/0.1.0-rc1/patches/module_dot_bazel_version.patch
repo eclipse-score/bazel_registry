@@ -1,0 +1,13 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -10,7 +10,9 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+-module(name = "score_qnx_sdp")
++module(name = "score_qnx_sdp",
++    version = "0.1.0-rc1"
++)
+ 
+ # *******************************************************************************
+ # Basic dependencies

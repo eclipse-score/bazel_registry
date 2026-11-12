@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-YvxRypRVWiPpE33j73HGawZFEcZsB9zsabs8CnSue8o=",
+    "strip_prefix": "qnx_sdp-0.1.0-rc1",
+    "url": "https://github.com/eclipse-score/qnx_sdp/archive/refs/tags/v0.1.0-rc1.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-FsKlWiAvZLNQIK8lg/6LFhUFxCm04HpK8huDb8dLuZg="
+    }
+}

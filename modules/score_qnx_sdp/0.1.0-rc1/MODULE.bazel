@@ -1,0 +1,36 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(name = "score_qnx_sdp",
+    version = "0.1.0-rc1"
+)
+
+# *******************************************************************************
+# Basic dependencies
+# *******************************************************************************
+bazel_dep(name = "rules_pkg", version = "1.2.0")
+
+qnx_softwarecentercli = use_repo_rule("@score_qnx_sdp//rules:qnx_softwarecentercli.bzl", "qnx_softwarecentercli")
+
+qnx_softwarecentercli(
+    name = "qnx_softwarecentercli",
+    sha256 = "5695a0ec8a1fd91840753b2cba86a9325f6052d4f69c757166cc61b09bcbe507",
+    url = "https://www.qnx.com/download/download/79441/qnx-setup-2.0.4-202501021438-linux.run",
+)
+
+# *******************************************************************************
+# Needed by S-CORE CI Automatic checks
+# *******************************************************************************
+bazel_dep(name = "rules_go", version = "0.64.2")
+bazel_dep(name = "score_tools", version = "0.0.3")
+bazel_dep(name = "aspect_rules_lint", version = "2.3.0")
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1")
