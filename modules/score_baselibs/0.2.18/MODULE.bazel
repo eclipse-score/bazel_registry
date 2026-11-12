@@ -1,0 +1,285 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+
+module(name = "score_baselibs",
+    version = "0.2.18"
+)
+
+## Configure the C++ toolchain
+
+# Toolchain dependencies.
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "1.1.0-rc1", dev_dependency = True)
+
+bazel_dep(name = "score_bazel_platforms", version = "1.1.0")
+bazel_dep(name = "platforms", version = "1.1.0")
+
+bazel_dep(name = "score_toolchains_rust", version = "0.10.0", dev_dependency = True)
+bazel_dep(name = "score_rules_imagefs", version = "0.1.0", dev_dependency = True)
+bazel_dep(name = "score_cpp_policies", version = "0.1.2", dev_dependency = True)
+
+# score_bazel_cpp_toolchains 1.0.0 removed its built-in warning features; inject them instead.
+WARNING_FEATURES = [
+    "@score_cpp_policies//warnings/gcc/features:minimal_warnings",
+    "@score_cpp_policies//warnings/gcc/features:strict_warnings",
+    "@score_cpp_policies//warnings/gcc/features:all_wall_warnings",
+    "@score_cpp_policies//warnings/gcc/features:warnings_as_errors",
+]
+
+# Same for the sanitizer features. UBSan needs a compiler-specific variant on top of the base.
+SANITIZER_FEATURES = [
+    "@score_cpp_policies//sanitizers/features:debug_symbols",
+    "@score_cpp_policies//sanitizers/features:asan",
+    "@score_cpp_policies//sanitizers/features:ubsan_base",
+    "@score_cpp_policies//sanitizers/features:lsan",
+    "@score_cpp_policies//sanitizers/features:tsan",
+]
+
+GCC_SANITIZER_FEATURES = SANITIZER_FEATURES + ["@score_cpp_policies//sanitizers/features:ubsan_gcc"]
+
+LLVM_SANITIZER_FEATURES = SANITIZER_FEATURES + ["@score_cpp_policies//sanitizers/features:ubsan_clang"]
+
+# Linux C++ toolchains.
+gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    extra_known_features = WARNING_FEATURES + GCC_SANITIZER_FEATURES,
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_gcc_aarch64_toolchain",
+    extra_known_features = WARNING_FEATURES + GCC_SANITIZER_FEATURES,
+    target_cpu = "aarch64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+
+# QNX C++ toolchains.
+gcc.toolchain(
+    name = "score_qcc_x86_64_toolchain",
+    extra_known_features = WARNING_FEATURES + GCC_SANITIZER_FEATURES,
+    sdp_version = "8.0.4",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_aarch64_toolchain",
+    extra_known_features = WARNING_FEATURES + GCC_SANITIZER_FEATURES,
+    sdp_version = "8.0.4",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    use_default_package = True,
+    version = "12.2.0",
+)
+gcc.toolchain(
+    name = "score_qcc_x86_64_toolchain_805",
+    extra_known_features = WARNING_FEATURES + GCC_SANITIZER_FEATURES,
+    sdp_version = "8.0.5",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    use_default_package = True,
+)
+gcc.toolchain(
+    name = "score_qcc_aarch64_toolchain_805",
+    extra_known_features = WARNING_FEATURES + GCC_SANITIZER_FEATURES,
+    sdp_version = "8.0.5",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    use_default_package = True,
+)
+use_repo(
+    gcc,
+    "qnx_sdp_8_0_4_pkg",
+    "qnx_sdp_8_0_5_pkg",
+    "score_gcc_aarch64_toolchain",
+    "score_gcc_x86_64_toolchain",
+    "score_qcc_aarch64_toolchain",
+    "score_qcc_aarch64_toolchain_805",
+    "score_qcc_x86_64_toolchain",
+    "score_qcc_x86_64_toolchain_805",
+)
+
+# QNX image toolchains.
+imagefs = use_extension("@score_rules_imagefs//extensions:imagefs.bzl", "imagefs", dev_dependency = True)
+imagefs.toolchain(
+    name = "score_qnx_x86_64_ifs_toolchain",
+    sdp_to_import = "@qnx_sdp_8_0_4_pkg",
+    sdp_version = "8.0.0",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    type = "ifs",
+)
+imagefs.toolchain(
+    name = "score_qnx_aarch64_ifs_toolchain",
+    sdp_to_import = "@qnx_sdp_8_0_4_pkg",
+    sdp_version = "8.0.0",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    type = "ifs",
+)
+imagefs.toolchain(
+    name = "score_qnx_x86_64_ifs_toolchain_805",
+    sdp_to_import = "@qnx_sdp_8_0_5_pkg",
+    sdp_version = "8.0.0",
+    target_cpu = "x86_64",
+    target_os = "qnx",
+    type = "ifs",
+)
+imagefs.toolchain(
+    name = "score_qnx_aarch64_ifs_toolchain_805",
+    sdp_to_import = "@qnx_sdp_8_0_5_pkg",
+    sdp_version = "8.0.0",
+    target_cpu = "aarch64",
+    target_os = "qnx",
+    type = "ifs",
+)
+use_repo(
+    imagefs,
+    "score_qnx_aarch64_ifs_toolchain",
+    "score_qnx_aarch64_ifs_toolchain_805",
+    "score_qnx_x86_64_ifs_toolchain",
+    "score_qnx_x86_64_ifs_toolchain_805",
+)
+
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "google_benchmark", version = "1.9.5")
+bazel_dep(name = "download_utils", version = "1.2.2")
+bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "openssl", version = "3.5.5.bcr.4")
+
+## Configure the Rust toolchain
+
+bazel_dep(name = "rules_rust", version = "0.68.2-score")
+bazel_dep(name = "score_rust_policies", version = "0.0.5")
+bazel_dep(name = "score_crates", version = "0.0.13")
+bazel_dep(name = "cxx.rs", version = "1.0.186")
+
+## Custom Module Loading
+
+bazel_dep(name = "score_docs_as_code", version = "8.6.0")
+bazel_dep(name = "score_process_description", version = "2.2.2")
+
+bazel_dep(name = "score_tooling", version = "3.0.2", dev_dependency = True)
+
+# LLVM source-based coverage pipeline (successor of @score_tooling//coverage),
+# see tools/coverage/. 0.2.0 fixes eclipse-score/baselibs#558 and
+# eclipse-score/coverage_tool#5 (third-party leak, dead report links, headers
+# tested through futurecpp_internal, files without coverage data listed).
+bazel_dep(name = "score_coverage", version = "0.4.2", dev_dependency = True)
+
+bazel_dep(name = "score_platform", version = "0.7.4")
+
+## Configure the python toolchain
+
+bazel_dep(name = "rules_python", version = "1.8.5")
+
+PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
+python.toolchain(
+    #configure_coverage_tool = True,
+    is_default = True,
+    python_version = PYTHON_VERSION,
+)
+
+bazel_dep(name = "aspect_rules_py", version = "1.6.3", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1", dev_dependency = True)
+bazel_dep(name = "aspect_rules_lint", version = "2.5.0", dev_dependency = True)
+bazel_dep(name = "score_qnx_unit_tests", version = "0.3.0", dev_dependency = True)
+bazel_dep(name = "toolchains_llvm", version = "1.8.0", dev_dependency = True)
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
+llvm.toolchain(
+    extra_known_features = [
+        # Runtime counter relocation for continuous-mode profiles; required by
+        # the LLVM coverage pipeline so death tests / abnormal exits still
+        # flush coverage counters (only active under --config=llvm_cov).
+        "@score_coverage//:enable_llvm_coverage_for_death_tests",
+    ] + WARNING_FEATURES + LLVM_SANITIZER_FEATURES,
+    link_libs = {"linux-x86_64": [
+        "-lrt",
+        "-latomic",
+    ]},
+    llvm_version = "22.1.7",
+    stdlib = {"linux-x86_64": "stdc++"},
+)
+use_repo(llvm, "llvm_toolchain", "llvm_toolchain_llvm")
+
+deb = use_repo_rule("@download_utils//download/deb:defs.bzl", "download_deb")
+
+deb(
+    name = "acl-deb",
+    build = "//third_party/acl:acl.BUILD",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/a/acl/libacl1-dev_2.3.1-1_amd64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "acl-deb-aarch64",
+    build = "//third_party/acl:acl.BUILD",
+    urls = ["https://ports.ubuntu.com/ubuntu-ports/pool/main/a/acl/libacl1-dev_2.3.1-1_arm64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "valgrind-deb",
+    build = "//third_party/valgrind:valgrind.BUILD",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/v/valgrind/valgrind_3.15.0-1ubuntu9.1_amd64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "libcap2-deb",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/libc/libcap2/libcap2_2.25-1.2_amd64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "libcap2-dev-deb",
+    build = "//third_party/libcap2:libcap2.BUILD",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/libc/libcap2/libcap-dev_2.25-1.2_amd64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "libcap2-deb-aarch64",
+    urls = ["https://ports.ubuntu.com/ubuntu-ports/pool/main/libc/libcap2/libcap2_2.25-1.2_arm64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+deb(
+    name = "libcap2-dev-deb-aarch64",
+    build = "//third_party/libcap2:libcap2.BUILD",
+    urls = ["https://ports.ubuntu.com/ubuntu-ports/pool/main/libc/libcap2/libcap-dev_2.25-1.2_arm64.deb"],
+    visibility = ["//visibility:public"],
+)
+
+bazel_dep(name = "flatbuffers", version = "25.12.19.bcr.1")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+
+# Hedron's Compile Commands Extractor for Bazel
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    commit = "abb61a688167623088f8768cc9264798df6a9d10",
+    patch_strip = 1,
+    # Patch for support for Bazel 8.6.0.
+    patches = ["//patches:hedron_compile_commands_env_vars.patch"],
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+)
