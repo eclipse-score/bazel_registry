@@ -1,0 +1,23 @@
+{
+    "homepage": "https://github.com/eclipse-score/inc_diagnostics",
+    "periodic-pull": true,
+    "maintainers": [
+        {
+            "name": "Alexander Mohr",
+            "email": "alexander.m.mohr@mercedes-benz.com",
+            "github": "alexmohr",
+            "github_user_id": 4541068
+        },
+        {
+            "name": "Frank Scholter Peres",
+            "email": "frank.scholter_peres@mercedes-benz.com",
+            "github": "FScholPer",
+            "github_user_id": 145544737
+        }
+    ],
+    "repository": [
+        "github:eclipse-score/inc_diagnostics"
+    ],
+    "versions": [],
+    "yanked_versions": {}
+}
