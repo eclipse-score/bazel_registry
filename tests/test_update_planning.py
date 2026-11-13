@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
+import json
 from argparse import Namespace
 from unittest.mock import MagicMock
 
@@ -109,3 +110,45 @@ def test_plan_skips_non_semver_release(
     msg = [m for m in warning_messages if new_release_version in m]
     assert len(msg) >= 1
     assert "is not a valid semantic version" in msg[0]
+
+
+def test_plan_source_only_migration(tmp_path):
+    """
+    Verifies that a source-only migration is planned when an existing version
+    can be moved from a dynamic archive to a stable release asset.
+    """
+    # Arrange
+    # 1. Create a mock registry structure
+    module_path = tmp_path / "modules" / "score_demo"
+    version_path = module_path / "1.0.0"
+    version_path.mkdir(parents=True)
+
+    # The existing source.json points to a dynamic archive
+    source_content = {
+        "url": "https://github.com/org/repo/archive/refs/tags/v1.0.0.tar.gz",
+        "integrity": "old-integrity-hash",
+        "strip_prefix": "repo-1.0.0",
+    }
+    (version_path / "source.json").write_text(json.dumps(source_content))
+
+    # 2. Create module info pointing to the temp registry
+    module = make_module_info(versions=["1.0.0"])
+    module.path = module_path
+
+    # 3. Mock GithubWrapper to return a release that HAS a stable asset URL
+    gh = MagicMock()
+    release_info = make_release_info(version="1.0.0")
+    release_info.asset_url = (
+        "https://github.com/org/repo/releases/download/v1.0.0/bzlmod-v1.0.0.tar.gz"
+    )
+    gh.get_latest_release.return_value = release_info
+
+    # Act
+    plan = plan_module_updates(Namespace(modules=[]), gh, [module])
+
+    # Assert
+    assert len(plan) == 1
+    update_task = plan[0]
+    assert str(update_task.release.version) == "1.0.0"
+    # The key assertion: mod_file is None to signal a source-only migration
+    assert update_task.mod_file is None
