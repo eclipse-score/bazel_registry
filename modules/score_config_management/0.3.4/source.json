@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-cDff3DhLl3C3gSA+Nu9dYYU/JneWZrx2RpGHVEq0zzs=",
+    "strip_prefix": "config_management-0.3.4",
+    "url": "https://github.com/eclipse-score/config_management/archive/refs/tags/v0.3.4.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-9PjLJ2WgM3salnUBTbLMgWOu4iBj13seNWVqyBuZ2oM="
+    }
+}
