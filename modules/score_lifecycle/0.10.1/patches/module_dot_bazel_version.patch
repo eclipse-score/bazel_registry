@@ -1,0 +1,13 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -10,7 +10,9 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+-module(name = "score_lifecycle")
++module(name = "score_lifecycle",
++    version = "0.10.1"
++)
+ 
+ # CodeQL Coding Standards release
+ CODEQL_STANDARDS_VERSION = "2.62.0"
