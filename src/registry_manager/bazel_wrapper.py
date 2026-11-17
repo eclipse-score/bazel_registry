@@ -228,12 +228,39 @@ def _build_archive_request(url: str, token: str | None) -> urllib.request.Reques
     return req
 
 
-def download_github_archive(url: str, token: str | None = None) -> tuple[str, str]:
+class ArchiveDownloadResult(tuple[str, str]):
+    """Result of downloading a GitHub source archive.
+
+    Inherits from ``tuple[str, str]`` for backward compatibility with code
+    and tests unpacking ``(integrity, top_level_dir)``. Also carries
+    ``module_bazel_content`` if MODULE.bazel was found in the archive root.
+    """
+
+    integrity: str
+    top_level_dir: str
+    module_bazel_content: str | None
+
+    def __new__(
+        cls,
+        integrity: str,
+        top_level_dir: str,
+        module_bazel_content: str | None = None,
+    ) -> "ArchiveDownloadResult":
+        instance = super().__new__(cls, (integrity, top_level_dir))
+        instance.integrity = integrity
+        instance.top_level_dir = top_level_dir
+        instance.module_bazel_content = module_bazel_content
+        return instance
+
+
+def download_github_archive(
+    url: str, token: str | None = None
+) -> ArchiveDownloadResult:
     """Download a GitHub source archive.
 
-    Returns ``(integrity, top_level_dir)`` where ``integrity`` is the
-    ``sha256-<base64>`` hash of the bytes and ``top_level_dir`` is the archive's
-    actual top-level directory name.
+    Returns an ``ArchiveDownloadResult`` (which unpacks as ``(integrity, top_level_dir)``
+    for compatibility) containing the ``sha256-<base64>`` hash of the bytes,
+    the archive's top-level directory name, and optional ``MODULE.bazel`` content.
     """
     # GitHub names a tarball's top-level directory ``{owner}-{repo}-{sha}``, but
     # the SHA length depends on repository visibility — 7 characters for public
@@ -252,7 +279,9 @@ def download_github_archive(url: str, token: str | None = None) -> tuple[str, st
         integrity = "sha256-" + base64.b64encode(h.digest()).decode("ascii")
         tmp.seek(0)
         top_level_dir = _archive_top_level_dir(tmp)
-    return integrity, top_level_dir
+        tmp.seek(0)
+        module_bazel_content = _extract_archive_module_bazel(tmp, top_level_dir)
+    return ArchiveDownloadResult(integrity, top_level_dir, module_bazel_content)
 
 
 def _archive_top_level_dir(archive: IO[bytes]) -> str:
@@ -262,21 +291,33 @@ def _archive_top_level_dir(archive: IO[bytes]) -> str:
     directory, which would be unexpected for a GitHub source archive.
     """
     # A valid GitHub source archive has a single top-level directory (e.g.
-    # ``{owner}-{repo}-{sha}``) with all entries nested below it.  An archive
+    # ``{owner}-{repo}-{sha}``) with all entries nested below it. An archive
     # that instead contains a bare top-level file (e.g. ``README``) must be
     # rejected, otherwise that filename would be returned as ``strip_prefix``
     # and produce unusable ``source.json`` metadata.
-    with tarfile.open(fileobj=archive, mode="r:gz") as tar:
+    with tarfile.open(fileobj=archive, mode="r:*") as tar:
         top_dirs: set[str] = set()
         top_files: set[str] = set()
         for member in tar.getmembers():
+            # Tar archives can store member paths with leading './' (e.g., './dir/file')
+            # or absolute slashes ('/dir/file') depending on how tar or git-archive was invoked.
+            # Normalizing member names by stripping these prefixes ensures that partition('/')
+            # correctly identifies the root directory rather than treating '.' or '' as a top-level folder.
             name = member.name.removeprefix("./").lstrip("/")
             if not name or name == ".":
                 continue
+
             first, sep, _ = name.partition("/")
-            # Skip POSIX tar/git archive PaxHeaders metadata entries
+
+            # Skip POSIX tar (pax) and git-archive extended metadata headers.
+            # When archiving files with long paths (>100 chars), high-precision timestamps,
+            # or git metadata, git-archive generates a global header ('pax_global_header')
+            # and extended header directories ('PaxHeaders.<PID>/...' or 'PaxHeaders/...').
+            # These are tar format metadata, not actual project files/folders. If not skipped,
+            # they would be counted as extra top-level files or directories and cause validation errors.
             if member.name == "pax_global_header" or first.startswith("PaxHeaders."):
                 continue
+
             if sep:
                 # Nested entry: lives under a top-level directory.
                 top_dirs.add(first)
@@ -292,6 +333,29 @@ def _archive_top_level_dir(archive: IO[bytes]) -> str:
             f"directories={sorted(top_dirs)}, files={sorted(top_files)}"
         )
     return top_dirs.pop()
+
+
+def _extract_archive_module_bazel(archive: IO[bytes], top_level_dir: str) -> str | None:
+    """Extract the content of MODULE.bazel directly from the archive if present.
+
+    Looks for '<top_level_dir>/MODULE.bazel' inside the archive.
+    """
+    with tarfile.open(fileobj=archive, mode="r:*") as tar:
+        for member in tar.getmembers():
+            name = member.name.removeprefix("./").lstrip("/")
+            if not member.isfile():
+                continue
+            if name == f"{top_level_dir}/MODULE.bazel":
+                f = tar.extractfile(member)
+                if f is not None:
+                    try:
+                        return f.read().decode("utf-8")
+                    except UnicodeDecodeError:
+                        log.warning(
+                            f"MODULE.bazel in {top_level_dir} could not be decoded as UTF-8"
+                        )
+                        return None
+    return None
 
 
 def sha256_from_string(content: str) -> str:
@@ -321,97 +385,63 @@ class ModuleUpdateRunner:
         """
         return self.info.release.asset_url or self.info.release.tarball
 
-    def generate_files(self) -> None:
+    def generate_files(self, source_only: bool = False) -> None:
         """Generate all necessary registry files for this module update.
 
-        Creates:
-        - Updated metadata.json with new version
-        - MODULE.bazel file (with version patch if needed)
-        - patches/ directory with any necessary patches
+        Writes/updates:
+        - metadata.json with the new version (skipped if source_only)
+        - <version>/MODULE.bazel with patched content if needed (skipped if source_only)
+        - patches/ directory with any necessary patches (skipped if source_only)
         - source.json with integrity hash and patch metadata
         """
-        # A source-only migration is signaled by mod_file being None.
-        # It only updates source.json and leaves other files untouched.
-        if self.info.mod_file is None:
-            self._migrate_source_only()
-            return
+        # 1. Download archive and extract integrity, archive root, and MODULE.bazel
+        archive_info = download_github_archive(self._download_url, self.token)
+        integrity = archive_info[0]
+        archive_root = archive_info[1]
+        archive_mod_content = getattr(archive_info, "module_bazel_content", None)
 
-        self._add_version_to_metadata()
-        patched_module_file = self._create_patch_for_module_version_if_mismatch()
-        self._generate_source_json()
-        self._write_files(patched_module_file)
-
-    def _migrate_source_only(self) -> None:
-        """Performs a source-only migration for an existing module version.
-
-        This only updates source.json with a new archive URL, integrity hash,
-        and strip prefix, while preserving all other existing files and metadata
-        (like MODULE.bazel and patches).
-        """
+        is_source_only = (
+            source_only
+            or self.info.source_only
+            or (self.info.mod_file is None and archive_mod_content is None)
+        )
         source_json_path = self.module_version_path / "source.json"
-        if not source_json_path.exists():
+
+        if is_source_only and not source_json_path.exists():
             log.fatal(
                 f"Cannot perform source-only migration: {source_json_path} does not exist."
             )
 
-        # 1. Get info for the new archive's root directory
-        integrity, new_archive_root = download_github_archive(
-            self._download_url, self.token
-        )
+        if not is_source_only:
+            self._add_version_to_metadata()
 
-        # 2. Read existing source.json
-        try:
-            with open(source_json_path) as f:
-                source_data = json.load(f)
-        except (json.JSONDecodeError, OSError) as e:
-            log.fatal(f"Could not read or parse existing {source_json_path}: {e}")
+            # Auto-detect whether the archive already has the module version set.
+            # If MODULE.bazel was found in the archive, use it as the source of truth;
+            # this prevents generating unnecessary or conflicting patches when release
+            # assets already have the version stamped.
+            if archive_mod_content:
+                self.info.mod_file = parse_MODULE_file_content(archive_mod_content)
 
-        old_strip_prefix = source_data.get("strip_prefix")
-        if not old_strip_prefix:
-            log.fatal(
-                f"Cannot migrate {source_json_path}: missing 'strip_prefix' in existing file."
-            )
+            patched_module_file = self._create_patch_for_module_version_if_mismatch()
+            self._write_files(patched_module_file)
 
-        # 3. Preserve the module subdirectory suffix from the old strip_prefix.
-        # The old prefix is formatted as `<archive_root>/<optional_module_subdir>`.
-        # We replace <archive_root> with new_archive_root while preserving the suffix.
-        _old_archive_root, _sep, module_subdir = old_strip_prefix.partition("/")
+        self._generate_source_json(integrity=integrity, archive_root=archive_root)
 
-        new_strip_prefix = (
-            f"{new_archive_root}/{module_subdir}" if module_subdir else new_archive_root
-        )
+    def _generate_source_json(
+        self, integrity: str | None = None, archive_root: str | None = None
+    ) -> None:
+        """Generate or update source.json with integrity hash, strip_prefix, and patches."""
+        if integrity is None or archive_root is None:
+            archive_info = download_github_archive(self._download_url, self.token)
+            integrity = archive_info[0]
+            archive_root = archive_info[1]
 
-        # 4. Update only the source-related fields, preserving patch metadata
-        source_data["url"] = self._download_url
-        source_data["integrity"] = integrity
-        source_data["strip_prefix"] = new_strip_prefix
-        source_data["archive_type"] = "tar.gz"  # Ensure this is set
-
-        # 5. Write back the updated source.json
-        self.module_version_path.mkdir(parents=True, exist_ok=True)
-        with open(source_json_path, "w") as f:
-            json.dump(source_data, f, indent=4)
-            f.write("\n")
-
-    def _generate_source_json(self) -> None:
-        """Generate source.json with integrity hash and patch metadata."""
-        # GitHub names a tarball's top-level directory '{owner}-{repo}-{sha}',
-        # but the SHA length depends on repository visibility, so the actual
-        # archive root must be read from the downloaded archive (see
-        # download_github_archive) rather than guessed.
-        integrity, archive_root = download_github_archive(
-            self._download_url, self.token
-        )
-        source_dict: dict[str, object] = {
-            "integrity": integrity,
-            "strip_prefix": archive_root,
-            "url": self._download_url,
-            "archive_type": "tar.gz",
-        }
-
+        source_json_path = self.module_version_path / "source.json"
         patches_map: dict[str, str] = {}
         patch_strip = 1
-        source_json_path = self.module_version_path / "source.json"
+        strip_prefix = archive_root
+
+        # Read existing source.json if present to preserve patches and monorepo subdir prefix
         if source_json_path.exists():
             try:
                 with open(source_json_path) as f:
@@ -420,8 +450,12 @@ class ModuleUpdateRunner:
                     patches_map.update(old_source["patches"])
                 if "patch_strip" in old_source:
                     patch_strip = old_source["patch_strip"]
-            except (json.JSONDecodeError, OSError):
-                pass
+                if old_strip_prefix := old_source.get("strip_prefix"):
+                    _old_root, _sep, module_subdir = old_strip_prefix.partition("/")
+                    if module_subdir:
+                        strip_prefix = f"{archive_root}/{module_subdir}"
+            except (json.JSONDecodeError, OSError) as e:
+                log.warning(f"Could not read existing {source_json_path}: {e}")
 
         # Add any new patches generated in this run, overwriting any existing
         # patches with the same name.
@@ -432,9 +466,16 @@ class ModuleUpdateRunner:
             }
             patches_map.update(new_patches)
 
+        source_dict: dict[str, object] = {
+            "integrity": integrity,
+            "strip_prefix": strip_prefix,
+            "url": self._download_url,
+            "archive_type": "tar.gz",
+        }
         if patches_map:
             source_dict["patch_strip"] = patch_strip
             source_dict["patches"] = patches_map
+
         self.module_version_path.mkdir(parents=True, exist_ok=True)
         with open(source_json_path, "w") as f:
             json.dump(source_dict, f, indent=4)

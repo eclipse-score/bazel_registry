@@ -60,3 +60,4 @@ class ModuleUpdateInfo:
 
     # Original module file content
     mod_file: ModuleFileContent | None
+    source_only: bool = False

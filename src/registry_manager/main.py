@@ -48,7 +48,7 @@ class RegistryRunResult:
 
         if len(self.updated_modules) == 1:
             update = self.updated_modules[0]
-            if update.release.version in update.module.versions:
+            if update.source_only or update.release.version in update.module.versions:
                 return f"fix: migrate {update.module.name}@{update.release.version} to release asset"
             return f"feat: update {update.module.name} to {update.release.version}"
 
@@ -56,7 +56,8 @@ class RegistryRunResult:
         lines = [
             (
                 f"- migrate {update.module.name}@{update.release.version} to release asset"
-                if update.release.version in update.module.versions
+                if update.source_only
+                or update.release.version in update.module.versions
                 else f"- {update.module.name} -> {update.release.version}"
             )
             for update in self.updated_modules
@@ -78,7 +79,7 @@ class RegistryRunResult:
             lines.extend(
                 (
                     f"- {u.module.name}: migrate {u.release.version} to release asset"
-                    if u.release.version in u.module.versions
+                    if u.source_only or u.release.version in u.module.versions
                     else (
                         f"- {u.module.name}: {u.module.latest_version} -> {u.release.version}"
                         if u.module.versions
@@ -369,7 +370,10 @@ def plan_module_updates(
                 # MODULE.bazel and patch files.
                 updated_modules.append(
                     ModuleUpdateInfo(
-                        module=module, release=latest_release, mod_file=None
+                        module=module,
+                        release=latest_release,
+                        mod_file=None,
+                        source_only=True,
                     )
                 )
             else:
@@ -387,7 +391,7 @@ def plan_module_updates(
 
 def apply_updates(plan: list[ModuleUpdateInfo], token: str | None = None) -> None:
     for task in plan:
-        if task.release.version in task.module.versions:
+        if task.source_only or task.release.version in task.module.versions:
             log.debug(
                 f"Migrating {task.module.name}@{task.release.version} to release asset"
             )
@@ -400,7 +404,7 @@ def apply_updates(plan: list[ModuleUpdateInfo], token: str | None = None) -> Non
             log.debug(
                 f"Adding first version to {task.module.name}: {task.release.version}"
             )
-        ModuleUpdateRunner(task, token).generate_files()
+        ModuleUpdateRunner(task, token).generate_files(source_only=task.source_only)
 
     if not plan:
         log.debug("All modules are up to date; no updates needed.")

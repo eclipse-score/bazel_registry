@@ -150,5 +150,6 @@ def test_plan_source_only_migration(tmp_path):
     assert len(plan) == 1
     update_task = plan[0]
     assert str(update_task.release.version) == "1.0.0"
-    # The key assertion: mod_file is None to signal a source-only migration
+    # The key assertion: source_only is True (and mod_file is None)
+    assert update_task.source_only is True
     assert update_task.mod_file is None

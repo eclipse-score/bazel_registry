@@ -28,6 +28,7 @@ from src.registry_manager import (
     ModuleUpdateInfo,
 )
 from src.registry_manager.bazel_wrapper import (
+    ArchiveDownloadResult,
     BazelModuleInfo,
     ModuleUpdateRunner,
     parse_MODULE_file_content,
@@ -426,7 +427,7 @@ bazel_dep(name = "protobuf", version = "21.7")
             asset_url="https://github.com/test-owner/monorepo/releases/download/v1.0.0/bzlmod-v1.0.0.tar.gz",
         )
         migration_task = ModuleUpdateInfo(
-            module=mock_module, release=mock_release, mod_file=None
+            module=mock_module, release=mock_release, mod_file=None, source_only=True
         )
 
         # Act
@@ -558,3 +559,96 @@ bazel_dep(name = "buildifier_prebuilt", version = "6.1.0", dev_dependency = True
 '''
             in module_content
         )
+
+    def test_archive_with_stamped_version_requires_no_patch(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """
+        Verifies that when the release archive's MODULE.bazel already contains
+        the correct release version, the runner auto-detects this and does NOT
+        generate a module_dot_bazel_version.patch.
+        """
+        basic_registry_setup()
+        os.chdir("/")
+
+        release_version = "1.0.0"
+        archive_mod_bazel = (
+            'module(name = "score_demo", version = "1.0.0", compatibility_level = 1)\n'
+        )
+        archive_result = ArchiveDownloadResult(
+            integrity="sha256-test-hash",
+            top_level_dir="score_demo-1.0.0",
+            module_bazel_content=archive_mod_bazel,
+        )
+
+        update_info = make_update_info(version=release_version)
+        # Even if git repo's mod_file had version="0.0.0" or placeholder:
+        update_info.mod_file = parse_MODULE_file_content('module(name = "score_demo")')
+
+        runner = ModuleUpdateRunner(update_info)
+        with patch(
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=archive_result,
+        ):
+            runner.generate_files()
+
+        # Check source.json has NO patches
+        source_json = json.loads(
+            Path(f"/modules/score_demo/{release_version}/source.json").read_text()
+        )
+        assert "patches" not in source_json
+
+        # Check patches/ directory does NOT have module_dot_bazel_version.patch
+        patch_file = Path(
+            f"/modules/score_demo/{release_version}/patches/module_dot_bazel_version.patch"
+        )
+        assert not patch_file.exists()
+
+        # Check MODULE.bazel has version = "1.0.0"
+        mod_bazel_file = Path(f"/modules/score_demo/{release_version}/MODULE.bazel")
+        assert 'version = "1.0.0"' in mod_bazel_file.read_text()
+
+    def test_archive_without_version_auto_detects_and_creates_patch(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """
+        Verifies that when the release archive's MODULE.bazel does NOT contain
+        a version, the runner auto-detects this and creates module_dot_bazel_version.patch.
+        """
+        basic_registry_setup()
+        os.chdir("/")
+
+        release_version = "2.0.0"
+        archive_mod_bazel = 'module(name = "score_demo", compatibility_level = 1)\n'
+        archive_result = ArchiveDownloadResult(
+            integrity="sha256-test-hash-2",
+            top_level_dir="score_demo-2.0.0",
+            module_bazel_content=archive_mod_bazel,
+        )
+
+        update_info = make_update_info(version=release_version)
+        update_info.mod_file = (
+            None  # None initially to verify auto-detection from archive
+        )
+
+        runner = ModuleUpdateRunner(update_info)
+        with patch(
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=archive_result,
+        ):
+            runner.generate_files()
+
+        # Check source.json DOES have patches
+        source_json = json.loads(
+            Path(f"/modules/score_demo/{release_version}/source.json").read_text()
+        )
+        assert "patches" in source_json
+        assert "module_dot_bazel_version.patch" in source_json["patches"]
+
+        # Check patches/ directory has module_dot_bazel_version.patch
+        patch_file = Path(
+            f"/modules/score_demo/{release_version}/patches/module_dot_bazel_version.patch"
+        )
+        assert patch_file.exists()
