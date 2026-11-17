@@ -1,0 +1,6 @@
+{
+    "integrity": "sha256-qqGiiQgNJKWvat811/hMaSz7NcL5xHk8DQ1dP3VK7Qg=",
+    "strip_prefix": "openssl-0.2.1",
+    "url": "https://github.com/eclipse-score/openssl/archive/refs/tags/v0.2.1.tar.gz",
+    "archive_type": "tar.gz"
+}
