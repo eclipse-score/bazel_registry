@@ -1,0 +1,195 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(name = "score_diagnostics",
+    version = "0.1.0"
+)
+
+bazel_dep(name = "classic-diagnostic-adapter", version = "0.1.0", dev_dependency = True)
+git_override(
+    module_name = "classic-diagnostic-adapter",
+    commit = "213767d340fb4e7167a82b30cc38c7013c36c042",
+    patch_strip = 1,
+    patches = [
+        "//patches:classic-diagnostic-adapter-linkme.patch",
+        "//patches:classic-diagnostic-adapter-resource-ids.patch",
+    ],
+    remote = "https://github.com/eclipse-opensovd/classic-diagnostic-adapter.git",
+)
+
+bazel_dep(name = "mbedtls-rs", version = "0.1.0", dev_dependency = True)
+git_override(
+    module_name = "mbedtls-rs",
+    commit = "1dac0d8c6a80feb3864e86aac80b35cf34b10f87",
+    remote = "https://github.com/eclipse-opensovd/mbedtls-rs.git",
+)
+
+# Override rules_foreign_cc to 0.17.0 which uses pkgconf instead of pkg-config.
+# This eliminates the BootstrapPkgConfig glib build that fails with hermetic
+# toolchains due to glib's use of GNU 'asm' extensions (incompatible with -std=c11).
+bazel_dep(name = "rules_foreign_cc", version = "0.17.0")
+single_version_override(
+    module_name = "rules_foreign_cc",
+    version = "0.17.0",
+)
+
+bazel_dep(name = "opensovd_core", version = "0.0.0", dev_dependency = True)
+git_override(
+    module_name = "opensovd_core",
+    commit = "30ac7995e3c850de567fc0308813b04d09dc667e",
+    patch_strip = 1,
+    patches = [
+        "//patches:opensovd-core-expose-tokio.patch",
+        "//patches:opensovd-core-expose-client.patch",
+    ],
+    remote = "https://github.com/eclipse-opensovd/opensovd-core.git",
+)
+
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "score_bazel_platforms", version = "0.1.2")
+
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.5.4", dev_dependency = True)
+
+gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(gcc, "score_gcc_x86_64_toolchain")
+
+bazel_dep(name = "rules_python", version = "1.8.3", dev_dependency = True)
+
+# Python 3.12: Required for testing infrastructure and code generation tools
+_PYTHON_VERSION = "3.12"
+
+python = use_extension(
+    "@rules_python//python/extensions:python.bzl",
+    "python",
+    dev_dependency = True,
+)
+python.toolchain(
+    is_default = True,
+    python_version = _PYTHON_VERSION,
+)
+
+pip = use_extension(
+    "@rules_python//python/extensions:pip.bzl",
+    "pip",
+    dev_dependency = True,
+)
+pip.parse(
+    envsubst = ["PIP_INDEX_URL"],
+    extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+    hub_name = "module_template_docs_hub_env",
+    python_version = _PYTHON_VERSION,
+    requirements_lock = "@score_docs_as_code//src:requirements.txt",
+)
+use_repo(pip, "module_template_docs_hub_env")
+
+# Add GoogleTest dependency
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2", dev_dependency = True)
+
+# Rust rules for Bazel
+bazel_dep(name = "rules_rust", version = "0.70.0")
+bazel_dep(name = "score_crates", version = "0.0.10")
+
+bazel_dep(name = "score_toolchains_rust", version = "0.9.1", dev_dependency = True)
+
+# Use the qualified Ferrocene toolchain for the supported Linux target.
+register_toolchains(
+    "@score_toolchains_rust//toolchains/ferrocene:ferrocene_x86_64_unknown_linux_gnu",
+    dev_dependency = True,
+)
+
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+
+# any further required individual rust creates shall get added below
+crate.spec(
+    package = "futures",
+    version = "0.3.31",
+)
+crate.spec(
+    package = "indexmap",
+    version = "2.11.4",
+)
+crate.spec(
+    package = "serde_json",
+    version = "1.0.143",
+)
+crate.spec(
+    package = "tracing",
+    version = "=0.1.41",
+)
+crate.spec(
+    features = [
+        "ansi",
+        "env-filter",
+        "fmt",
+        "std",
+    ],
+    package = "tracing-subscriber",
+    version = "=0.3.19",
+)
+crate.spec(
+    features = [
+        "macros",
+        "net",
+        "rt",
+        "sync",
+        "time",
+    ],
+    package = "tokio",
+    version = "1.47.1",
+)
+crate.from_specs(
+    name = "score_crate_index",
+    supported_platform_triples = [
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-none",
+    ],
+)
+use_repo(crate, "score_crate_index")
+
+# C/C++ rules for Bazel
+bazel_dep(name = "rules_cc", version = "0.2.18")
+
+# functional deps
+bazel_dep(name = "score_baselibs", version = "0.2.9")
+
+# NOTE: score_baselibs has flatbuffers@25.12.19 as a non-dev dependency and that one
+# transitively pulls grpc -> googleapis -> grpc-java@1.66.0 into all consumers.
+# grpc-java@1.66.0 contains a broken use_repo declaration that Bazel 8.x
+# rejects as a hard error.
+#
+# The upstream fix in flatbuffers (google/flatbuffers@2b8e4d3) upgrades grpc to
+# 1.76.0, which drops the problematic grpc-java@1.66.0 dependency. Until such
+# commit is included in a flatbuffers release, this direct dependency of a
+# transitive dependency serves as a mitigation.
+#
+# TODO: Remove below bazel_dep once flatbuffers releases a version which contains the following fix:
+# https://github.com/google/flatbuffers/commit/2b8e4d3af04a6c38c7a7e19460fc26faa3608c9e
+bazel_dep(name = "grpc", version = "1.76.0")
+
+# tooling
+bazel_dep(name = "score_tooling", version = "1.1.2", dev_dependency = True)
+bazel_dep(name = "score_devcontainer", version = "1.7.0", dev_dependency = True)
+bazel_dep(name = "aspect_rules_lint", version = "2.3.0", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2", dev_dependency = True)
+
+# docs-as-code
+bazel_dep(name = "score_docs_as_code", version = "4.6.0")
+
+bazel_dep(name = "score_process", version = "1.6.0", dev_dependency = True)

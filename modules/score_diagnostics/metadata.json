@@ -18,6 +18,8 @@
     "repository": [
         "github:eclipse-score/diagnostics"
     ],
-    "versions": [],
+    "versions": [
+        "0.1.0"
+    ],
     "yanked_versions": {}
 }
