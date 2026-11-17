@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-6PXdeGHI1KdFIC0uQ8dfLrIQInRJrMepwAeRUlLD7B8=",
+    "strip_prefix": "openssl-0.2.0",
+    "url": "https://github.com/eclipse-score/openssl/archive/refs/tags/v0.2.0.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-bxTXeKhcrWOVGf4wjTFGZQ1+C8DMLvonfq3Ubge5EXI="
+    }
+}
