@@ -21,6 +21,7 @@ import tempfile
 import urllib.parse
 import urllib.request
 from collections.abc import Iterable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import IO
 
@@ -228,29 +229,13 @@ def _build_archive_request(url: str, token: str | None) -> urllib.request.Reques
     return req
 
 
-class ArchiveDownloadResult(tuple[str, str]):
-    """Result of downloading a GitHub source archive.
-
-    Inherits from ``tuple[str, str]`` for backward compatibility with code
-    and tests unpacking ``(integrity, top_level_dir)``. Also carries
-    ``module_bazel_content`` if MODULE.bazel was found in the archive root.
-    """
+@dataclass
+class ArchiveDownloadResult:
+    """Result of downloading a GitHub source archive."""
 
     integrity: str
-    top_level_dir: str
-    module_bazel_content: str | None
-
-    def __new__(
-        cls,
-        integrity: str,
-        top_level_dir: str,
-        module_bazel_content: str | None = None,
-    ) -> "ArchiveDownloadResult":
-        instance = super().__new__(cls, (integrity, top_level_dir))
-        instance.integrity = integrity
-        instance.top_level_dir = top_level_dir
-        instance.module_bazel_content = module_bazel_content
-        return instance
+    strip_prefix: str
+    module_bazel_content: str | None = None
 
 
 def download_github_archive(
@@ -258,9 +243,9 @@ def download_github_archive(
 ) -> ArchiveDownloadResult:
     """Download a GitHub source archive.
 
-    Returns an ``ArchiveDownloadResult`` (which unpacks as ``(integrity, top_level_dir)``
-    for compatibility) containing the ``sha256-<base64>`` hash of the bytes,
-    the archive's top-level directory name, and optional ``MODULE.bazel`` content.
+    Returns an ``ArchiveDownloadResult`` containing the ``sha256-<base64>`` hash
+    of the bytes, the archive's top-level directory name (strip_prefix), and optional
+    ``MODULE.bazel`` content if present in the archive root.
     """
     # GitHub names a tarball's top-level directory ``{owner}-{repo}-{sha}``, but
     # the SHA length depends on repository visibility — 7 characters for public
@@ -281,7 +266,11 @@ def download_github_archive(
         top_level_dir = _archive_top_level_dir(tmp)
         tmp.seek(0)
         module_bazel_content = _extract_archive_module_bazel(tmp, top_level_dir)
-    return ArchiveDownloadResult(integrity, top_level_dir, module_bazel_content)
+    return ArchiveDownloadResult(
+        integrity=integrity,
+        strip_prefix=top_level_dir,
+        module_bazel_content=module_bazel_content,
+    )
 
 
 def _archive_top_level_dir(archive: IO[bytes]) -> str:
@@ -385,86 +374,48 @@ class ModuleUpdateRunner:
         """
         return self.info.release.asset_url or self.info.release.tarball
 
-    def generate_files(self, source_only: bool = False) -> None:
+    def generate_files(self) -> None:
         """Generate all necessary registry files for this module update.
 
-        Writes/updates:
-        - metadata.json with the new version (skipped if source_only)
-        - <version>/MODULE.bazel with patched content if needed (skipped if source_only)
-        - patches/ directory with any necessary patches (skipped if source_only)
+        Creates:
+        - Updated metadata.json with new version
+        - MODULE.bazel file (with version patch if needed)
+        - patches/ directory with any necessary patches
         - source.json with integrity hash and patch metadata
         """
-        # 1. Download archive and extract integrity, archive root, and MODULE.bazel
         archive_info = download_github_archive(self._download_url, self.token)
-        integrity = archive_info[0]
-        archive_root = archive_info[1]
-        archive_mod_content = getattr(archive_info, "module_bazel_content", None)
+        if isinstance(archive_info, ArchiveDownloadResult):
+            integrity = archive_info.integrity
+            strip_prefix = archive_info.strip_prefix
+            archive_mod_content = archive_info.module_bazel_content
+        else:
+            integrity, strip_prefix = archive_info[0], archive_info[1]
+            archive_mod_content = getattr(archive_info, "module_bazel_content", None)
 
-        is_source_only = (
-            source_only
-            or self.info.source_only
-            or (self.info.mod_file is None and archive_mod_content is None)
-        )
-        source_json_path = self.module_version_path / "source.json"
+        self._add_version_to_metadata()
 
-        if is_source_only and not source_json_path.exists():
-            log.fatal(
-                f"Cannot perform source-only migration: {source_json_path} does not exist."
-            )
+        # Auto-detect whether the archive already has the module version set.
+        # If MODULE.bazel was found in the archive, use it as the source of truth;
+        # this prevents generating unnecessary or conflicting patches when release
+        # assets already have the version stamped.
+        if archive_mod_content:
+            self.info.mod_file = parse_MODULE_file_content(archive_mod_content)
 
-        if not is_source_only:
-            self._add_version_to_metadata()
-
-            # Auto-detect whether the archive already has the module version set.
-            # If MODULE.bazel was found in the archive, use it as the source of truth;
-            # this prevents generating unnecessary or conflicting patches when release
-            # assets already have the version stamped.
-            if archive_mod_content:
-                self.info.mod_file = parse_MODULE_file_content(archive_mod_content)
-
-            patched_module_file = self._create_patch_for_module_version_if_mismatch()
-            self._write_files(patched_module_file)
-
-        self._generate_source_json(integrity=integrity, archive_root=archive_root)
+        patched_module_file = self._create_patch_for_module_version_if_mismatch()
+        self._write_files(patched_module_file)
+        self._generate_source_json(integrity=integrity, strip_prefix=strip_prefix)
 
     def _generate_source_json(
-        self, integrity: str | None = None, archive_root: str | None = None
+        self, integrity: str | None = None, strip_prefix: str | None = None
     ) -> None:
-        """Generate or update source.json with integrity hash, strip_prefix, and patches."""
-        if integrity is None or archive_root is None:
+        """Generate source.json with integrity hash and patch metadata."""
+        if integrity is None or strip_prefix is None:
             archive_info = download_github_archive(self._download_url, self.token)
-            integrity = archive_info[0]
-            archive_root = archive_info[1]
-
-        source_json_path = self.module_version_path / "source.json"
-        patches_map: dict[str, str] = {}
-        patch_strip = 1
-        strip_prefix = archive_root
-
-        # Read existing source.json if present to preserve patches and monorepo subdir prefix
-        if source_json_path.exists():
-            try:
-                with open(source_json_path) as f:
-                    old_source = json.load(f)
-                if isinstance(old_source.get("patches"), dict):
-                    patches_map.update(old_source["patches"])
-                if "patch_strip" in old_source:
-                    patch_strip = old_source["patch_strip"]
-                if old_strip_prefix := old_source.get("strip_prefix"):
-                    _old_root, _sep, module_subdir = old_strip_prefix.partition("/")
-                    if module_subdir:
-                        strip_prefix = f"{archive_root}/{module_subdir}"
-            except (json.JSONDecodeError, OSError) as e:
-                log.warning(f"Could not read existing {source_json_path}: {e}")
-
-        # Add any new patches generated in this run, overwriting any existing
-        # patches with the same name.
-        if self.patches:
-            new_patches = {
-                patch_name: sha256_from_string(patch_text)
-                for patch_name, patch_text in self.patches.items()
-            }
-            patches_map.update(new_patches)
+            if isinstance(archive_info, ArchiveDownloadResult):
+                integrity = archive_info.integrity
+                strip_prefix = archive_info.strip_prefix
+            else:
+                integrity, strip_prefix = archive_info[0], archive_info[1]
 
         source_dict: dict[str, object] = {
             "integrity": integrity,
@@ -472,12 +423,15 @@ class ModuleUpdateRunner:
             "url": self._download_url,
             "archive_type": "tar.gz",
         }
-        if patches_map:
-            source_dict["patch_strip"] = patch_strip
-            source_dict["patches"] = patches_map
+        if self.patches:
+            source_dict["patch_strip"] = 1
+            source_dict["patches"] = {
+                patch_name: sha256_from_string(patch_text)
+                for patch_name, patch_text in self.patches.items()
+            }
 
         self.module_version_path.mkdir(parents=True, exist_ok=True)
-        with open(source_json_path, "w") as f:
+        with open(self.module_version_path / "source.json", "w") as f:
             json.dump(source_dict, f, indent=4)
             f.write("\n")
 
@@ -489,11 +443,10 @@ class ModuleUpdateRunner:
             versions = _parse_versions(metadata.get("versions", []), metadata_path)
 
             if self.info.release.version in versions:
-                log.debug(
+                raise RuntimeError(
                     f"Version {self.info.release.version} already present in metadata"
-                    f" for module {self.info.module.name}; skipping metadata update."
+                    f" for module {self.info.module.name}"
                 )
-                return
 
             # prepend new version. This way we always modify a single line.
             # (otherwise a comma needs to be added to the previous last line)
@@ -512,7 +465,7 @@ class ModuleUpdateRunner:
         Note: if patched_module_file is provided, it is written as MODULE.bazel;
         otherwise, the original module file content is used.
         """
-        if self.info.mod_file is None:
+        if not self.info.mod_file:
             raise ValueError("Module file content not available")
 
         self.module_version_path.mkdir(parents=True, exist_ok=True)
@@ -540,7 +493,7 @@ class ModuleUpdateRunner:
         # module(this_is_just_a_comment, version='1.0.0')
         module(real_module)
         """
-        if self.info.mod_file is None:
+        if not self.info.mod_file:
             raise ValueError("Module file content not available")
 
         file_version = self.info.mod_file.version

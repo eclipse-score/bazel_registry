@@ -114,10 +114,10 @@ class TestDownloadGithubArchive:
         captured: dict[str, urllib.request.Request] = {}
         _patch_opener(monkeypatch, payload, captured)
 
-        integrity, strip_prefix = download_github_archive(GITHUB_ARCHIVE_URL)
+        result = download_github_archive(GITHUB_ARCHIVE_URL)
 
-        assert integrity.startswith("sha256-")
-        assert strip_prefix == top_dir
+        assert result.integrity.startswith("sha256-")
+        assert result.strip_prefix == top_dir
         # No token passed -> no Authorization header on the wire.
         assert not captured["req"].has_header("Authorization")
 
@@ -208,10 +208,9 @@ class TestArchiveTopLevelDir:
         _patch_opener(monkeypatch, payload, captured)
 
         result = download_github_archive(GITHUB_ARCHIVE_URL)
-        integrity, strip_prefix = result
 
-        assert integrity.startswith("sha256-")
-        assert strip_prefix == top_dir
+        assert result.integrity.startswith("sha256-")
+        assert result.strip_prefix == top_dir
         assert result.module_bazel_content == mod_bazel.decode("utf-8")
 
 
