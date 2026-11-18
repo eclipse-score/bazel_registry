@@ -94,27 +94,28 @@ class GithubWrapper:
             latest = sorted_releases[0]
 
             asset_url = None
-            tag_clean = latest.tag_name.lstrip("v")
-            candidate_names = {
-                f"bzlmod-{latest.tag_name}.tar.gz",
-                f"bzlmod-v{tag_clean}.tar.gz",
-                f"bzlmod-{tag_clean}.tar.gz",
-            }
-            assets = list(latest.get_assets())
-            for asset in assets:
-                if asset.name in candidate_names:
-                    asset_url = asset.browser_download_url
-                    break
+            if not repo.private:
+                tag_clean = latest.tag_name.lstrip("v")
+                candidate_names = {
+                    f"bzlmod-{latest.tag_name}.tar.gz",
+                    f"bzlmod-v{tag_clean}.tar.gz",
+                    f"bzlmod-{tag_clean}.tar.gz",
+                }
+                assets = list(latest.get_assets())
+                for asset in assets:
+                    if asset.name in candidate_names:
+                        asset_url = asset.browser_download_url
+                        break
 
-            if asset_url:
-                log.debug(
-                    f"Found explicit release asset for {org_and_repo}@{latest.tag_name}: {asset_url}"
-                )
-            else:
-                log.debug(
-                    f"No explicit release asset found for {org_and_repo}@{latest.tag_name}; "
-                    "falling back to archive link."
-                )
+                if asset_url:
+                    log.debug(
+                        f"Found explicit release asset for {org_and_repo}@{latest.tag_name}: {asset_url}"
+                    )
+                else:
+                    log.debug(
+                        f"No explicit release asset found for {org_and_repo}@{latest.tag_name}; "
+                        "falling back to archive link."
+                    )
 
             result = GitHubReleaseInfo(
                 org_and_repo=org_and_repo,

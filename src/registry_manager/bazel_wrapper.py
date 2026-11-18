@@ -366,14 +366,6 @@ class ModuleUpdateRunner:
         self.module_path = Path("modules") / task_info.module.name
         self.module_version_path = self.module_path / str(task_info.release.version)
 
-    @property
-    def _download_url(self) -> str:
-        """Returns the preferred download URL for the release archive.
-
-        Prefers a stable release asset URL over the dynamic tarball URL.
-        """
-        return self.info.release.asset_url or self.info.release.tarball
-
     def generate_files(self) -> None:
         """Generate all necessary registry files for this module update.
 
@@ -383,7 +375,7 @@ class ModuleUpdateRunner:
         - patches/ directory with any necessary patches
         - source.json with integrity hash and patch metadata
         """
-        archive_info = download_github_archive(self._download_url, self.token)
+        archive_info = download_github_archive(self.info.release.tarball, self.token)
         if isinstance(archive_info, ArchiveDownloadResult):
             integrity = archive_info.integrity
             strip_prefix = archive_info.strip_prefix
@@ -410,7 +402,9 @@ class ModuleUpdateRunner:
     ) -> None:
         """Generate source.json with integrity hash and patch metadata."""
         if integrity is None or strip_prefix is None:
-            archive_info = download_github_archive(self._download_url, self.token)
+            archive_info = download_github_archive(
+                self.info.release.tarball, self.token
+            )
             if isinstance(archive_info, ArchiveDownloadResult):
                 integrity = archive_info.integrity
                 strip_prefix = archive_info.strip_prefix
@@ -420,7 +414,7 @@ class ModuleUpdateRunner:
         source_dict: dict[str, object] = {
             "integrity": integrity,
             "strip_prefix": strip_prefix,
-            "url": self._download_url,
+            "url": self.info.release.tarball,
             "archive_type": "tar.gz",
         }
         if self.patches:
