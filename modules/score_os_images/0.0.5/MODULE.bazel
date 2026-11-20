@@ -1,0 +1,123 @@
+# *******************************************************************************
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(name = "score_os_images",
+    version = "0.0.5"
+)
+
+# Compliance and licensing toolchain
+bazel_dep(name = "score_tooling", version = "3.0.2")
+bazel_dep(name = "score_python_basics", version = "0.3.4")
+
+# Formatting and linting helpers
+bazel_dep(name = "score_format_checker", version = "0.1.1")
+
+bazel_dep(
+    name = "aspect_rules_lint",
+    version = "2.9.1",
+    dev_dependency = True,
+)
+bazel_dep(
+    name = "buildifier_prebuilt",
+    version = "10.1.0",
+    dev_dependency = True,
+)
+
+# Rules used by the QEMU image definitions
+bazel_dep(name = "platforms", version = "1.1.0", dev_dependency = True)
+
+bazel_dep(name = "rules_pkg", version = "1.2.0")
+bazel_dep(name = "rules_shell", version = "0.6.1")
+
+# QEMU integration test framework
+bazel_dep(name = "score_itf", version = "0.7.0", dev_dependency = True)
+bazel_dep(name = "rules_python", version = "1.9.0", dev_dependency = True)
+
+# Filesystem image rules, used to build the additional disk image attached to the
+# QEMU targets via `--qemu-disk`.
+bazel_dep(name = "score_rules_imagefs", version = "0.1.0", dev_dependency = True)
+
+imagefs = use_extension("@score_rules_imagefs//extensions:imagefs.bzl", "imagefs", dev_dependency = True)
+imagefs.toolchain(
+    name = "score_linux_x86_64_ext4_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    type = "ext4",
+)
+use_repo(imagefs, "score_linux_x86_64_ext4_toolchain")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
+python.defaults(python_version = "3.12")
+python.toolchain(
+    is_default = True,
+    python_version = "3.12",
+)
+
+###############################################################################
+#
+# EBcLfSA release archive used as base for the aarch64 QEMU image
+#
+###############################################################################
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "score_os_images_release_archive",
+    downloaded_file_path = "score-image-trixie-ebclfsa-ebcl-qemuarm64.tar.gz",
+    sha256 = "c85d1c01ad1f148a59489dd779792bf89e6b98a1677f9b1210cabd0cae44fe74",
+    urls = ["https://github.com/eclipse-score/os_images/releases/download/v0.0.2/score-image-trixie-ebclfsa-ebcl-qemuarm64.tar.gz"],
+)
+
+###############################################################################
+#
+# EB corbos Toolkit sources used to build the aarch64 image from scratch
+#
+# Only the KAS configuration, the bundled Isar layers and the development
+# container setup are used, see //ebclfsa_aarch64.
+#
+###############################################################################
+new_git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
+
+new_git_repository(
+    name = "eb_corbos_toolkit",
+    build_file_content = """
+exports_files(["BUILD.bazel"])
+
+filegroup(
+    name = "sources",
+    srcs = glob(["kas/**", "layers/**", ".devcontainer/**"]),
+    visibility = ["//visibility:public"],
+)
+""",
+    commit = "fe2cddbc01232e4b62accb9abab783c8ccf75ef7",  # v2.0.0-beta3
+    remote = "https://github.com/Elektrobit/eb_corbos_toolkit.git",
+)
+
+###############################################################################
+#
+# Ubuntu minimal cloud image used as base for the x86_64 QEMU image
+#
+# Pinned to a dated release directory so the download stays reproducible. The
+# minimal image is used instead of the full server image to reduce test times.
+# The file uses the ".img" extension but is in fact a qcow2 image.
+#
+###############################################################################
+http_file(
+    name = "ubuntu_noble_minimal_cloudimg_amd64",
+    downloaded_file_path = "ubuntu-24.04-minimal-cloudimg-amd64.img",
+    sha256 = "3839f148c5a3b4a736e7dbb0af75594743fa5ebee2a202424ba1a32e5d3b5d2c",
+    urls = ["https://cloud-images.ubuntu.com/minimal/releases/noble/release-20261027/ubuntu-24.04-minimal-cloudimg-amd64.img"],
+)
+
+bazel_dep(
+    name = "score_devcontainer",
+    version = "1.13.0",
+)

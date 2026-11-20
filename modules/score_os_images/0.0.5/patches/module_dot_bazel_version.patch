@@ -1,0 +1,13 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -10,7 +10,9 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+-module(name = "score_os_images")
++module(name = "score_os_images",
++    version = "0.0.5"
++)
+ 
+ # Compliance and licensing toolchain
+ bazel_dep(name = "score_tooling", version = "3.0.2")
