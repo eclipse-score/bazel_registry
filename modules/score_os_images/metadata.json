@@ -4,6 +4,8 @@
     "repository": [
         "github:eclipse-score/os_images"
     ],
-    "versions": [],
+    "versions": [
+        "0.0.4"
+    ],
     "yanked_versions": {}
 }

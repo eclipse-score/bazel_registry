@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-tyqcpQ4iRrtwcD/V7I5AFTTT3JH0Gp2eHJEOdLAjjQI=",
+    "strip_prefix": "os_images-0.0.4",
+    "url": "https://github.com/eclipse-score/os_images/archive/refs/tags/v0.0.4.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-iKW3TcH825pNc8Lp5DpmPX7FBVrpksZ59qSffO7fpHo="
+    }
+}
