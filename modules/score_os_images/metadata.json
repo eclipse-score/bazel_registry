@@ -1,0 +1,9 @@
+{
+    "homepage": "https://github.com/eclipse-score/os_images",
+    "periodic-pull": true,
+    "repository": [
+        "github:eclipse-score/os_images"
+    ],
+    "versions": [],
+    "yanked_versions": {}
+}
