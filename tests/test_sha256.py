@@ -114,10 +114,10 @@ class TestDownloadGithubArchive:
         captured: dict[str, urllib.request.Request] = {}
         _patch_opener(monkeypatch, payload, captured)
 
-        integrity, strip_prefix = download_github_archive(GITHUB_ARCHIVE_URL)
+        result = download_github_archive(GITHUB_ARCHIVE_URL)
 
-        assert integrity.startswith("sha256-")
-        assert strip_prefix == top_dir
+        assert result.integrity.startswith("sha256-")
+        assert result.strip_prefix == top_dir
         # No token passed -> no Authorization header on the wire.
         assert not captured["req"].has_header("Authorization")
 
@@ -158,6 +158,60 @@ class TestArchiveTopLevelDir:
             ValueError, match="expected exactly one top-level directory"
         ):
             _archive_top_level_dir(buf)
+
+    def test_handles_dot_slash_prefixes_and_root_slashes(self) -> None:
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+            # Member with explicit ./ prefix
+            info1 = tarfile.TarInfo(name="./my-repo-1.0.0")
+            info1.type = tarfile.DIRTYPE
+            tar.addfile(info1)
+            # Member file with ./ prefix
+            info2 = tarfile.TarInfo(name="./my-repo-1.0.0/file.txt")
+            info2.size = 5
+            tar.addfile(info2, io.BytesIO(b"hello"))
+            # Dot entry itself
+            dot_info = tarfile.TarInfo(name="./")
+            dot_info.type = tarfile.DIRTYPE
+            tar.addfile(dot_info)
+        buf.seek(0)
+        assert _archive_top_level_dir(buf) == "my-repo-1.0.0"
+
+    def test_skips_pax_headers_and_pax_global_header(self) -> None:
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+            # pax_global_header at root
+            pax_hdr = tarfile.TarInfo(name="pax_global_header")
+            pax_hdr.size = 10
+            tar.addfile(pax_hdr, io.BytesIO(b"0123456789"))
+            # PaxHeaders directory
+            pax_dir = tarfile.TarInfo(name="PaxHeaders.1234/my-repo-1.0.0")
+            pax_dir.type = tarfile.DIRTYPE
+            tar.addfile(pax_dir)
+            # Real top-level directory
+            real_dir = tarfile.TarInfo(name="my-repo-1.0.0")
+            real_dir.type = tarfile.DIRTYPE
+            tar.addfile(real_dir)
+            file_info = tarfile.TarInfo(name="my-repo-1.0.0/file.txt")
+            file_info.size = 4
+            tar.addfile(file_info, io.BytesIO(b"data"))
+        buf.seek(0)
+        assert _archive_top_level_dir(buf) == "my-repo-1.0.0"
+
+    def test_download_github_archive_extracts_module_bazel(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        top_dir = "my-repo-1.0.0"
+        mod_bazel = b'module(name = "my_mod", version = "1.0.0")\n'
+        payload = _make_targz(top_dir, {"MODULE.bazel": mod_bazel})
+        captured: dict[str, urllib.request.Request] = {}
+        _patch_opener(monkeypatch, payload, captured)
+
+        result = download_github_archive(GITHUB_ARCHIVE_URL)
+
+        assert result.integrity.startswith("sha256-")
+        assert result.strip_prefix == top_dir
+        assert result.module_bazel_content == mod_bazel.decode("utf-8")
 
 
 def _redirect(from_url: str, to_url: str) -> urllib.request.Request:
