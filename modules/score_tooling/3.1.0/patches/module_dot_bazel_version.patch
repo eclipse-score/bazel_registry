@@ -1,0 +1,13 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -11,7 +11,9 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+ 
+-module(name = "score_tooling")
++module(name = "score_tooling",
++    version = "3.1.0"
++)
+ 
+ tooling_provenance = use_extension(
+     "//bazel/rules/rules_score/private:tooling_provenance.bzl",
