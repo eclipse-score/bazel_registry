@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-C0WOFuqw9gUxoJ3+C23Y6gduKIy3s9BKfTbLb0m1GtU=",
+    "strip_prefix": "rules_imagefs-0.2.0",
+    "url": "https://github.com/eclipse-score/rules_imagefs/archive/refs/tags/v0.2.0.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-6O4W4U65CjfjCDNezplIccM4rMx2wJxZVpq57at6Fxs="
+    }
+}
