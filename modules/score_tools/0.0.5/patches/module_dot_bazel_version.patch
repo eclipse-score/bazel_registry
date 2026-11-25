@@ -1,0 +1,10 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -13,6 +13,7 @@
+ 
+ module(
+     name = "score_tools",
++    version = "0.0.5"
+ )
+ 
+ # CR_CHECKER
