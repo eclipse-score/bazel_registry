@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-nPqlvBwqRrJnBMqhsRw4gXLe8Ur73SQHnc2TjHvUvJc=",
+    "strip_prefix": "diagnostics-0.2.0",
+    "url": "https://github.com/eclipse-score/diagnostics/archive/refs/tags/v0.2.0.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-fBxCj0e1JgXuG8phVeSLjZ8fpn0CCEvn2+AkUy3hBYs="
+    }
+}

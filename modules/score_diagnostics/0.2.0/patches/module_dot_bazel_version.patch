@@ -1,0 +1,13 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -10,7 +10,9 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ # *******************************************************************************
+-module(name = "score_diagnostics")
++module(name = "score_diagnostics",
++    version = "0.2.0"
++)
+ 
+ bazel_dep(name = "classic-diagnostic-adapter", version = "0.1.0")
+ git_override(

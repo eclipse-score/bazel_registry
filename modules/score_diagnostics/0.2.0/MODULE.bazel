@@ -1,0 +1,207 @@
+# *******************************************************************************
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+# *******************************************************************************
+module(name = "score_diagnostics",
+    version = "0.2.0"
+)
+
+bazel_dep(name = "classic-diagnostic-adapter", version = "0.1.0")
+git_override(
+    module_name = "classic-diagnostic-adapter",
+    commit = "f613cde67473d6746725edc9cbf8f64179a74f6a",
+    patch_strip = 1,
+    patches = [
+        "//patches:classic-diagnostic-adapter-export-requirements.patch",
+    ],
+    remote = "https://github.com/eclipse-opensovd/classic-diagnostic-adapter.git",
+)
+
+bazel_dep(name = "mbedtls-rs", version = "0.1.0")
+git_override(
+    module_name = "mbedtls-rs",
+    commit = "1dac0d8c6a80feb3864e86aac80b35cf34b10f87",
+    remote = "https://github.com/eclipse-opensovd/mbedtls-rs.git",
+)
+
+# Not used directly. The classic-diagnostic-adapter dependency graph builds glib
+# with rules_foreign_cc; versions before 0.17.0 bootstrap pkg-config from glib
+# (BootstrapPkgConfig), which fails with the hermetic GCC toolchain because glib
+# uses GNU 'asm' extensions that -std=c11 rejects. 0.17.0 uses pkgconf instead.
+# As root module this bazel_dep raises the resolved version to at least 0.17.0.
+bazel_dep(name = "rules_foreign_cc", version = "0.17.0")
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+bazel_dep(name = "opensovd_core", version = "0.0.0")
+
+# feat/score-integration includes the embeddable gateway runner, the public mDNS target and the
+# public client, server and shared dependency targets, and Client::authorize.
+git_override(
+    module_name = "opensovd_core",
+    commit = "f61eeeb4133e5c5a7c3541861489f12e306e4ee4",
+    remote = "https://github.com/eclipse-opensovd/opensovd-core.git",
+)
+
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "score_bazel_platforms", version = "1.3.0")
+
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "1.0.5", dev_dependency = True)
+
+gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
+gcc.toolchain(
+    name = "score_gcc_x86_64_toolchain",
+    target_cpu = "x86_64",
+    target_os = "linux",
+    use_default_package = True,
+    version = "12.2.0",
+)
+use_repo(gcc, "score_gcc_x86_64_toolchain")
+
+# Public gateway and CDA packages load Python rules, even when building non-Python targets.
+bazel_dep(name = "rules_python", version = "1.9.0")
+
+# Python 3.12: Required for testing infrastructure and code generation tools
+_PYTHON_VERSION = "3.12"
+
+python = use_extension(
+    "@rules_python//python/extensions:python.bzl",
+    "python",
+    dev_dependency = True,
+)
+python.toolchain(
+    is_default = True,
+    python_version = _PYTHON_VERSION,
+)
+
+pip = use_extension(
+    "@rules_python//python/extensions:pip.bzl",
+    "pip",
+    dev_dependency = True,
+)
+pip.parse(
+    envsubst = ["PIP_INDEX_URL"],
+    extra_pip_args = ["--index-url=${PIP_INDEX_URL:-https://pypi.org/simple/}"],
+    hub_name = "module_template_docs_hub_env",
+    python_version = _PYTHON_VERSION,
+    requirements_lock = "@score_docs_as_code//src:requirements.txt",
+)
+use_repo(pip, "module_template_docs_hub_env")
+
+# Independent DNS-SD client for the gateway's Linux network integration test.
+pip.parse(
+    hub_name = "gateway_test_deps",
+    python_version = _PYTHON_VERSION,
+    requirements_lock = "//score/opensovd-core/tests:requirements.txt",
+)
+use_repo(pip, "gateway_test_deps")
+
+bazel_dep(name = "rules_shell", version = "0.8.0", dev_dependency = True)
+
+# Add GoogleTest dependency
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2", dev_dependency = True)
+
+# Rust rules for Bazel
+bazel_dep(name = "rules_rust", version = "0.70.0")
+bazel_dep(name = "score_crates", version = "0.0.10")
+
+bazel_dep(name = "score_toolchains_rust", version = "0.10.1", dev_dependency = True)
+
+# Use the qualified Ferrocene toolchain for the supported Linux target.
+register_toolchains(
+    "@score_toolchains_rust//toolchains/ferrocene:ferrocene_x86_64_unknown_linux_gnu",
+    dev_dependency = True,
+)
+
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+
+# any further required individual rust creates shall get added below
+crate.spec(
+    package = "futures",
+    version = "0.3.31",
+)
+crate.spec(
+    package = "indexmap",
+    version = "2.11.4",
+)
+crate.spec(
+    package = "serde_json",
+    version = "1.0.143",
+)
+crate.spec(
+    package = "tracing",
+    version = "=0.1.41",
+)
+crate.spec(
+    features = [
+        "ansi",
+        "env-filter",
+        "fmt",
+        "std",
+    ],
+    package = "tracing-subscriber",
+    version = "=0.3.19",
+)
+crate.spec(
+    features = [
+        "macros",
+        "net",
+        "rt",
+        "sync",
+        "time",
+    ],
+    package = "tokio",
+    version = "1.47.1",
+)
+crate.from_specs(
+    name = "score_crate_index",
+    supported_platform_triples = [
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-none",
+    ],
+)
+use_repo(crate, "score_crate_index")
+
+# C/C++ rules for Bazel
+bazel_dep(name = "rules_cc", version = "0.2.18")
+
+# functional deps
+bazel_dep(name = "score_baselibs", version = "0.2.9")
+
+# NOTE: score_baselibs has flatbuffers@25.12.19 as a non-dev dependency and that one
+# transitively pulls grpc -> googleapis -> grpc-java@1.66.0 into all consumers.
+# grpc-java@1.66.0 contains a broken use_repo declaration that Bazel 8.x
+# rejects as a hard error.
+#
+# The upstream fix in flatbuffers (google/flatbuffers@2b8e4d3) upgrades grpc to
+# 1.76.0, which drops the problematic grpc-java@1.66.0 dependency. Until such
+# commit is included in a flatbuffers release, this direct dependency of a
+# transitive dependency serves as a mitigation.
+#
+# TODO: Remove below bazel_dep once flatbuffers releases a version which contains the following fix:
+# https://github.com/google/flatbuffers/commit/2b8e4d3af04a6c38c7a7e19460fc26faa3608c9e
+bazel_dep(name = "grpc", version = "1.76.0")
+
+# tooling
+bazel_dep(name = "score_tooling", version = "1.3.1")
+
+bazel_dep(name = "score_devcontainer", version = "1.14.0", dev_dependency = True)
+bazel_dep(name = "aspect_rules_lint", version = "2.3.0", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2", dev_dependency = True)
+bazel_dep(name = "toolchains_llvm", version = "1.8.0", dev_dependency = True)
+
+# docs-as-code
+bazel_dep(name = "score_docs_as_code", version = "9.1.1")
+
+bazel_dep(name = "score_process_description", version = "2.2.5", dev_dependency = True)
+
+# Feature requirements that the component requirements in docs/ are derived from.
+# 0.6.3 is the first release with the diagnostics feature (feat__diagnostics).
+bazel_dep(name = "score_platform", version = "0.7.6", dev_dependency = True)
