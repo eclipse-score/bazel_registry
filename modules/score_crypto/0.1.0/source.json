@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-+M1QwGZQTADSABZD9UkY8dSq/xtibNQa/dR/CwSk2yQ=",
+    "strip_prefix": "crypto-0.1.0",
+    "url": "https://github.com/eclipse-score/crypto/archive/refs/tags/v0.1.0.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-D6I5R1kOsjArb0lVzfdrhicV9bmJ9B7zNa0GWIMgk1U="
+    }
+}
