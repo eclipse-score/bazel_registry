@@ -1,0 +1,10 @@
+{
+    "integrity": "sha256-n9Lgn4Wvai/Q46Kc+uUQRevmK6qCCJEx4r1+esWn2k8=",
+    "strip_prefix": "baselibs-0.2.21",
+    "url": "https://github.com/eclipse-score/baselibs/archive/refs/tags/v0.2.21.tar.gz",
+    "archive_type": "tar.gz",
+    "patch_strip": 1,
+    "patches": {
+        "module_dot_bazel_version.patch": "sha256-hD1LM83DzkHZtpygQW5hT9bhgqCY9hYfLHL7Q0E+U/k="
+    }
+}
