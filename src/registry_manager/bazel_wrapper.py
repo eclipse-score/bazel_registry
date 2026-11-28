@@ -21,6 +21,7 @@ import tempfile
 import urllib.parse
 import urllib.request
 from collections.abc import Iterable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import IO
 
@@ -217,7 +218,7 @@ def _build_archive_request(url: str, token: str | None) -> urllib.request.Reques
     them with a 404 rather than a 401 without one. The token is only attached
     to allowlisted HTTPS GitHub hosts to avoid leaking it on redirects.
     """
-    req = urllib.request.Request(url)
+    req = urllib.request.Request(url, headers={"User-Agent": "score-bazel-registry"})
     if token:
         if not _is_allowed_token_url(url):
             raise ValueError(
@@ -228,12 +229,23 @@ def _build_archive_request(url: str, token: str | None) -> urllib.request.Reques
     return req
 
 
-def download_github_archive(url: str, token: str | None = None) -> tuple[str, str]:
+@dataclass
+class ArchiveDownloadResult:
+    """Result of downloading a GitHub source archive."""
+
+    integrity: str
+    strip_prefix: str
+    module_bazel_content: str | None = None
+
+
+def download_github_archive(
+    url: str, token: str | None = None
+) -> ArchiveDownloadResult:
     """Download a GitHub source archive.
 
-    Returns ``(integrity, strip_prefix)`` where ``integrity`` is the
-    ``sha256-<base64>`` hash of the bytes and ``strip_prefix`` is the archive's
-    actual top-level directory name.
+    Returns an ``ArchiveDownloadResult`` containing the ``sha256-<base64>`` hash
+    of the bytes, the archive's top-level directory name (strip_prefix), and optional
+    ``MODULE.bazel`` content if present in the archive root.
     """
     # GitHub names a tarball's top-level directory ``{owner}-{repo}-{sha}``, but
     # the SHA length depends on repository visibility — 7 characters for public
@@ -251,8 +263,14 @@ def download_github_archive(url: str, token: str | None = None) -> tuple[str, st
             h.update(chunk)
         integrity = "sha256-" + base64.b64encode(h.digest()).decode("ascii")
         tmp.seek(0)
-        strip_prefix = _archive_top_level_dir(tmp)
-    return integrity, strip_prefix
+        top_level_dir = _archive_top_level_dir(tmp)
+        tmp.seek(0)
+        module_bazel_content = _extract_archive_module_bazel(tmp, top_level_dir)
+    return ArchiveDownloadResult(
+        integrity=integrity,
+        strip_prefix=top_level_dir,
+        module_bazel_content=module_bazel_content,
+    )
 
 
 def _archive_top_level_dir(archive: IO[bytes]) -> str:
@@ -262,17 +280,33 @@ def _archive_top_level_dir(archive: IO[bytes]) -> str:
     directory, which would be unexpected for a GitHub source archive.
     """
     # A valid GitHub source archive has a single top-level directory (e.g.
-    # ``{owner}-{repo}-{sha}``) with all entries nested below it.  An archive
+    # ``{owner}-{repo}-{sha}``) with all entries nested below it. An archive
     # that instead contains a bare top-level file (e.g. ``README``) must be
     # rejected, otherwise that filename would be returned as ``strip_prefix``
     # and produce unusable ``source.json`` metadata.
-    with tarfile.open(fileobj=archive, mode="r:gz") as tar:
+    with tarfile.open(fileobj=archive, mode="r:*") as tar:
         top_dirs: set[str] = set()
         top_files: set[str] = set()
         for member in tar.getmembers():
-            if not member.name:
+            # Tar archives can store member paths with leading './' (e.g., './dir/file')
+            # or absolute slashes ('/dir/file') depending on how tar or git-archive was invoked.
+            # Normalizing member names by stripping these prefixes ensures that partition('/')
+            # correctly identifies the root directory rather than treating '.' or '' as a top-level folder.
+            name = member.name.removeprefix("./").lstrip("/")
+            if not name or name == ".":
                 continue
-            first, sep, _ = member.name.partition("/")
+
+            first, sep, _ = name.partition("/")
+
+            # Skip POSIX tar (pax) and git-archive extended metadata headers.
+            # When archiving files with long paths (>100 chars), high-precision timestamps,
+            # or git metadata, git-archive generates a global header ('pax_global_header')
+            # and extended header directories ('PaxHeaders.<PID>/...' or 'PaxHeaders/...').
+            # These are tar format metadata, not actual project files/folders. If not skipped,
+            # they would be counted as extra top-level files or directories and cause validation errors.
+            if member.name == "pax_global_header" or first.startswith("PaxHeaders."):
+                continue
+
             if sep:
                 # Nested entry: lives under a top-level directory.
                 top_dirs.add(first)
@@ -288,6 +322,29 @@ def _archive_top_level_dir(archive: IO[bytes]) -> str:
             f"directories={sorted(top_dirs)}, files={sorted(top_files)}"
         )
     return top_dirs.pop()
+
+
+def _extract_archive_module_bazel(archive: IO[bytes], top_level_dir: str) -> str | None:
+    """Extract the content of MODULE.bazel directly from the archive if present.
+
+    Looks for '<top_level_dir>/MODULE.bazel' inside the archive.
+    """
+    with tarfile.open(fileobj=archive, mode="r:*") as tar:
+        for member in tar.getmembers():
+            name = member.name.removeprefix("./").lstrip("/")
+            if not member.isfile():
+                continue
+            if name == f"{top_level_dir}/MODULE.bazel":
+                f = tar.extractfile(member)
+                if f is not None:
+                    try:
+                        return f.read().decode("utf-8")
+                    except UnicodeDecodeError:
+                        log.warning(
+                            f"MODULE.bazel in {top_level_dir} could not be decoded as UTF-8"
+                        )
+                        return None
+    return None
 
 
 def sha256_from_string(content: str) -> str:
@@ -318,27 +375,48 @@ class ModuleUpdateRunner:
         - patches/ directory with any necessary patches
         - source.json with integrity hash and patch metadata
         """
-        self._add_version_to_metadata()
-        patched_module_file = self._create_patch_for_module_version_if_mismatch()
-        self._generate_source_json()
-        self._write_files(patched_module_file)
+        archive_info = download_github_archive(self.info.release.tarball, self.token)
+        if isinstance(archive_info, ArchiveDownloadResult):
+            integrity = archive_info.integrity
+            strip_prefix = archive_info.strip_prefix
+            archive_mod_content = archive_info.module_bazel_content
+        else:
+            integrity, strip_prefix = archive_info[0], archive_info[1]
+            archive_mod_content = getattr(archive_info, "module_bazel_content", None)
 
-    def _generate_source_json(self) -> None:
+        self._add_version_to_metadata()
+
+        # Auto-detect whether the archive already has the module version set.
+        # If MODULE.bazel was found in the archive, use it as the source of truth;
+        # this prevents generating unnecessary or conflicting patches when release
+        # assets already have the version stamped.
+        if archive_mod_content:
+            self.info.mod_file = parse_MODULE_file_content(archive_mod_content)
+
+        patched_module_file = self._create_patch_for_module_version_if_mismatch()
+        self._write_files(patched_module_file)
+        self._generate_source_json(integrity=integrity, strip_prefix=strip_prefix)
+
+    def _generate_source_json(
+        self, integrity: str | None = None, strip_prefix: str | None = None
+    ) -> None:
         """Generate source.json with integrity hash and patch metadata."""
-        # GitHub names a tarball's top-level directory '{owner}-{repo}-{sha}',
-        # but the SHA length depends on repository visibility, so the actual
-        # prefix must be read from the downloaded archive (see
-        # download_github_archive) rather than guessed from the commit SHA.
-        integrity, strip_prefix = download_github_archive(
-            self.info.release.tarball, self.token
-        )
+        if integrity is None or strip_prefix is None:
+            archive_info = download_github_archive(
+                self.info.release.tarball, self.token
+            )
+            if isinstance(archive_info, ArchiveDownloadResult):
+                integrity = archive_info.integrity
+                strip_prefix = archive_info.strip_prefix
+            else:
+                integrity, strip_prefix = archive_info[0], archive_info[1]
+
         source_dict: dict[str, object] = {
             "integrity": integrity,
             "strip_prefix": strip_prefix,
             "url": self.info.release.tarball,
             "archive_type": "tar.gz",
         }
-
         if self.patches:
             source_dict["patch_strip"] = 1
             source_dict["patches"] = {
@@ -412,21 +490,18 @@ class ModuleUpdateRunner:
         if not self.info.mod_file:
             raise ValueError("Module file content not available")
 
-        # Keep track of missing versions before using a sentinel for logging and
-        # version replacement below.
-        version_was_missing = self.info.mod_file.version is None
-        if version_was_missing:
-            self.info.mod_file.version = Version("0.0.0")
+        file_version = self.info.mod_file.version
+        version_was_missing = file_version is None
+
         # Check if no patch is needed
-        if (
-            not version_was_missing
-            and self.info.mod_file.version == self.info.release.version
-        ):
+        if not version_was_missing and file_version == self.info.release.version:
             log.debug("MODULE.bazel version matches release version; no patch needed.")
             return None  # No patch needed
 
+        effective_file_version = file_version or Version("0.0.0")
+
         # Build metadata strings for logging
-        file_meta = f"(version={self.info.mod_file.version})"
+        file_meta = f"(version={effective_file_version})"
         release_meta = f"(version={self.info.release.version})"
         log.debug(
             f"MODULE.bazel {file_meta} doesn't match release {release_meta}; creating patch"

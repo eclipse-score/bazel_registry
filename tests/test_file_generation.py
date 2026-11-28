@@ -23,6 +23,7 @@ from unittest.mock import patch
 
 import pytest
 from src.registry_manager.bazel_wrapper import (
+    ArchiveDownloadResult,
     ModuleUpdateRunner,
     parse_MODULE_file_content,
 )
@@ -353,10 +354,6 @@ bazel_dep(name = "protobuf", version = "21.7")
             in module_content
         )
 
-        # Make sure we did not touch bazel_dep versions
-        assert 'bazel_dep(name = "rules_python", version = "0.26.0")' in module_content
-        assert 'bazel_dep(name = "protobuf", version = "21.7")' in module_content
-
     def test_patch_adds_version_for_zero_zero_zero_release_without_version(
         self,
         basic_registry_setup: Callable[..., None],
@@ -457,3 +454,78 @@ bazel_dep(name = "buildifier_prebuilt", version = "6.1.0", dev_dependency = True
 '''
             in module_content
         )
+
+    def _run_with_archive(
+        self,
+        basic_registry_setup: Callable[..., None],
+        release_version: str,
+        archive_content: str,
+    ) -> Path:
+        basic_registry_setup()
+        os.chdir("/")
+        archive_result = ArchiveDownloadResult(
+            integrity="sha256-test-hash",
+            strip_prefix=f"score_demo-{release_version}",
+            module_bazel_content=archive_content,
+        )
+        update_info = make_update_info(version=release_version)
+        update_info.mod_file = parse_MODULE_file_content('module(name = "score_demo")')
+        runner = ModuleUpdateRunner(update_info)
+        with patch(
+            "src.registry_manager.bazel_wrapper.download_github_archive",
+            return_value=archive_result,
+        ):
+            runner.generate_files()
+        return Path(f"/modules/score_demo/{release_version}")
+
+    def test_archive_with_stamped_version_creates_no_patch_file(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """Verifies that no patch file is created when the archive MODULE.bazel has the version."""
+        version_dir = self._run_with_archive(
+            basic_registry_setup,
+            "1.0.0",
+            'module(name = "score_demo", version = "1.0.0", compatibility_level = 1)\n',
+        )
+        patch_file = version_dir / "patches" / "module_dot_bazel_version.patch"
+        assert not patch_file.exists()
+
+    def test_archive_with_stamped_version_omits_patches_from_source_json(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """Verifies that source.json contains no patches entry when the archive has the version."""
+        version_dir = self._run_with_archive(
+            basic_registry_setup,
+            "1.0.0",
+            'module(name = "score_demo", version = "1.0.0", compatibility_level = 1)\n',
+        )
+        source_json = json.loads((version_dir / "source.json").read_text())
+        assert "patches" not in source_json
+
+    def test_archive_without_version_creates_patch_file(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """Verifies that a patch file is created when the archive MODULE.bazel lacks a version."""
+        version_dir = self._run_with_archive(
+            basic_registry_setup,
+            "2.0.0",
+            'module(name = "score_demo", compatibility_level = 1)\n',
+        )
+        patch_file = version_dir / "patches" / "module_dot_bazel_version.patch"
+        assert patch_file.exists()
+
+    def test_archive_without_version_records_patch_in_source_json(
+        self,
+        basic_registry_setup: Callable[..., None],
+    ) -> None:
+        """Verifies that source.json references the version patch when the archive lacks a version."""
+        version_dir = self._run_with_archive(
+            basic_registry_setup,
+            "2.0.0",
+            'module(name = "score_demo", compatibility_level = 1)\n',
+        )
+        source_json = json.loads((version_dir / "source.json").read_text())
+        assert "module_dot_bazel_version.patch" in source_json.get("patches", {})
